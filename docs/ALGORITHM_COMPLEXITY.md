@@ -264,3 +264,50 @@ Given a project graph with $V$ tasks, $E$ dependency edges, and $K$ eligible pen
 | **System Role** | Operational execution dispatch (fair background worker) | Strategic planning & schedule optimization (recommendation engine) |
 | **Interference** | **Independent** (both read SQLite; neither mutates the other) | **Independent** (both read SQLite; neither mutates the other) |
 
+---
+
+## 10. Critical Path Analysis and What-If Schedule Simulator (CO5)
+
+### A. Algorithmic Complexity Table
+
+Let $V$ be the number of project tasks (nodes) and $E$ be the number of directed dependency constraints (edges).
+
+| Operation | Time Complexity | Auxiliary Space | Algorithm Description |
+| :--- | :--- | :--- | :--- |
+| **Graph Validation & Topological Sorting** | $\mathcal{O}(V + E)$ | $\mathcal{O}(V + E)$ | Kahn's Algorithm with in-degree queue & 3-color DFS cycle verification. |
+| **Critical Path Dynamic Programming** | $\mathcal{O}(V + E)$ | $\mathcal{O}(V)$ | Single-pass recurrence evaluation across topologically ordered vertices. |
+| **Earliest Start & Finish Calculations** | $\mathcal{O}(V + E)$ | $\mathcal{O}(V)$ | $\text{ES}[v] = \max_{u \in \text{pred}(v)} \text{EF}[u]$; $\text{EF}[v] = \text{ES}[v] + D[v]$. |
+| **Baseline Schedule Computation** | $\mathcal{O}(V + E)$ | $\mathcal{O}(V)$ | In-memory evaluation over incomplete tasks with completed tasks at $t=0$. |
+| **Simulated Schedule Recomputation** | $\mathcal{O}(V + E)$ | $\mathcal{O}(V)$ | Propagates added waiting delay strictly downstream along dependent paths. |
+| **Comparison & Impact Differencing** | $\mathcal{O}(V)$ | $\mathcal{O}(V)$ | Linear comparison of baseline vs. simulated intervals to classify shifted tasks. |
+
+### B. Theoretical Foundations & Proof of Correctness
+
+#### 1. Why Dynamic Programming Works on DAGs
+A Directed Acyclic Graph (DAG) defines a strict strict partial ordering over tasks. Because there are no directed cycles, dependencies form an asymmetric, irreflexive, and transitive relation. This guarantees **optimal substructure**: the earliest completion time of any task $v$ depends solely on the already-finalized earliest completion times of its immediate predecessors:
+$$\text{ES}[v] = \max_{u \in \text{prerequisites}(v)} \text{EF}[u], \quad \text{EF}[v] = \text{ES}[v] + \text{Duration}[v]$$
+
+#### 2. Why Topological Order is Essential
+In an arbitrary graph or unsorted vertex array, computing $\text{ES}[v]$ would risk evaluating unfinalized predecessors. In Kahn's topological order $\pi = [v_1, v_2, \dots, v_n]$, every directed edge $(u, v)$ satisfies $\pi^{-1}(u) < \pi^{-1}(v)$. Processing vertices in topological sequence ensures that by the time task $v$ is examined, all of its prerequisites $u \in \text{prerequisites}(v)$ have already had their $\text{EF}[u]$ computed and permanently finalized.
+
+#### 3. Why Cycles Invalidate the Analysis
+If a directed cycle $A \to B \to C \to A$ exists, task $A$ cannot finish until $C$ finishes, $C$ cannot finish until $B$ finishes, and $B$ cannot finish until $A$ finishes. This constitutes a deadlocked recurrence equation $\text{ES}[A] \ge \text{ES}[A] + D[A] + D[B] + D[C]$, which has no finite solution for positive durations. Topological sorting fails, and Kahn's algorithm halts before visiting all nodes. TaskForge strictly halts and returns a structured diagnostic error displaying the cycle path.
+
+#### 4. How the Critical Path Determines Project Duration
+Independent branches execute concurrently. The total duration of the project is not the sum of all task durations, but the maximum earliest finish across all terminal or leaf tasks:
+$$\text{Project Duration} = \max_{v \in V} \text{EF}[v]$$
+The **Critical Path** is the longest directed predecessor chain connecting the project start to the task $v^*$ achieving this maximum earliest finish. Any delay to any task on the critical path directly delays the overall project completion date.
+
+#### 5. Parallel Execution and Slack Absorption
+Tasks on non-critical parallel branches possess **Total Float (Slack)**:
+$$\text{Slack}[u] = \text{Latest Finish}[u] - \text{Earliest Finish}[u]$$
+When an incomplete task on a non-critical branch experiences an added delay $\Delta \le \text{Slack}[u]$, the delay propagates only within the parallel branch and is absorbed by the convergence point. Downstream tasks beyond the convergence point and the total project finish time remain entirely unaffected ($\Delta_{\text{project}} = 0$).
+
+#### 6. Full-Plan vs. Remaining-Work Schedules
+- **Critical Path Analyzer (`CriticalPathService`):** Evaluates the entire project specification assuming all tasks require their defined duration from project inception ($t=0$).
+- **What-If Schedule Simulator (`WhatIfSimulatorService`):** Models real-time remaining work. Tasks already marked `Completed` represent satisfied constraints requiring $0$ additional time ($t=0$). Only unfinished tasks (`Pending`, `In Progress`) contribute to remaining project completion time.
+
+#### 7. Persistence Safety Architecture
+What-If simulations operate entirely on isolated in-memory deep copies. Persistent SQLite storage, undo/redo stacks, priority queue recommendations, and index trees are never modified during simulation runs, preventing data corruption or speculative state contamination.
+
+

@@ -29,7 +29,7 @@ This document provides the official Course Outcome (CO) mapping for **TaskForge:
 | **CO5** | **Phase 05** | Custom Adjacency-List Graph, BFS/DFS Traversal, Cycle Detection, Topological Sorting (Kahn's), Dependency Scheduler | `taskforge/graph/dependency_graph.py`<br>`taskforge/services/dependency_service.py`<br>`taskforge/services/scheduler.py`<br>`taskforge/ui/dependency_view.py` | **Implemented (Phase 05)** | `tests/test_dependency_graph.py`<br>`tests/test_dependency_service.py`<br>`tests/test_scheduler.py`<br>`tests/test_dependency_integration.py` (28 tests passing) |
 | **CO2** | **Phase 06** | Custom Hash Table (separate chaining), Task-ID Index, & Multi-Structure Evaluation Lab (List vs Hash vs BST) | `taskforge/structures/hash_table.py`<br>`taskforge/services/task_hash_index.py`<br>`taskforge/services/structure_evaluation.py`<br>`taskforge/ui/structure_evaluation_view.py` | **Implemented (Phase 06)** | `tests/test_hash_table.py`<br>`tests/test_task_hash_index.py`<br>`tests/test_structure_evaluation.py`<br>`tests/test_phase6_integration.py` (23 tests passing) |
 | **CO1 + CO5** | **Phase 07** | Custom Heap Priority Queue, Smart Auto-Scheduler, Rule-Based Deadline Risk Analyzer | `taskforge/structures/priority_queue.py`<br>`taskforge/services/scheduler.py`<br>`taskforge/services/risk_analyzer.py`<br>`taskforge/ui/scheduling_view.py` | **Implemented (Phase 07)** | `tests/test_priority_queue.py`<br>`tests/test_smart_scheduler.py`<br>`tests/test_risk_analyzer.py`<br>`tests/test_phase7_integration.py` (25 tests passing) |
-| **CO5** | **Phase 08** | Critical Path Analyzer (DAG Longest Path) & What-If Schedule Simulator (Non-mutating) | `taskforge/services/critical_path.py`<br>`taskforge/services/what_if_simulator.py` | *Planned (Phase 08)* | Critical path duration tests, downstream delay propagation tests, non-mutation proofs |
+| **CO5** | **Phase 08** | Critical Path Analyzer (DAG Longest Path) & What-If Schedule Simulator (Non-mutating) | `taskforge/services/critical_path.py`<br>`taskforge/services/what_if_simulator.py`<br>`taskforge/ui/planning_view.py` | **Implemented (Phase 08)** | `tests/test_critical_path.py`<br>`tests/test_what_if_simulator.py`<br>`tests/test_phase8_integration.py` (22 tests passing) |
 | **All COs** | **Phase 09** | Full Integration, System Verification, Performance Audit & Viva Documentation | Whole application integration | *Planned (Phase 09)* | End-to-end integration tests covering all CO criteria |
 
 ---
@@ -117,6 +117,62 @@ This document provides the official Course Outcome (CO) mapping for **TaskForge:
   - `tests/test_risk_analyzer.py`: 10 tests covering all 5 categories, boundary conditions, and aggregate metrics.
   - `tests/test_phase7_integration.py`: 3 end-to-end integration tests verifying prerequisite unblocking, undo/redo synchronization, and queue coexistence.
   - **Total active tests for Phase 07:** 25 tests (all passing). Total project tests: 174 passing.
+
+### Phase 08 Extension (CO5): Critical Path Analyzer and What-If Schedule Simulator
+*(Implemented in Phase 08)*
+- **Critical Path Analyzer (`taskforge/services/critical_path.py`):**
+  - Implements dynamic programming over Kahn's topological sort on custom `DependencyGraph` without third-party graph packages (no NetworkX).
+  - Calculates Earliest Start ($\text{ES}$) and Earliest Finish ($\text{EF}$) times in $\mathcal{O}(V + E)$ time.
+  - Reconstructs the longest predecessor chain determining total project duration ($\max_{v \in V} \text{EF}[v]$).
+  - Deterministic tie-breaking for equal-duration paths using task-ID ordering.
+  - Cycle-safe: aborts gracefully and reports circular dependency cycle paths.
+- **What-If Schedule Simulator (`taskforge/services/what_if_simulator.py`):**
+  - Evaluates hypothetical delay propagation in-memory without persistent database mutation.
+  - Status-aware: treats `Completed` tasks as completed prerequisites at $t=0$, modeling remaining work accurately.
+  - Propagates delays strictly along dependent downstream paths; delays on parallel branches with sufficient float are absorbed without shifting the project completion date.
+  - Guaranteed persistence safety: zero mutation of SQLite, models, undo history, or indexes.
+- **Verification:**
+  - `tests/test_critical_path.py`: 10 unit tests covering empty, single, linear, diamond branching, disconnected components, tie-breaking, cycle aborts, and recalculations.
+  - `tests/test_what_if_simulator.py`: 9 unit tests covering validations, zero delay, linear propagation, intermediate task delay, parallel slack absorption, completed prereqs, and persistence safety.
+  - `tests/test_phase8_integration.py`: 3 end-to-end integration tests verifying planning lifecycle, remaining-work differences, and cycle safety across services.
+  - **Total active tests for Phase 08:** 22 tests (all passing). Total project tests: 196 passing.
+
+---
+
+## Academic Viva Demonstration Procedure (CO5: Phase 08)
+
+1. **Launch the application:**
+   ```bash
+   streamlit run app.py
+   ```
+2. **Access the Planning Module:**
+   - In the sidebar navigation, select **🗺️ Critical Path & What-If Planning (CO5)**.
+   - Click **🌱 Load Sample Tasks** in the sidebar if the project database is empty.
+3. **Demonstrate the Critical Path Analyzer (Tab 1):**
+   - Click **🔄 Recalculate Critical Path**.
+   - Walk faculty through the top metrics: Total Project Duration, Critical Path Length, and Critical Task Ratio.
+   - Point out the **🎯 Critical Dependency Chain** callout:
+     * *“Notice the highlighted chain of tasks: this is the longest-duration dependency path from project start to finish. Our algorithm uses dynamic programming over Kahn's topological sort in $\mathcal{O}(V + E)$ time without relying on NetworkX.”*
+     * *“Because independent branches execute concurrently, non-critical tasks have slack float and do not prolong the project.”*
+   - Inspect the **Project Earliest Schedule (Gantt Chart)**:
+     * Red bars denote Critical Path tasks with zero float.
+     * Blue bars denote parallel tasks with float buffer.
+4. **Demonstrate the What-If Schedule Simulator (Tab 2):**
+   - Switch to the **🔮 What-If Schedule Simulator** tab.
+   - Emphasize the **Persistence Safety Guarantee**:
+     * *“This simulator operates entirely in memory on deep copies. It will never mutate SQLite database records, change task statuses, or alter application indexes.”*
+   - **Scenario 1: Delaying a Parallel Non-Critical Task (Slack Absorption):**
+     * Select a task on a parallel branch with float. Enter a moderate delay (e.g., 30 minutes).
+     * Click **🚀 Run What-If Simulation**.
+     * Show faculty:
+       * *“Notice the outcome: Project Delay Impact is +0 min (Absorbed). Because this task has parallel float, its delay is absorbed without pushing the project completion date.”*
+   - **Scenario 2: Delaying a Critical Path Task (Delay Propagation):**
+     * Select a task on the Critical Path (e.g. Task #1 or Task #2).
+     * Enter a delay of 45 minutes.
+     * Click **🚀 Run What-If Simulation**.
+     * Show faculty:
+       * *“Notice the outcome: Project Delay Impact is +45 min. Downstream dependent tasks are shifted forward, pushing the entire project deadline.”*
+     * Inspect the **Schedule Comparison Timeline** chart to visually verify which tasks moved (orange/red) versus which remained untouched (green/blue).
 
 ---
 

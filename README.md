@@ -62,6 +62,13 @@ TaskForge is a Python web application that combines task management with practic
 - **Dual Queue Coexistence:** Demonstrates harmonious coexistence of FIFO background execution queue (`TaskQueueService`) and Heap recommendation engine (`SchedulerService`) without interference or state pollution.
 - **Interactive UI View:** Recommendations card, full heap execution sequence, blocked tasks inspector, risk category cards, and deep-dive slack calculator.
 
+### Phase 08: Critical Path Analyzer and What-If Schedule Simulator (CO5)
+- **Critical Path Analyzer (`CriticalPathService`):** Calculates the longest dependency chain in a DAG using dynamic programming over Kahn's topological sort in $\mathcal{O}(V + E)$ time without third-party graph packages.
+- **Earliest Start & Finish Calculations:** Computes deterministic task timelines, predecessor chains, and total estimated project duration.
+- **What-If Schedule Simulator (`WhatIfSimulatorService`):** Simulates the propagation of hypothetical task delays in-memory, computing exact downstream shift vs. parallel branch slack absorption.
+- **Strict Persistence Safety:** 100% guarantee that simulations operate on isolated in-memory models and never modify SQLite records, task statuses, deadlines, durations, dependencies, or undo histories.
+- **Interactive Planning UI:** Visual Gantt timeline highlighting Critical Path tasks vs. float tasks, What-If simulation sandbox, comparative schedule tables, and Matplotlib delta charts.
+
 ---
 
 ## 🛠️ Technology Stack
@@ -163,7 +170,9 @@ TaskForge/
 │   │   ├── structure_evaluation.py # List vs HashTable vs BST evaluation engine (CO2)
 │   │   ├── dependency_service.py   # Graph SQLite sync and cycle validation (CO5)
 │   │   ├── scheduler.py            # Heap-based task recommendation scheduler (CO1 + CO5)
-│   │   └── risk_analyzer.py        # Rule-based deadline risk & slack analyzer (CO1 + CO5)
+│   │   ├── risk_analyzer.py        # Rule-based deadline risk & slack analyzer (CO1 + CO5)
+│   │   ├── critical_path.py        # DAG longest path & critical path analyzer (CO5)
+│   │   └── what_if_simulator.py    # Non-mutating schedule delay simulator (CO5)
 │   └── ui/                         # Modular Streamlit UI components
 │       ├── __init__.py
 │       ├── dashboard.py            # Dashboard metrics, filters, task table, custom sorting
@@ -173,8 +182,9 @@ TaskForge/
 │       ├── tree_view.py            # CO4 BST Task Index, Traversals & Tree Visualizer
 │       ├── dependency_view.py      # CO5 Dependency Map, Topological Order & Traversals
 │       ├── structure_evaluation_view.py # CO2 Hash Table Lab & Structure Comparison
-│       └── scheduling_view.py      # CO1+CO5 Smart Scheduler & Deadline Risk UI
-├── tests/                          # Automated test suite (174 tests)
+│       ├── scheduling_view.py      # CO1+CO5 Smart Scheduler & Deadline Risk UI
+│       └── planning_view.py        # CO5 Critical Path & What-If Planning UI
+├── tests/                          # Automated test suite (196 tests)
 │   ├── __init__.py
 │   ├── test_models.py              # Domain model and validation tests
 │   ├── test_storage.py             # SQLite CRUD and persistence tests
@@ -200,7 +210,10 @@ TaskForge/
 │   ├── test_priority_queue.py      # Binary Min-Heap unit tests (CO1)
 │   ├── test_smart_scheduler.py     # Heap-based scheduler unit tests (CO1 + CO5)
 │   ├── test_risk_analyzer.py       # Deadline risk analyzer unit tests (CO1 + CO5)
-│   └── test_phase7_integration.py  # Phase 07 end-to-end integration tests (CO1 + CO5)
+│   ├── test_phase7_integration.py  # Phase 07 end-to-end integration tests (CO1 + CO5)
+│   ├── test_critical_path.py       # Critical path analyzer unit tests (CO5)
+│   ├── test_what_if_simulator.py   # What-If schedule delay simulation tests (CO5)
+│   └── test_phase8_integration.py  # Phase 08 end-to-end integration tests (CO5)
 └── docs/                           # Project documentation
     ├── CO_MAPPING.md               # Official Course Outcome alignment matrix & viva guide
     └── ALGORITHM_COMPLEXITY.md     # Data structure & algorithm complexity analysis
@@ -214,6 +227,6 @@ TaskForge/
 - **CO2:** Evaluate the suitability of data structures for efficient storage and retrieval. *(Implemented in Phase 06)*
 - **CO3:** Evaluate the performance of searching and sorting algorithms for solving engineering problems. *(Implemented in Phase 03)*
 - **CO4:** Develop tree structure for solving engineering problems. *(Implemented in Phase 04)*
-- **CO5:** Evaluate the applicability of graph data structures and traversal techniques for solving engineering problems. *(Implemented in Phase 05 & Phase 07)*
+- **CO5:** Evaluate the applicability of graph data structures and traversal techniques for solving engineering problems. *(Implemented in Phase 05, Phase 07 & Phase 08)*
 
 See [`docs/CO_MAPPING.md`](docs/CO_MAPPING.md) and [`docs/ALGORITHM_COMPLEXITY.md`](docs/ALGORITHM_COMPLEXITY.md) for detailed verification and complexity tables.

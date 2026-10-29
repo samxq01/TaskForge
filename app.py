@@ -9,6 +9,7 @@ from datetime import datetime, timedelta
 import streamlit as st
 
 from taskforge.models import Priority, Task, TaskStatus
+from taskforge.services.critical_path import CriticalPathService
 from taskforge.services.dependency_service import DependencyService
 from taskforge.services.risk_analyzer import DeadlineRiskAnalyzer
 from taskforge.services.scheduler import SchedulerService
@@ -16,11 +17,13 @@ from taskforge.services.task_hash_index import TaskHashIndexService
 from taskforge.services.task_index import TaskIndexService
 from taskforge.services.task_queue_service import TaskQueueService
 from taskforge.services.undo_manager import ActionType, UndoManager
+from taskforge.services.what_if_simulator import WhatIfSimulatorService
 from taskforge.storage import TaskStorage
 from taskforge.ui.dashboard import render_dashboard
 from taskforge.ui.dependency_view import render_dependency_view
 from taskforge.ui.dsa_labs import render_dsa_performance_lab
 from taskforge.ui.history_view import render_history_view
+from taskforge.ui.planning_view import render_planning_view
 from taskforge.ui.scheduling_view import render_scheduling_view
 from taskforge.ui.structure_evaluation_view import render_structure_evaluation_view
 from taskforge.ui.tree_view import render_tree_view
@@ -88,6 +91,20 @@ def get_risk_analyzer_service(storage: TaskStorage, dep_service: DependencyServi
     if "risk_analyzer" not in st.session_state:
         st.session_state.risk_analyzer = DeadlineRiskAnalyzer(storage, dep_service)
     return st.session_state.risk_analyzer
+
+
+def get_critical_path_service(storage: TaskStorage, dep_service: DependencyService) -> CriticalPathService:
+    """Initialize or retrieve CriticalPathService singleton (CO5)."""
+    if "cp_service" not in st.session_state:
+        st.session_state.cp_service = CriticalPathService(storage, dep_service)
+    return st.session_state.cp_service
+
+
+def get_what_if_simulator_service(storage: TaskStorage, dep_service: DependencyService) -> WhatIfSimulatorService:
+    """Initialize or retrieve WhatIfSimulatorService singleton (CO5)."""
+    if "what_if_simulator" not in st.session_state:
+        st.session_state.what_if_simulator = WhatIfSimulatorService(storage, dep_service)
+    return st.session_state.what_if_simulator
 
 
 def load_sample_tasks(
@@ -205,6 +222,7 @@ def render_sidebar(
                 "📋 Task Dashboard & Registry",
                 "🔄 Task Processing & History (CO1)",
                 "🧠 Smart Scheduling & Deadline Risks (CO1 + CO5)",
+                "🗺️ Critical Path & What-If Planning (CO5)",
                 "🧮 Data Structure Evaluation (CO2)",
                 "🔬 DSA Performance Lab (CO3)",
                 "🌲 BST Task Index (CO4)",
@@ -224,8 +242,8 @@ def render_sidebar(
 - 🟢 **Phase 04:** BST Deadline Index (CO4) *(Complete)*
 - 🟢 **Phase 05:** Dependency Graph & Visual Map (CO5) *(Complete)*
 - 🟢 **Phase 06:** Hash Table & Storage Lab (CO2) *(Complete)*
-- 🟢 **Phase 07:** Smart Auto-Scheduler & Risk Analyzer (CO1 + CO5) *(Active)*
-- 🔒 **Phase 08:** Critical Path & Simulator
+- 🟢 **Phase 07:** Smart Auto-Scheduler & Risk Analyzer (CO1 + CO5) *(Complete)*
+- 🟢 **Phase 08:** Critical Path & What-If Planning (CO5) *(Active)*
 - 🔒 **Phase 09:** Final Polish & Integration
             """
         )
@@ -268,7 +286,7 @@ def render_sidebar(
                         st.rerun()
 
         st.markdown("---")
-        st.caption("TaskForge v0.7.0 • Phase 07 (CO1 + CO5)")
+        st.caption("TaskForge v0.8.0 • Phase 08 (CO5)")
 
     return view_choice
 
@@ -287,6 +305,8 @@ def main() -> None:
     dep_service = get_dependency_service(storage)
     scheduler_service = get_scheduler_service(storage, dep_service)
     risk_analyzer = get_risk_analyzer_service(storage, dep_service)
+    cp_service = get_critical_path_service(storage, dep_service)
+    what_if_simulator = get_what_if_simulator_service(storage, dep_service)
     queue_service = get_queue_service(storage, undo_manager, dep_service)
     index_service = get_index_service(storage)
     hash_index = get_hash_index_service(storage)
@@ -311,6 +331,8 @@ def main() -> None:
         render_history_view(storage, undo_manager, queue_service)
     elif current_view == "🧠 Smart Scheduling & Deadline Risks (CO1 + CO5)":
         render_scheduling_view(storage, scheduler_service, risk_analyzer, queue_service)
+    elif current_view == "🗺️ Critical Path & What-If Planning (CO5)":
+        render_planning_view(storage, cp_service, what_if_simulator)
     elif current_view == "🧮 Data Structure Evaluation (CO2)":
         render_structure_evaluation_view(storage, hash_index)
     elif current_view == "🔬 DSA Performance Lab (CO3)":
