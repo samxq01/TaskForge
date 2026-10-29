@@ -27,27 +27,27 @@ from taskforge.services.what_if_simulator import (
 from taskforge.storage import TaskStorage
 from taskforge.ui.theme import (
     COLOR_BG,
+    COLOR_BRAND,
     COLOR_CORAL,
-    COLOR_LIME,
     COLOR_SURFACE,
     COLOR_TEXT_MUTED,
     COLOR_TEXT_PRIMARY,
     render_metric_strip,
     render_pill,
     render_section_header,
-    style_anthracite_ax,
+    style_potadot_ax,
 )
 
 
 def draw_critical_path_gantt(result: CriticalPathResult) -> plt.Figure:
-    """Render a Gantt-style timeline visualization of earliest task schedules."""
+    """Render a Gantt-style timeline visualization of earliest task schedules in light mode."""
     fig, ax = plt.subplots(figsize=(10, max(4.0, len(result.schedule_details) * 0.52)), dpi=120)
-    fig.patch.set_facecolor(COLOR_BG)
-    ax.set_facecolor(COLOR_SURFACE)
+    fig.patch.set_facecolor("#FFFFFF")
+    ax.set_facecolor("#FFFFFF")
 
     tasks_ordered = [result.schedule_details[tid] for tid in result.topological_order if tid in result.schedule_details]
     if not tasks_ordered:
-        ax.text(0.5, 0.5, "No tasks to display", color=COLOR_TEXT_MUTED, ha="center", va="center")
+        ax.text(0.5, 0.5, "No tasks to display", color="#64748B", ha="center", va="center")
         return fig
 
     y_positions = list(range(len(tasks_ordered)))[::-1]
@@ -58,8 +58,8 @@ def draw_critical_path_gantt(result: CriticalPathResult) -> plt.Figure:
         duration = max(1, item.duration_minutes)
         is_crit = item.is_on_critical_path
 
-        bar_color = COLOR_CORAL if is_crit else "#3B82F6"
-        edge_color = "#EF4444" if is_crit else "#2563EB"
+        bar_color = "#EF4444" if is_crit else "#93C5FD"
+        edge_color = "#DC2626" if is_crit else "#3B82F6"
 
         # Draw task duration bar
         rect = patches.Rectangle(
@@ -80,23 +80,23 @@ def draw_critical_path_gantt(result: CriticalPathResult) -> plt.Figure:
             start + duration / 2,
             y,
             label_text,
-            color="#FFFFFF" if is_crit else "#F3F1EB",
+            color="#FFFFFF" if is_crit else "#0F172A",
             fontsize=8.5,
-            fontweight="bold" if is_crit else "normal",
+            fontweight="bold",
             ha="center",
             va="center",
             zorder=4,
         )
 
     ax.set_yticks(y_positions)
-    ax.set_yticklabels([f"#{item.task.id}" for item in tasks_ordered], color=COLOR_TEXT_MUTED, fontsize=8.5)
-    style_anthracite_ax(ax, title="Project Earliest Start / Finish Timeline", xlabel="Elapsed Minutes from Project Inception", ylabel="Tasks")
+    ax.set_yticklabels([f"#{item.task.id}" for item in tasks_ordered], color="#475569", fontsize=8.5)
+    style_potadot_ax(ax, title="Project Earliest Start / Finish Timeline", xlabel="Elapsed Minutes from Project Inception", ylabel="Tasks")
 
     # Vertical line at total duration
     if result.total_duration_minutes > 0:
         ax.axvline(
             result.total_duration_minutes,
-            color=COLOR_LIME,
+            color="#2563EB",
             linestyle="-.",
             linewidth=1.8,
             label=f"Project Finish: {result.total_duration_minutes}m",
@@ -107,22 +107,22 @@ def draw_critical_path_gantt(result: CriticalPathResult) -> plt.Figure:
     ax.set_ylim(-1, len(tasks_ordered))
 
     legend_elements = [
-        patches.Patch(facecolor=COLOR_CORAL, edgecolor="#EF4444", label="Critical Path Task (Zero Float)"),
-        patches.Patch(facecolor="#3B82F6", edgecolor="#2563EB", label="Non-Critical (Has Slack)"),
+        patches.Patch(facecolor="#EF4444", edgecolor="#DC2626", label="Critical Path Task (Zero Float)"),
+        patches.Patch(facecolor="#93C5FD", edgecolor="#3B82F6", label="Non-Critical (Has Slack)"),
     ]
-    ax.legend(handles=legend_elements, loc="upper right", facecolor="#1B1B1B", edgecolor="#2A2A2A", labelcolor=COLOR_TEXT_MUTED, fontsize=8.5)
+    ax.legend(handles=legend_elements, loc="upper right", facecolor="#FFFFFF", edgecolor="#E2E8F0", labelcolor="#0F172A", fontsize=8.5)
     plt.tight_layout()
     return fig
 
 
 def draw_what_if_comparison_chart(sim_result: WhatIfSimulationResult) -> plt.Figure:
-    """Render a side-by-side timeline comparison of Baseline vs Simulated schedules."""
+    """Render a side-by-side timeline comparison of Baseline vs Simulated schedules in light mode."""
     fig, ax = plt.subplots(figsize=(10, max(4.0, len(sim_result.impacts) * 0.65)), dpi=120)
-    fig.patch.set_facecolor(COLOR_BG)
-    ax.set_facecolor(COLOR_SURFACE)
+    fig.patch.set_facecolor("#FFFFFF")
+    ax.set_facecolor("#FFFFFF")
 
     if not sim_result.impacts:
-        ax.text(0.5, 0.5, "No incomplete tasks simulated", color=COLOR_TEXT_MUTED, ha="center", va="center")
+        ax.text(0.5, 0.5, "No incomplete tasks simulated", color="#64748B", ha="center", va="center")
         return fig
 
     impacts = sim_result.impacts[::-1]
@@ -136,15 +136,15 @@ def draw_what_if_comparison_chart(sim_result: WhatIfSimulationResult) -> plt.Fig
             0.28,
             linewidth=1,
             edgecolor="#3B82F6",
-            facecolor="#1D4ED8",
-            alpha=0.8,
+            facecolor="#93C5FD",
+            alpha=0.85,
             zorder=3,
         )
         ax.add_patch(b_rect)
 
         # Simulated bar (bottom half)
-        sim_color = COLOR_CORAL if imp.is_affected else COLOR_LIME
-        sim_edge = "#EF4444" if imp.is_affected else "#C2ED4C"
+        sim_color = "#FCA5A5" if imp.is_affected else "#A7F3D0"
+        sim_edge = "#EF4444" if imp.is_affected else "#10B981"
 
         s_rect = patches.Rectangle(
             (imp.simulated_start, y - 0.33),
@@ -164,15 +164,16 @@ def draw_what_if_comparison_chart(sim_result: WhatIfSimulationResult) -> plt.Fig
             max(imp.baseline_finish, imp.simulated_finish) + 5,
             y,
             f"#{imp.task_id} {imp.task_title[:18]}{marker}",
-            color=COLOR_CORAL if imp.is_affected else COLOR_TEXT_MUTED,
+            color="#EF4444" if imp.is_affected else "#475569",
             fontsize=8.2,
+            fontweight="bold" if imp.is_affected else "normal",
             va="center",
             zorder=4,
         )
 
     ax.set_yticks(y_positions)
-    ax.set_yticklabels([f"#{imp.task_id}" for imp in impacts], color=COLOR_TEXT_MUTED, fontsize=8.5)
-    style_anthracite_ax(ax, title="Remaining Timeline Comparison (Baseline vs Simulated)", xlabel="Remaining Minutes", ylabel="Tasks")
+    ax.set_yticklabels([f"#{imp.task_id}" for imp in impacts], color="#475569", fontsize=8.5)
+    style_potadot_ax(ax, title="Remaining Timeline Comparison (Baseline vs Simulated)", xlabel="Remaining Minutes", ylabel="Tasks")
 
     max_x = max(
         sim_result.simulated_project_duration,
@@ -183,11 +184,11 @@ def draw_what_if_comparison_chart(sim_result: WhatIfSimulationResult) -> plt.Fig
     ax.set_ylim(-1, len(impacts))
 
     legend_elements = [
-        patches.Patch(facecolor="#1D4ED8", edgecolor="#3B82F6", label="Baseline Schedule"),
-        patches.Patch(facecolor=COLOR_CORAL, edgecolor="#EF4444", label="Simulated (Shifted Downstream)"),
-        patches.Patch(facecolor=COLOR_LIME, edgecolor="#C2ED4C", label="Simulated (Slack Absorbed / Unchanged)"),
+        patches.Patch(facecolor="#93C5FD", edgecolor="#3B82F6", label="Baseline Schedule"),
+        patches.Patch(facecolor="#FCA5A5", edgecolor="#EF4444", label="Simulated (Shifted Downstream)"),
+        patches.Patch(facecolor="#A7F3D0", edgecolor="#10B981", label="Simulated (Slack Absorbed / Unchanged)"),
     ]
-    ax.legend(handles=legend_elements, loc="upper right", facecolor="#1B1B1B", edgecolor="#2A2A2A", labelcolor=COLOR_TEXT_MUTED, fontsize=8.5)
+    ax.legend(handles=legend_elements, loc="upper right", facecolor="#FFFFFF", edgecolor="#E2E8F0", labelcolor="#0F172A", fontsize=8.5)
     plt.tight_layout()
     return fig
 
@@ -217,10 +218,10 @@ def render_planning_view(
     with tab_cp:
         st.markdown(
             """
-            <div style="font-family: 'Syne', sans-serif; font-size: 1.15rem; font-weight: 700; color: #FFFFFF; margin-top: 0.5rem; margin-bottom: 0.2rem;">
+            <div style="font-family: 'Syne', sans-serif; font-size: 1.15rem; font-weight: 700; color: #0F172A; margin-top: 0.5rem; margin-bottom: 0.2rem;">
                 Critical Path Analysis (DAG Longest Path)
             </div>
-            <div style="font-size: 0.85rem; color: #A6A49E; margin-bottom: 1.2rem;">
+            <div style="font-size: 0.86rem; color: #475569; margin-bottom: 1.2rem;">
                 Identifies the sequence of dependent tasks that strictly dictates total project duration. Computed via single-pass dynamic programming over Kahn's topological sort.
             </div>
             """,
@@ -255,18 +256,18 @@ def render_planning_view(
         # Visual Critical Path Chain
         if result.critical_path_tasks:
             path_display = " &nbsp;➔&nbsp; ".join(
-                f"<span style='background-color:#261414; border: 1px solid rgba(248, 113, 113, 0.4); padding:4px 10px; border-radius:3px; font-weight:600; font-family: JetBrains Mono; color: #F87171;'>#{t.id} {t.title} ({t.duration}m)</span>"
+                f"<span style='background-color:#FEF2F2; border: 1px solid #FECACA; padding:4px 10px; border-radius:4px; font-weight:600; font-family: JetBrains Mono; color: #B91C1C;'>#{t.id} {t.title} ({t.duration}m)</span>"
                 for t in result.critical_path_tasks
             )
             st.markdown(
                 f"""
-                <div style="background-color: #1A1A1A; border: 1px solid #282828; border-left: 3px solid #F87171; padding: 1.2rem 1.4rem; border-radius: 3px; margin-bottom: 1.4rem;">
-                    <div style="font-family: 'JetBrains Mono', monospace; font-size: 0.68rem; letter-spacing: 0.12em; text-transform: uppercase; color: #F87171; font-weight: 700; margin-bottom: 0.4rem;">
+                <div style="background-color: #FFFFFF; border: 1px solid #E2E8F0; border-left: 4px solid #EF4444; padding: 1.2rem 1.4rem; border-radius: 8px; margin-bottom: 1.4rem; box-shadow: 0 1px 3px rgba(239,68,68,0.06);">
+                    <div style="font-family: 'JetBrains Mono', monospace; font-size: 0.68rem; letter-spacing: 0.12em; text-transform: uppercase; color: #EF4444; font-weight: 700; margin-bottom: 0.4rem;">
                         ● Critical Dependency Chain (Zero Float)
                     </div>
-                    <div style="font-size: 0.95rem; color: #FFFFFF; line-height: 1.9; margin-bottom: 0.6rem;">{path_display}</div>
-                    <div style="font-size: 0.85rem; color: #A6A49E; border-top: 1px solid #252525; padding-top: 0.6rem;">
-                        <strong style="color: #FFFFFF;">Algorithmic Assessment:</strong> {result.explanation}
+                    <div style="font-size: 0.95rem; color: #0F172A; line-height: 1.9; margin-bottom: 0.6rem;">{path_display}</div>
+                    <div style="font-size: 0.86rem; color: #475569; border-top: 1px solid #F1F5F9; padding-top: 0.6rem;">
+                        <strong style="color: #0F172A;">Algorithmic Assessment:</strong> {result.explanation}
                     </div>
                 </div>
                 """,
@@ -277,14 +278,14 @@ def render_planning_view(
 
         # Timeline Chart
         if result.schedule_details:
-            st.markdown('<div style="font-family: Syne, sans-serif; font-size: 1.05rem; font-weight: 700; color: #FFFFFF; margin-bottom: 0.6rem;">Project Earliest Schedule Timeline (Gantt)</div>', unsafe_allow_html=True)
+            st.markdown('<div style="font-family: Syne, sans-serif; font-size: 1.05rem; font-weight: 700; color: #0F172A; margin-bottom: 0.6rem;">Project Earliest Schedule Timeline (Gantt)</div>', unsafe_allow_html=True)
             fig = draw_critical_path_gantt(result)
             st.pyplot(fig)
             plt.close(fig)
 
         # Schedule Table
         if result.schedule_details:
-            st.markdown('<div style="font-family: Syne, sans-serif; font-size: 1.05rem; font-weight: 700; color: #FFFFFF; margin: 1.2rem 0 0.6rem 0;">Earliest Start & Finish Schedule Table</div>', unsafe_allow_html=True)
+            st.markdown('<div style="font-family: Syne, sans-serif; font-size: 1.05rem; font-weight: 700; color: #0F172A; margin: 1.2rem 0 0.6rem 0;">Earliest Start & Finish Schedule Table</div>', unsafe_allow_html=True)
             table_data = []
             for tid in result.topological_order:
                 if tid in result.schedule_details:
@@ -326,10 +327,10 @@ def render_planning_view(
     with tab_sim:
         st.markdown(
             """
-            <div style="font-family: 'Syne', sans-serif; font-size: 1.15rem; font-weight: 700; color: #FFFFFF; margin-top: 0.5rem; margin-bottom: 0.2rem;">
+            <div style="font-family: 'Syne', sans-serif; font-size: 1.15rem; font-weight: 700; color: #0F172A; margin-top: 0.5rem; margin-bottom: 0.2rem;">
                 What-If Schedule Simulator
             </div>
-            <div style="font-size: 0.85rem; color: #A6A49E; margin-bottom: 1.2rem;">
+            <div style="font-size: 0.86rem; color: #475569; margin-bottom: 1.2rem;">
                 Hypothetically delay an incomplete task to assess downstream ripple effects and project completion delays.
             </div>
             """,
@@ -339,8 +340,8 @@ def render_planning_view(
         # Safety Banner
         st.markdown(
             """
-            <div style="background-color: #171A15; border: 1px solid rgba(215, 255, 100, 0.35); border-radius: 3px; padding: 1rem 1.3rem; margin-bottom: 1.4rem; font-size: 0.88rem; color: #F3F1EB;">
-                <strong style="color: #D7FF64;">● Strict Persistence Safety Guaranteed:</strong> This simulation runs strictly on in-memory deep copies. Persistent SQLite records, deadlines, durations, dependencies, and undo histories remain 100% unaltered.
+            <div style="background-color: #EFF6FF; border: 1px solid #BFDBFE; border-left: 4px solid #2563EB; border-radius: 8px; padding: 1rem 1.3rem; margin-bottom: 1.4rem; font-size: 0.88rem; color: #0F172A; box-shadow: 0 1px 3px rgba(37,99,235,0.06);">
+                <strong style="color: #2563EB;">● Strict Persistence Safety Guaranteed:</strong> This simulation runs strictly on in-memory deep copies. Persistent SQLite records, deadlines, durations, dependencies, and undo histories remain 100% unaltered.
             </div>
             """,
             unsafe_allow_html=True,
@@ -397,7 +398,7 @@ def render_planning_view(
             if sim_res.project_delay_increase > 0:
                 st.markdown(
                     f"""
-                    <div style="background-color: #241616; border: 1px solid rgba(248, 113, 113, 0.4); border-radius: 3px; padding: 1rem 1.2rem; margin-bottom: 1.2rem; font-size: 0.88rem; color: #F87171;">
+                    <div style="background-color: #FEF2F2; border: 1px solid #FECACA; border-left: 4px solid #EF4444; border-radius: 8px; padding: 1rem 1.2rem; margin-bottom: 1.2rem; font-size: 0.88rem; color: #B91C1C;">
                         <strong>⚠ Schedule Impact:</strong> {sim_res.explanation}
                     </div>
                     """,
@@ -406,7 +407,7 @@ def render_planning_view(
             else:
                 st.markdown(
                     f"""
-                    <div style="background-color: #1A1F16; border: 1px solid rgba(215, 255, 100, 0.35); border-radius: 3px; padding: 1rem 1.2rem; margin-bottom: 1.2rem; font-size: 0.88rem; color: #D7FF64;">
+                    <div style="background-color: #ECFDF5; border: 1px solid #A7F3D0; border-left: 4px solid #10B981; border-radius: 8px; padding: 1rem 1.2rem; margin-bottom: 1.2rem; font-size: 0.88rem; color: #047857;">
                         <strong>● Slack Absorbed:</strong> {sim_res.explanation}
                     </div>
                     """,
@@ -414,13 +415,13 @@ def render_planning_view(
                 )
 
             # Gantt / Timeline Comparison Chart
-            st.markdown('<div style="font-family: Syne, sans-serif; font-size: 1.05rem; font-weight: 700; color: #FFFFFF; margin-bottom: 0.6rem;">Schedule Comparison Timeline (Baseline vs Simulated)</div>', unsafe_allow_html=True)
+            st.markdown('<div style="font-family: Syne, sans-serif; font-size: 1.05rem; font-weight: 700; color: #0F172A; margin-bottom: 0.6rem;">Schedule Comparison Timeline (Baseline vs Simulated)</div>', unsafe_allow_html=True)
             fig_comp = draw_what_if_comparison_chart(sim_res)
             st.pyplot(fig_comp)
             plt.close(fig_comp)
 
             # Comparison Table
-            st.markdown('<div style="font-family: Syne, sans-serif; font-size: 1.05rem; font-weight: 700; color: #FFFFFF; margin: 1.2rem 0 0.6rem 0;">Detailed Task Impact Comparison</div>', unsafe_allow_html=True)
+            st.markdown('<div style="font-family: Syne, sans-serif; font-size: 1.05rem; font-weight: 700; color: #0F172A; margin: 1.2rem 0 0.6rem 0;">Detailed Task Impact Comparison</div>', unsafe_allow_html=True)
             comp_table = []
             for imp in sim_res.impacts:
                 comp_table.append(

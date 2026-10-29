@@ -24,8 +24,8 @@ from taskforge.services.task_queue_service import TaskQueueService
 from taskforge.storage import TaskStorage
 from taskforge.ui.theme import (
     COLOR_BG,
+    COLOR_BRAND,
     COLOR_CORAL,
-    COLOR_LIME,
     COLOR_SURFACE,
     COLOR_TEXT_MUTED,
     COLOR_TEXT_PRIMARY,
@@ -54,11 +54,11 @@ def render_scheduling_view(
         with col_c1:
             st.markdown(
                 """
-                <div style="background-color: #171717; border: 1px solid #282828; border-radius: 3px; padding: 1.1rem 1.3rem;">
-                    <div style="font-family: 'Syne', sans-serif; font-size: 1rem; font-weight: 700; color: #FFFFFF; margin-bottom: 0.4rem;">
+                <div style="background-color: #FFFFFF; border: 1px solid #E2E8F0; border-radius: 8px; padding: 1.1rem 1.3rem; box-shadow: 0 1px 2px rgba(0,0,0,0.02);">
+                    <div style="font-family: 'Syne', sans-serif; font-size: 1rem; font-weight: 700; color: #0F172A; margin-bottom: 0.4rem;">
                         🔄 FIFO Processing Queue (Phase 02 & 05)
                     </div>
-                    <ul style="color: #A6A49E; font-size: 0.85rem; line-height: 1.6; margin: 0; padding-left: 1.2rem;">
+                    <ul style="color: #475569; font-size: 0.85rem; line-height: 1.6; margin: 0; padding-left: 1.2rem;">
                         <li><strong>Data Structure:</strong> Custom Singly-Linked <code>Queue</code> ($O(1)$ operations).</li>
                         <li><strong>Strategy:</strong> Strict chronological arrival (<code>created_at ASC, id ASC</code>).</li>
                         <li><strong>Role:</strong> Fair, predictable background task dispatching without starvation.</li>
@@ -71,11 +71,11 @@ def render_scheduling_view(
         with col_c2:
             st.markdown(
                 """
-                <div style="background-color: #171717; border: 1px solid #282828; border-radius: 3px; padding: 1.1rem 1.3rem;">
-                    <div style="font-family: 'Syne', sans-serif; font-size: 1rem; font-weight: 700; color: #D7FF64; margin-bottom: 0.4rem;">
+                <div style="background-color: #EFF6FF; border: 1px solid #BFDBFE; border-radius: 8px; padding: 1.1rem 1.3rem; box-shadow: 0 1px 2px rgba(37,99,235,0.04);">
+                    <div style="font-family: 'Syne', sans-serif; font-size: 1rem; font-weight: 700; color: #2563EB; margin-bottom: 0.4rem;">
                         ⚡ Smart Heap Auto-Scheduler (Phase 07)
                     </div>
-                    <ul style="color: #A6A49E; font-size: 0.85rem; line-height: 1.6; margin: 0; padding-left: 1.2rem;">
+                    <ul style="color: #475569; font-size: 0.85rem; line-height: 1.6; margin: 0; padding-left: 1.2rem;">
                         <li><strong>Data Structure:</strong> Custom Binary <code>PriorityQueue</code> ($O(\\log N)$ push/pop).</li>
                         <li><strong>Strategy:</strong> Multi-criteria tuple: <code>(-priority, has_deadline, deadline, duration, id)</code>.</li>
                         <li><strong>Role:</strong> Maximizes project throughput and business impact.</li>
@@ -99,10 +99,10 @@ def render_scheduling_view(
     with tab_scheduler:
         st.markdown(
             """
-            <div style="font-family: 'Syne', sans-serif; font-size: 1.15rem; font-weight: 700; color: #FFFFFF; margin-top: 0.5rem; margin-bottom: 0.2rem;">
+            <div style="font-family: 'Syne', sans-serif; font-size: 1.15rem; font-weight: 700; color: #0F172A; margin-top: 0.5rem; margin-bottom: 0.2rem;">
                 Heap-Ranked Task Recommendations
             </div>
-            <div style="font-size: 0.85rem; color: #A6A49E; margin-bottom: 1.2rem;">
+            <div style="font-size: 0.86rem; color: #475569; margin-bottom: 1.2rem;">
                 Eligible tasks (Pending status with all prerequisite dependencies satisfied) prioritized via Binary Min-Heap.
             </div>
             """,
@@ -139,18 +139,18 @@ def render_scheduling_view(
             due_str = top.due_date.strftime('%Y-%m-%d %H:%M') if top.due_date else 'No Deadline'
             st.markdown(
                 f"""
-                <div style="background-color: #1A1F16; border: 1px solid rgba(215, 255, 100, 0.4); border-radius: 3px; padding: 1.4rem 1.6rem; margin-bottom: 1.4rem;">
-                    <div style="font-family: 'JetBrains Mono', monospace; font-size: 0.7rem; letter-spacing: 0.12em; text-transform: uppercase; color: #D7FF64; font-weight: 700; margin-bottom: 0.35rem;">
+                <div style="background-color: #EFF6FF; border: 1px solid #BFDBFE; border-left: 4px solid #2563EB; border-radius: 8px; padding: 1.4rem 1.6rem; margin-bottom: 1.4rem; box-shadow: 0 1px 3px rgba(37,99,235,0.08);">
+                    <div style="font-family: 'JetBrains Mono', monospace; font-size: 0.7rem; letter-spacing: 0.12em; text-transform: uppercase; color: #2563EB; font-weight: 700; margin-bottom: 0.35rem;">
                         ● Top Recommended Task (#1 Rank in Min-Heap)
                     </div>
-                    <div style="font-family: 'Syne', sans-serif; font-size: 1.45rem; font-weight: 800; color: #FFFFFF; margin-bottom: 0.4rem;">
+                    <div style="font-family: 'Syne', sans-serif; font-size: 1.45rem; font-weight: 800; color: #0F172A; margin-bottom: 0.4rem;">
                         Task #{top.id}: {top.title}
                     </div>
-                    <div style="font-family: 'JetBrains Mono', monospace; font-size: 0.8rem; color: #A6A49E; margin-bottom: 0.8rem;">
-                        Priority: <strong style="color: #FFFFFF;">{top.priority_label}</strong> &bull; Duration: <strong style="color: #FFFFFF;">{top.duration}m</strong> &bull; Deadline: <strong style="color: #FFFFFF;">{due_str}</strong>
+                    <div style="font-family: 'JetBrains Mono', monospace; font-size: 0.8rem; color: #475569; margin-bottom: 0.8rem;">
+                        Priority: <strong style="color: #0F172A;">{top.priority_label}</strong> &bull; Duration: <strong style="color: #0F172A;">{top.duration}m</strong> &bull; Deadline: <strong style="color: #0F172A;">{due_str}</strong>
                     </div>
-                    <div style="font-size: 0.88rem; color: #F3F1EB; border-top: 1px solid rgba(255, 255, 255, 0.08); padding-top: 0.75rem;">
-                        <strong style="color: #D7FF64;">Algorithmic Justification:</strong> {schedule_result.recommendation_reason}
+                    <div style="font-size: 0.88rem; color: #0F172A; border-top: 1px solid #DBEAFE; padding-top: 0.75rem;">
+                        <strong style="color: #2563EB;">Algorithmic Justification:</strong> {schedule_result.recommendation_reason}
                     </div>
                 </div>
                 """,
@@ -161,20 +161,20 @@ def render_scheduling_view(
 
         # Ranked Schedule List
         if schedule_result.ranked_tasks:
-            st.markdown('<div style="font-family: Syne, sans-serif; font-size: 1.05rem; font-weight: 700; color: #FFFFFF; margin-bottom: 0.6rem;">Recommended Execution Sequence</div>', unsafe_allow_html=True)
+            st.markdown('<div style="font-family: Syne, sans-serif; font-size: 1.05rem; font-weight: 700; color: #0F172A; margin-bottom: 0.6rem;">Recommended Execution Sequence</div>', unsafe_allow_html=True)
             for idx, item in enumerate(schedule_result.ranked_tasks):
                 t = item.task
                 due_display = t.due_date.strftime("%Y-%m-%d %H:%M") if t.due_date else "No Deadline"
                 st.markdown(
                     f"""
-                    <div style="background-color: #1A1A1A; border: 1px solid #282828; padding: 10px 14px; border-radius: 3px; margin-bottom: 8px;">
+                    <div style="background-color: #FFFFFF; border: 1px solid #E2E8F0; padding: 10px 14px; border-radius: 6px; margin-bottom: 8px; box-shadow: 0 1px 2px rgba(0,0,0,0.02);">
                         <div style="display: flex; justify-content: space-between; align-items: center;">
-                            <span style="font-size: 0.95rem; font-weight: 600; color: #FFFFFF;">
-                                <span style="font-family: JetBrains Mono; color: #D7FF64;">#{idx + 1}</span> &nbsp; Task #{t.id}: {t.title}
+                            <span style="font-size: 0.95rem; font-weight: 600; color: #0F172A;">
+                                <span style="font-family: JetBrains Mono; color: #2563EB; font-weight: 700;">#{idx + 1}</span> &nbsp; Task #{t.id}: {t.title}
                             </span>
                             {render_pill(t.priority_label, variant='amber' if 'High' in t.priority_label or 'Urgent' in t.priority_label else 'muted')}
                         </div>
-                        <div style="font-family: 'JetBrains Mono', monospace; font-size: 0.75rem; color: #A6A49E; margin-top: 4px;">
+                        <div style="font-family: 'JetBrains Mono', monospace; font-size: 0.75rem; color: #64748B; margin-top: 4px;">
                             Duration: {t.duration}m &bull; Deadline: {due_display} &bull; <em>{item.explanation}</em>
                         </div>
                     </div>
@@ -192,7 +192,7 @@ def render_scheduling_view(
                     blocking = b_info["blocking_prerequisites"]
                     b_prereq_str = ", ".join(f"#{p.id} '{p.title}' ({p.status})" for p in blocking)
                     st.markdown(
-                        f"- <span style='font-family: JetBrains Mono; color: #F87171;'>#{b_task.id}</span> **{b_task.title}** ({b_task.priority_label}): Waiting on {b_prereq_str}",
+                        f"- <span style='font-family: JetBrains Mono; color: #EF4444; font-weight: 600;'>#{b_task.id}</span> **{b_task.title}** ({b_task.priority_label}): Waiting on {b_prereq_str}",
                         unsafe_allow_html=True,
                     )
 
@@ -202,10 +202,10 @@ def render_scheduling_view(
     with tab_risk:
         st.markdown(
             """
-            <div style="font-family: 'Syne', sans-serif; font-size: 1.15rem; font-weight: 700; color: #FFFFFF; margin-top: 0.5rem; margin-bottom: 0.2rem;">
+            <div style="font-family: 'Syne', sans-serif; font-size: 1.15rem; font-weight: 700; color: #0F172A; margin-top: 0.5rem; margin-bottom: 0.2rem;">
                 Deterministic Deadline Risk Analyzer
             </div>
-            <div style="font-size: 0.85rem; color: #A6A49E; margin-bottom: 1.2rem;">
+            <div style="font-size: 0.86rem; color: #475569; margin-bottom: 1.2rem;">
                 Rule-based risk evaluation: Completed &gt; Overdue &gt; At Risk &gt; Unscheduled &gt; Safe. Evaluates <code>slack = (Time Remaining - Duration)</code> and incomplete dependencies.
             </div>
             """,
@@ -279,7 +279,7 @@ def render_scheduling_view(
         # Deep-Dive Inspector
         if risk_summary.assessments:
             st.markdown("<hr style='margin: 1.4rem 0 1rem 0;'>", unsafe_allow_html=True)
-            st.markdown('<div style="font-family: Syne, sans-serif; font-size: 1.05rem; font-weight: 700; color: #FFFFFF; margin-bottom: 0.6rem;">🔬 Task Risk Diagnostics Inspector</div>', unsafe_allow_html=True)
+            st.markdown('<div style="font-family: Syne, sans-serif; font-size: 1.05rem; font-weight: 700; color: #0F172A; margin-bottom: 0.6rem;">🔬 Task Risk Diagnostics Inspector</div>', unsafe_allow_html=True)
             task_options = {a.task.id: a for a in risk_summary.assessments if a.task.id is not None}
             selected_id = st.selectbox(
                 "Select a task to inspect in-depth calculations:",
@@ -293,9 +293,9 @@ def render_scheduling_view(
                 with col_d1:
                     st.markdown(
                         f"""
-                        <div style="background-color: #171717; border: 1px solid #282828; border-radius: 3px; padding: 1rem 1.2rem; font-size: 0.85rem; color: #A6A49E; line-height: 1.6;">
-                            <strong style="color: #FFFFFF;">Task Metadata:</strong><br>
-                            &bull; Title: <strong style="color: #FFFFFF;">#{t.id} {t.title}</strong><br>
+                        <div style="background-color: #FFFFFF; border: 1px solid #E2E8F0; border-radius: 8px; padding: 1rem 1.2rem; font-size: 0.85rem; color: #475569; line-height: 1.6; box-shadow: 0 1px 2px rgba(0,0,0,0.02);">
+                            <strong style="color: #0F172A;">Task Metadata:</strong><br>
+                            &bull; Title: <strong style="color: #0F172A;">#{t.id} {t.title}</strong><br>
                             &bull; Status: <code>{t.status}</code> &bull; Priority: {t.priority_label}<br>
                             &bull; Duration: {t.duration} minutes<br>
                             &bull; Deadline: {t.due_date.strftime('%Y-%m-%d %H:%M') if t.due_date else 'None'}
@@ -306,9 +306,9 @@ def render_scheduling_view(
                 with col_d2:
                     st.markdown(
                         f"""
-                        <div style="background-color: #171717; border: 1px solid #282828; border-radius: 3px; padding: 1rem 1.2rem; font-size: 0.85rem; color: #A6A49E; line-height: 1.6;">
-                            <strong style="color: #FFFFFF;">Slack Diagnostics:</strong><br>
-                            &bull; Risk Category: <strong style="color: #D7FF64;">{sel.category.value}</strong><br>
+                        <div style="background-color: #FFFFFF; border: 1px solid #E2E8F0; border-radius: 8px; padding: 1rem 1.2rem; font-size: 0.85rem; color: #475569; line-height: 1.6; box-shadow: 0 1px 2px rgba(0,0,0,0.02);">
+                            <strong style="color: #0F172A;">Slack Diagnostics:</strong><br>
+                            &bull; Risk Category: <strong style="color: #2563EB;">{sel.category.value}</strong><br>
                             &bull; Time Remaining: {f"{sel.time_remaining_minutes:.1f}m" if sel.time_remaining_minutes is not None else 'N/A'}<br>
                             &bull; Slack Buffer: {f"{sel.slack_minutes:+.1f}m" if sel.slack_minutes is not None else 'N/A'}<br>
                             &bull; Blocked by Prerequisites: {'Yes' if sel.is_blocked else 'No'}
@@ -319,8 +319,8 @@ def render_scheduling_view(
 
                 st.markdown(
                     f"""
-                    <div style="background-color: #1A1F16; border: 1px solid rgba(215, 255, 100, 0.3); border-radius: 3px; padding: 0.9rem 1.1rem; margin-top: 0.8rem; font-size: 0.85rem; color: #F3F1EB;">
-                        <strong style="color: #D7FF64;">Diagnostic Justification:</strong> {sel.explanation}
+                    <div style="background-color: #EFF6FF; border: 1px solid #BFDBFE; border-left: 4px solid #2563EB; border-radius: 8px; padding: 0.9rem 1.1rem; margin-top: 0.8rem; font-size: 0.85rem; color: #0F172A;">
+                        <strong style="color: #2563EB;">Diagnostic Justification:</strong> {sel.explanation}
                     </div>
                     """,
                     unsafe_allow_html=True,

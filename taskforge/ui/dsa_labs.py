@@ -12,39 +12,39 @@ from taskforge.services.benchmark_service import (
 )
 from taskforge.ui.theme import (
     COLOR_BG,
-    COLOR_LIME,
+    COLOR_BRAND,
     COLOR_SURFACE,
     COLOR_TEXT_MUTED,
     COLOR_TEXT_PRIMARY,
     render_metric_strip,
     render_section_header,
-    style_anthracite_ax,
+    style_potadot_ax,
 )
 
 
 def _render_search_chart(result: SearchBenchmarkResult) -> None:
-    """Render a clean Anthracite-styled Matplotlib chart comparing comparisons and execution time."""
+    """Render a clean Potadot-styled Matplotlib chart comparing comparisons and execution time."""
     fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(10, 3.8))
-    fig.patch.set_facecolor(COLOR_BG)
+    fig.patch.set_facecolor("#FFFFFF")
 
     algorithms = ["Linear Search", "Binary Search"]
     comparisons = [result.linear_comparisons, result.binary_comparisons]
     times_ms = [result.linear_time_ms, result.binary_time_ms]
-    colors = [COLOR_TEXT_MUTED, COLOR_LIME]
+    colors = ["#94A3B8", "#2563EB"]
 
     # 1. Comparison Count Bar Chart
-    bars1 = ax1.bar(algorithms, comparisons, color=colors, width=0.42, edgecolor="#2A2A2A", linewidth=0.8)
-    style_anthracite_ax(ax1, title=f"Key Comparisons (Size: N={result.dataset_size})", ylabel="Comparisons")
+    bars1 = ax1.bar(algorithms, comparisons, color=colors, width=0.42, edgecolor="#CBD5E1", linewidth=0.8)
+    style_potadot_ax(ax1, title=f"Key Comparisons (Size: N={result.dataset_size})", ylabel="Comparisons")
     for bar in bars1:
         yval = bar.get_height()
-        ax1.text(bar.get_x() + bar.get_width() / 2.0, yval, f"{int(yval):,}", ha="center", va="bottom", color=COLOR_TEXT_PRIMARY, fontsize=9, fontweight="bold")
+        ax1.text(bar.get_x() + bar.get_width() / 2.0, yval, f"{int(yval):,}", ha="center", va="bottom", color="#0F172A", fontsize=9, fontweight="bold")
 
     # 2. Execution Time (ms) Bar Chart
-    bars2 = ax2.bar(algorithms, times_ms, color=colors, width=0.42, edgecolor="#2A2A2A", linewidth=0.8)
-    style_anthracite_ax(ax2, title="Execution Time (Avg ms)", ylabel="Milliseconds")
+    bars2 = ax2.bar(algorithms, times_ms, color=colors, width=0.42, edgecolor="#CBD5E1", linewidth=0.8)
+    style_potadot_ax(ax2, title="Execution Time (Avg ms)", ylabel="Milliseconds")
     for bar in bars2:
         yval = bar.get_height()
-        ax2.text(bar.get_x() + bar.get_width() / 2.0, yval, f"{yval:.4f} ms", ha="center", va="bottom", color=COLOR_TEXT_PRIMARY, fontsize=9, fontweight="bold")
+        ax2.text(bar.get_x() + bar.get_width() / 2.0, yval, f"{yval:.4f} ms", ha="center", va="bottom", color="#0F172A", fontsize=9, fontweight="bold")
 
     plt.tight_layout()
     st.pyplot(fig)
@@ -52,28 +52,28 @@ def _render_search_chart(result: SearchBenchmarkResult) -> None:
 
 
 def _render_sort_chart(result: SortBenchmarkResult) -> None:
-    """Render a clean Anthracite-styled Matplotlib chart comparing sorting comparisons and execution time."""
+    """Render a clean Potadot-styled Matplotlib chart comparing sorting comparisons and execution time."""
     fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(10, 3.8))
-    fig.patch.set_facecolor(COLOR_BG)
+    fig.patch.set_facecolor("#FFFFFF")
 
     algorithms = ["Insertion Sort", "Merge Sort"]
     comparisons = [result.insertion_comparisons, result.merge_comparisons]
     times_ms = [result.insertion_time_ms, result.merge_time_ms]
-    colors = ["#FBBF24", COLOR_LIME]
+    colors = ["#F59E0B", "#2563EB"]
 
     # 1. Comparison Count Bar Chart
-    bars1 = ax1.bar(algorithms, comparisons, color=colors, width=0.42, edgecolor="#2A2A2A", linewidth=0.8)
-    style_anthracite_ax(ax1, title=f"Key Comparisons ({result.distribution.capitalize()}, N={result.dataset_size})", ylabel="Comparisons")
+    bars1 = ax1.bar(algorithms, comparisons, color=colors, width=0.42, edgecolor="#CBD5E1", linewidth=0.8)
+    style_potadot_ax(ax1, title=f"Key Comparisons ({result.distribution.capitalize()}, N={result.dataset_size})", ylabel="Comparisons")
     for bar in bars1:
         yval = bar.get_height()
-        ax1.text(bar.get_x() + bar.get_width() / 2.0, yval, f"{int(yval):,}", ha="center", va="bottom", color=COLOR_TEXT_PRIMARY, fontsize=9, fontweight="bold")
+        ax1.text(bar.get_x() + bar.get_width() / 2.0, yval, f"{int(yval):,}", ha="center", va="bottom", color="#0F172A", fontsize=9, fontweight="bold")
 
     # 2. Execution Time (ms) Bar Chart
-    bars2 = ax2.bar(algorithms, times_ms, color=colors, width=0.42, edgecolor="#2A2A2A", linewidth=0.8)
-    style_anthracite_ax(ax2, title=f"Execution Time (N={result.dataset_size})", ylabel="Milliseconds")
+    bars2 = ax2.bar(algorithms, times_ms, color=colors, width=0.42, edgecolor="#CBD5E1", linewidth=0.8)
+    style_potadot_ax(ax2, title=f"Execution Time (N={result.dataset_size})", ylabel="Milliseconds")
     for bar in bars2:
         yval = bar.get_height()
-        ax2.text(bar.get_x() + bar.get_width() / 2.0, yval, f"{yval:.2f} ms", ha="center", va="bottom", color=COLOR_TEXT_PRIMARY, fontsize=9, fontweight="bold")
+        ax2.text(bar.get_x() + bar.get_width() / 2.0, yval, f"{yval:.2f} ms", ha="center", va="bottom", color="#0F172A", fontsize=9, fontweight="bold")
 
     plt.tight_layout()
     st.pyplot(fig)
@@ -96,10 +96,10 @@ def render_dsa_performance_lab() -> None:
     with tab_searching:
         st.markdown(
             """
-            <div style="font-family: 'Syne', sans-serif; font-size: 1.15rem; font-weight: 700; color: #FFFFFF; margin-top: 0.5rem; margin-bottom: 0.2rem;">
+            <div style="font-family: 'Syne', sans-serif; font-size: 1.15rem; font-weight: 700; color: #0F172A; margin-top: 0.5rem; margin-bottom: 0.2rem;">
                 Linear Search vs. Binary Search
             </div>
-            <div style="font-size: 0.85rem; color: #A6A49E; margin-bottom: 1.2rem;">
+            <div style="font-size: 0.86rem; color: #475569; margin-bottom: 1.2rem;">
                 Compare sequential scanning <code>O(n)</code> against divide-and-conquer <code>O(log n)</code> elimination on identical sorted data.
             </div>
             """,
@@ -161,9 +161,9 @@ def render_dsa_performance_lab() -> None:
             comp_ratio = res.linear_comparisons / max(res.binary_comparisons, 1)
             st.markdown(
                 f"""
-                <div style="background-color: #1A1F16; border: 1px solid rgba(215, 255, 100, 0.35); border-radius: 3px; padding: 1rem 1.3rem; margin-bottom: 1.2rem; font-size: 0.88rem; color: #F3F1EB;">
-                    <strong style="color: #D7FF64;">● Algorithmic Efficiency:</strong> Binary Search required <strong>{res.binary_comparisons}</strong> comparisons 
-                    versus <strong>{res.linear_comparisons}</strong> for Linear Search (<strong style="color: #D7FF64;">{comp_ratio:.1f}x reduction</strong> in comparison operations).
+                <div style="background-color: #EFF6FF; border: 1px solid #BFDBFE; border-left: 4px solid #2563EB; border-radius: 8px; padding: 1rem 1.3rem; margin-bottom: 1.2rem; font-size: 0.88rem; color: #0F172A; box-shadow: 0 1px 3px rgba(37,99,235,0.06);">
+                    <strong style="color: #2563EB;">● Algorithmic Efficiency:</strong> Binary Search required <strong>{res.binary_comparisons}</strong> comparisons 
+                    versus <strong>{res.linear_comparisons}</strong> for Linear Search (<strong style="color: #2563EB;">{comp_ratio:.1f}x reduction</strong> in comparison operations).
                 </div>
                 """,
                 unsafe_allow_html=True,
@@ -197,10 +197,10 @@ def render_dsa_performance_lab() -> None:
     with tab_sorting:
         st.markdown(
             """
-            <div style="font-family: 'Syne', sans-serif; font-size: 1.15rem; font-weight: 700; color: #FFFFFF; margin-top: 0.5rem; margin-bottom: 0.2rem;">
+            <div style="font-family: 'Syne', sans-serif; font-size: 1.15rem; font-weight: 700; color: #0F172A; margin-top: 0.5rem; margin-bottom: 0.2rem;">
                 Insertion Sort vs. Merge Sort
             </div>
-            <div style="font-size: 0.85rem; color: #A6A49E; margin-bottom: 1.2rem;">
+            <div style="font-size: 0.86rem; color: #475569; margin-bottom: 1.2rem;">
                 Examine asymptotic scaling: quadratic <code>O(n²)</code> insertion sorting vs guaranteed <code>O(n log n)</code> recursive merge sorting.
             </div>
             """,
@@ -251,7 +251,7 @@ def render_dsa_performance_lab() -> None:
             if s_res.is_correct:
                 st.markdown(
                     """
-                    <div style="background-color: #1A1F16; border: 1px solid rgba(215, 255, 100, 0.35); border-radius: 3px; padding: 0.8rem 1.2rem; margin-bottom: 1rem; font-size: 0.88rem; color: #D7FF64;">
+                    <div style="background-color: #ECFDF5; border: 1px solid #A7F3D0; border-left: 4px solid #10B981; border-radius: 8px; padding: 0.8rem 1.2rem; margin-bottom: 1rem; font-size: 0.88rem; color: #047857;">
                         ● Correctness Verified: Both algorithms produced identical ground-truth sorted permutations.
                     </div>
                     """,
@@ -290,7 +290,7 @@ def render_dsa_performance_lab() -> None:
     with tab_summary:
         st.markdown(
             """
-            <div style="font-family: 'Syne', sans-serif; font-size: 1.15rem; font-weight: 700; color: #FFFFFF; margin-top: 0.5rem; margin-bottom: 0.8rem;">
+            <div style="font-family: 'Syne', sans-serif; font-size: 1.15rem; font-weight: 700; color: #0F172A; margin-top: 0.5rem; margin-bottom: 0.8rem;">
                 Theoretical Complexity Matrix & Viva Examination Reference
             </div>
             """,
@@ -338,18 +338,18 @@ def render_dsa_performance_lab() -> None:
 
         st.markdown(
             """
-            <div style="background-color: #1B1B1B; border: 1px solid #2A2A2A; border-radius: 3px; padding: 1.6rem 1.8rem; margin-top: 1.5rem;">
-                <div style="font-family: 'Syne', sans-serif; font-size: 1.15rem; font-weight: 700; color: #FFFFFF; margin-bottom: 0.8rem;">
+            <div style="background-color: #FFFFFF; border: 1px solid #E2E8F0; border-radius: 8px; padding: 1.6rem 1.8rem; margin-top: 1.5rem; box-shadow: 0 1px 3px rgba(0,0,0,0.03);">
+                <div style="font-family: 'Syne', sans-serif; font-size: 1.15rem; font-weight: 700; color: #0F172A; margin-bottom: 0.8rem;">
                     Key Examiner Viva Questions & Answers
                 </div>
-                <div style="color: #A6A49E; font-size: 0.9rem; line-height: 1.6;">
-                    <p><strong style="color: #D7FF64;">Q1: Why does Binary Search require pre-sorted data?</strong><br>
+                <div style="color: #475569; font-size: 0.9rem; line-height: 1.6;">
+                    <p><strong style="color: #2563EB;">Q1: Why does Binary Search require pre-sorted data?</strong><br>
                     Binary Search requires an invariant: if the midpoint value exceeds the target, the target strictly cannot reside in the right partition. On unsorted inputs, this invariant fails and elements are erroneously bypassed.</p>
 
-                    <p><strong style="color: #D7FF64;">Q2: Why does Insertion Sort outperform Merge Sort on sorted arrays?</strong><br>
+                    <p><strong style="color: #2563EB;">Q2: Why does Insertion Sort outperform Merge Sort on sorted arrays?</strong><br>
                     On already-sorted input, each item compares only once against its immediate left predecessor and incurs 0 shifts ($O(n)$ time), eliminating Merge Sort's recursive partition and merge buffer allocation overhead.</p>
 
-                    <p><strong style="color: #D7FF64;">Q3: How do we preserve persistence safety during benchmarks?</strong><br>
+                    <p><strong style="color: #2563EB;">Q3: How do we preserve persistence safety during benchmarks?</strong><br>
                     BenchmarkService creates synthetic, isolated Python lists in memory using high-resolution <code>time.perf_counter()</code>; persistent SQLite records are completely untouched.</p>
                 </div>
             </div>

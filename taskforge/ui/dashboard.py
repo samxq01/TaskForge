@@ -1,4 +1,4 @@
-"""Main dashboard view for task management with custom DSA searching and sorting integration."""
+"""Main dashboard view for task management with custom DSA searching, sorting, and Potadot product showcases."""
 
 from __future__ import annotations
 
@@ -17,6 +17,12 @@ from taskforge.algorithms.sorting import (
     task_priority_key,
 )
 from taskforge.models import Priority, Task, TaskStatus
+from taskforge.services.critical_path import CriticalPathService
+from taskforge.services.dependency_service import DependencyService
+from taskforge.services.risk_analyzer import DeadlineRiskAnalyzer
+from taskforge.services.scheduler import SchedulerService
+from taskforge.services.task_hash_index import TaskHashIndexService
+from taskforge.services.task_index import TaskIndexService
 from taskforge.services.task_queue_service import TaskQueueService
 from taskforge.services.undo_manager import ActionType, UndoManager
 from taskforge.storage import TaskStorage
@@ -34,21 +40,6 @@ from taskforge.ui.theme import (
 )
 
 
-def render_summary_metrics(storage: TaskStorage) -> None:
-    """Render top metric strip for total, pending, in-progress, completed, and overdue tasks."""
-    counts = storage.count_tasks()
-    overdue_val = counts["overdue"]
-    overdue_caption = f"{overdue_val} past due" if overdue_val > 0 else "All deadlines current"
-
-    render_metric_strip([
-        {"label": "Total Tasks", "value": counts["total"], "caption": "Persistent SQLite"},
-        {"label": "Pending", "value": counts["pending"], "caption": "FIFO Queue Head"},
-        {"label": "In Progress", "value": counts["in_progress"], "caption": "Active Processing"},
-        {"label": "Completed", "value": counts["completed"], "caption": "Prereqs Satisfied"},
-        {"label": "Overdue", "value": overdue_val, "caption": overdue_caption},
-    ])
-
-
 def _format_duration(minutes: int) -> str:
     """Format duration into human-readable string."""
     if minutes < 60:
@@ -59,7 +50,7 @@ def _format_duration(minutes: int) -> str:
 
 
 def _priority_badge(priority: int) -> str:
-    """Return an Anthracite-styled semantic pill for priority value."""
+    """Return a Potadot-styled semantic pill for priority value."""
     if priority == Priority.URGENT.value:
         return render_pill("Urgent (P4)", variant="coral")
     elif priority == Priority.HIGH.value:
@@ -70,7 +61,7 @@ def _priority_badge(priority: int) -> str:
 
 
 def _status_badge(status: str) -> str:
-    """Return an Anthracite-styled semantic pill for status."""
+    """Return a Potadot-styled semantic pill for status."""
     if status == TaskStatus.COMPLETED.value:
         return render_pill("Completed", variant="lime")
     elif status == TaskStatus.IN_PROGRESS.value:
@@ -78,38 +69,322 @@ def _status_badge(status: str) -> str:
     return render_pill("Pending", variant="muted")
 
 
+def render_summary_metrics(storage: TaskStorage, dep_service: Optional[DependencyService] = None) -> None:
+    """Render top metric strip for total, pending, in-progress, completed, overdue, and blocked tasks."""
+    counts = storage.count_tasks()
+    overdue_val = counts["overdue"]
+    overdue_caption = f"{overdue_val} past due" if overdue_val > 0 else "All deadlines current"
+
+    blocked_count = 0
+    if dep_service is not None:
+        graph = dep_service.get_graph()
+        all_tasks = storage.list_tasks()
+        completed_ids = {t.id for t in all_tasks if t.status == TaskStatus.COMPLETED.value}
+        for t in all_tasks:
+            if t.status == TaskStatus.PENDING.value and t.id is not None:
+                prereqs = graph.get_prerequisites(t.id)
+                if any(p not in completed_ids for p in prereqs):
+                    blocked_count += 1
+
+    metrics_list = [
+        {"label": "Total Tasks", "value": counts["total"], "caption": "Persistent SQLite"},
+        {"label": "Pending Queue", "value": counts["pending"], "caption": "FIFO Arrival Sequence"},
+        {"label": "In Progress", "value": counts["in_progress"], "caption": "Active Processing"},
+        {"label": "Completed", "value": counts["completed"], "caption": "Prereqs Satisfied"},
+        {"label": "Overdue", "value": overdue_val, "caption": overdue_caption},
+    ]
+
+    if blocked_count > 0:
+        metrics_list.append({"label": "Blocked Tasks", "value": blocked_count, "caption": "Awaiting Prereqs"})
+
+    render_metric_strip(metrics_list)
+
+
 def render_dashboard(
     storage: TaskStorage,
     undo_manager: Optional[UndoManager] = None,
     queue_service: Optional[TaskQueueService] = None,
+    scheduler_service: Optional[SchedulerService] = None,
+    risk_analyzer: Optional[DeadlineRiskAnalyzer] = None,
+    dep_service: Optional[DependencyService] = None,
+    index_service: Optional[TaskIndexService] = None,
+    hash_index: Optional[TaskHashIndexService] = None,
+    cp_service: Optional[CriticalPathService] = None,
 ) -> None:
-    """Render the full TaskForge dashboard with CRUD operations, undo/redo, and custom sorting/searching."""
+    """Render the full TaskForge dashboard inspired by Potadot's professional product experience."""
     counts = storage.count_tasks()
+    now = datetime.now()
 
-    # Editorial Hero Section
+    # -------------------------------------------------------------------------
+    # 1. OPENING PRODUCT HERO
+    # -------------------------------------------------------------------------
     render_editorial_hero(
-        eyebrow="DIGITAL CRAFT • INTELLIGENT PLANNING",
-        headline="Make every task count.",
-        subhead="Your work, dependencies, and deadlines. One intelligent, deterministic planning system powered by pure data structures.",
+        eyebrow="INTELLIGENT TASK SCHEDULING PLATFORM",
+        headline="Your work. Clearly planned.",
+        subhead="Manage tasks, understand dependencies, and make better scheduling decisions from one cohesive workspace powered by pure data structures.",
         meta_tags=[
             ("TOTAL INVENTORY", f"{counts['total']} Items"),
             ("ARRIVAL QUEUE", f"{counts['pending']} Pending"),
             ("STORAGE ENGINE", "SQLite ACID Persistence"),
+            ("GRAPH TOPOLOGY", "Directed Acyclic Graph (DAG)"),
         ],
     )
 
-    # Top Metric Strip
-    render_summary_metrics(storage)
+    # Quick Navigation / Action Bar directly below Hero
+    col_act1, col_act2, col_act3, _ = st.columns([2, 2.4, 2.2, 3.4])
+    with col_act1:
+        if st.button("➕ Create Task", key="hero_create_btn", use_container_width=True, type="primary"):
+            st.session_state["expand_add_form"] = True
+    with col_act2:
+        if st.button("⚡ View Smart Schedule", key="hero_schedule_btn", use_container_width=True):
+            st.session_state["nav_view"] = "🧠 Smart Scheduling & Deadline Risks (CO1 + CO5)"
+            st.rerun()
+    with col_act3:
+        if st.button("🔬 Explore DSA Labs", key="hero_labs_btn", use_container_width=True):
+            st.session_state["nav_view"] = "🔬 DSA Performance Lab (CO3)"
+            st.rerun()
 
-    # State variables for editing and deleting
-    if "editing_task_id" not in st.session_state:
-        st.session_state.editing_task_id = None
-    if "deleting_task_id" not in st.session_state:
-        st.session_state.deleting_task_id = None
+    st.write("")
+
+    # -------------------------------------------------------------------------
+    # 2. PROJECT OVERVIEW METRICS
+    # -------------------------------------------------------------------------
+    render_summary_metrics(storage, dep_service=dep_service)
+
+    # -------------------------------------------------------------------------
+    # 3. WORKSPACE HIGHLIGHTS (RECOMMENDED TASK & UPCOMING DEADLINES)
+    # -------------------------------------------------------------------------
+    col_rec, col_deadlines = st.columns([6, 5])
+
+    # Left Column: Recommended Next Task from Smart Auto-Scheduler
+    with col_rec:
+        st.markdown(
+            """
+            <div style="font-family: 'Syne', sans-serif; font-size: 1.1rem; font-weight: 700; color: #0F172A; margin-bottom: 0.4rem;">
+                ⚡ Recommended Next Task (Smart Auto-Scheduler)
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
+
+        rec_task_item = None
+        if scheduler_service is not None:
+            schedule_res = scheduler_service.get_smart_schedule()
+            if schedule_res.is_valid and schedule_res.ranked_tasks:
+                rec_task_item = schedule_res.ranked_tasks[0]
+
+        if rec_task_item is not None:
+            rec_task = rec_task_item.task
+            assert rec_task.id is not None
+            dl_display = rec_task.formatted_deadline if rec_task.due_date else "No deadline"
+            st.markdown(
+                f"""
+                <div style="background-color: #FFFFFF; border: 1px solid #BFDBFE; border-left: 4px solid #2563EB; border-radius: 8px; padding: 1.2rem 1.4rem; box-shadow: 0 1px 3px rgba(37, 99, 235, 0.08); margin-bottom: 0.8rem;">
+                    <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.4rem;">
+                        <span class="tf-pill tf-pill-blue">RANK #{rec_task_item.rank} &bull; TOP PRIORITY</span>
+                        <span style="font-family: 'JetBrains Mono', monospace; font-size: 0.72rem; color: #2563EB; font-weight: 600;">{_priority_badge(rec_task.priority)}</span>
+                    </div>
+                    <div style="font-family: 'Syne', sans-serif; font-size: 1.15rem; font-weight: 700; color: #0F172A; margin-bottom: 0.3rem;">
+                        #{rec_task.id}: {rec_task.title}
+                    </div>
+                    <div style="font-size: 0.86rem; color: #475569; margin-bottom: 0.6rem; line-height: 1.45;">
+                        {rec_task.description or 'Ready for immediate dispatch — all dependencies satisfied.'}
+                    </div>
+                    <div style="font-family: 'JetBrains Mono', monospace; font-size: 0.78rem; color: #64748B; border-top: 1px solid #EFF6FF; padding-top: 0.5rem; display: flex; gap: 1rem; flex-wrap: wrap;">
+                        <span>🗓️ Due: <strong style="color: #0F172A;">{dl_display}</strong></span>
+                        <span>⏱️ Duration: <strong style="color: #0F172A;">{_format_duration(rec_task.duration)}</strong></span>
+                        <span>🧩 Prereqs: <strong style="color: #10B981;">Satisfied</strong></span>
+                    </div>
+                </div>
+                """,
+                unsafe_allow_html=True,
+            )
+        else:
+            st.markdown(
+                """
+                <div style="background-color: #FFFFFF; border: 1px solid #E2E8F0; border-radius: 8px; padding: 1.4rem; color: #64748B; font-size: 0.88rem; margin-bottom: 0.8rem;">
+                    <strong style="color: #0F172A;">All caught up!</strong><br>
+                    No pending tasks are awaiting dispatch or all pending items are currently blocked by uncompleted prerequisites.
+                </div>
+                """,
+                unsafe_allow_html=True,
+            )
+
+    # Right Column: Upcoming Deadlines & Risks
+    with col_deadlines:
+        st.markdown(
+            """
+            <div style="font-family: 'Syne', sans-serif; font-size: 1.1rem; font-weight: 700; color: #0F172A; margin-bottom: 0.4rem;">
+                🗓️ Upcoming Deadlines & Chronology
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
+
+        all_tasks_raw = storage.list_tasks()
+        pending_with_deadlines = [t for t in all_tasks_raw if t.due_date is not None and t.status != TaskStatus.COMPLETED.value]
+        sorted_by_dl = merge_sort(pending_with_deadlines, key=task_deadline_key).items if pending_with_deadlines else []
+
+        if not sorted_by_dl:
+            st.markdown(
+                """
+                <div style="background-color: #FFFFFF; border: 1px solid #E2E8F0; border-radius: 8px; padding: 1.4rem; color: #64748B; font-size: 0.88rem; margin-bottom: 0.8rem;">
+                    No pending deadlines scheduled. Create tasks with due dates to activate BST indexing and risk tracking.
+                </div>
+                """,
+                unsafe_allow_html=True,
+            )
+        else:
+            top_dl = sorted_by_dl[:3]
+            dl_html = ""
+            for t in top_dl:
+                is_ov = t.is_overdue(as_of=now)
+                status_color = "#EF4444" if is_ov else "#2563EB"
+                badge = '<span class="tf-pill tf-pill-coral">OVERDUE</span>' if is_ov else f'<span style="font-family: JetBrains Mono; font-size: 0.72rem; color: #64748B;">{t.formatted_deadline}</span>'
+                dl_html += f"""
+                <div style="display: flex; align-items: center; justify-content: space-between; padding: 0.55rem 0; border-bottom: 1px solid #F1F5F9;">
+                    <div>
+                        <span style="font-family: 'JetBrains Mono', monospace; font-weight: 700; color: {status_color}; font-size: 0.84rem;">#{t.id}</span>
+                        <strong style="color: #0F172A; font-size: 0.88rem; margin-left: 0.4rem;">{t.title}</strong>
+                    </div>
+                    <div>{badge}</div>
+                </div>
+                """
+            st.markdown(
+                f"""
+                <div style="background-color: #FFFFFF; border: 1px solid #E2E8F0; border-radius: 8px; padding: 1rem 1.3rem; margin-bottom: 0.8rem;">
+                    {dl_html}
+                </div>
+                """,
+                unsafe_allow_html=True,
+            )
+
+    st.markdown("<hr style='margin: 1.4rem 0;'>", unsafe_allow_html=True)
+
+    # -------------------------------------------------------------------------
+    # 4. EXPLORE TASKFORGE (INTERACTIVE PRODUCT SHOWCASE MODULES)
+    # -------------------------------------------------------------------------
+    render_section_header(
+        eyebrow="WORKSPACE CAPABILITIES & INTERACTIVE MODULES",
+        title="Explore TaskForge Systems",
+        subtitle="Live architectural previews of the underlying custom data structures, graph algorithms, and planning engines.",
+    )
+
+    col_m1, col_m2, col_m3, col_m4 = st.columns(4)
+
+    # Module 01: Task Operations (CO1)
+    with col_m1:
+        q_head = queue_service.peek_next_task() if queue_service else None
+        head_label = f"#{q_head.id} {q_head.title[:15]}..." if q_head else "Queue Empty"
+        undo_cnt = len(undo_manager.get_undo_history()) if undo_manager else 0
+        st.markdown(
+            f"""
+            <div class="pt-preview-card">
+                <div class="pt-preview-number">MODULE 01 &bull; CO1</div>
+                <div class="pt-preview-title">Task Operations</div>
+                <div class="pt-preview-desc">FIFO Queue dispatching and dual-stack transactional history.</div>
+                <div style="font-family: 'JetBrains Mono', monospace; font-size: 0.72rem; color: #475569; margin-bottom: 0.8rem;">
+                    Queue Head: <strong style="color: #2563EB;">{head_label}</strong><br>
+                    Undo Depth: <strong style="color: #0F172A;">{undo_cnt}</strong> actions
+                </div>
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
+        if st.button("Open Task Queue ➔", key="mod_queue_btn", use_container_width=True):
+            st.session_state["nav_view"] = "🔄 Task Processing & History (CO1)"
+            st.rerun()
+
+    # Module 02: DSA Laboratory (CO3 + CO4 + CO2)
+    with col_m2:
+        bst_nodes = index_service.get_tree_size() if index_service else 0
+        bst_height = index_service.get_tree_height() if index_service else 0
+        hash_entries = hash_index.size() if hash_index else 0
+        st.markdown(
+            f"""
+            <div class="pt-preview-card">
+                <div class="pt-preview-number">MODULE 02 &bull; CO3 / CO4</div>
+                <div class="pt-preview-title">Algorithm Labs</div>
+                <div class="pt-preview-desc">High-precision benchmarks and BST deadline index.</div>
+                <div style="font-family: 'JetBrains Mono', monospace; font-size: 0.72rem; color: #475569; margin-bottom: 0.8rem;">
+                    BST Size / Height: <strong style="color: #2563EB;">{bst_nodes} / {bst_height}</strong><br>
+                    Hash Entries: <strong style="color: #0F172A;">{hash_entries}</strong> items
+                </div>
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
+        if st.button("Open Algorithm Labs ➔", key="mod_labs_btn", use_container_width=True):
+            st.session_state["nav_view"] = "🔬 DSA Performance Lab (CO3)"
+            st.rerun()
+
+    # Module 03: Dependency Planning (CO5)
+    with col_m3:
+        graph_nodes = 0
+        graph_edges = 0
+        is_dag_str = "Acyclic"
+        if dep_service:
+            g = dep_service.get_graph()
+            graph_nodes = g.node_count()
+            graph_edges = g.edge_count()
+            is_dag_str = "Acyclic DAG" if g.is_acyclic() else "Cycle Alert"
+        st.markdown(
+            f"""
+            <div class="pt-preview-card">
+                <div class="pt-preview-number">MODULE 03 &bull; CO5</div>
+                <div class="pt-preview-title">Dependency Map</div>
+                <div class="pt-preview-desc">Directed Acyclic Graph execution flow and cycle detection.</div>
+                <div style="font-family: 'JetBrains Mono', monospace; font-size: 0.72rem; color: #475569; margin-bottom: 0.8rem;">
+                    DAG Nodes / Edges: <strong style="color: #2563EB;">{graph_nodes} / {graph_edges}</strong><br>
+                    Graph State: <strong style="color: #10B981;">{is_dag_str}</strong>
+                </div>
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
+        if st.button("Open Dependency Map ➔", key="mod_dep_btn", use_container_width=True):
+            st.session_state["nav_view"] = "🔗 Dependency Map (CO5)"
+            st.rerun()
+
+    # Module 04: Intelligent Scheduling (CO1 + CO5)
+    with col_m4:
+        cp_dur = 0
+        if cp_service:
+            cp_res = cp_service.calculate_critical_path()
+            if cp_res.is_valid:
+                cp_dur = cp_res.total_duration_minutes
+        st.markdown(
+            f"""
+            <div class="pt-preview-card">
+                <div class="pt-preview-number">MODULE 04 &bull; CO5</div>
+                <div class="pt-preview-title">Critical Path & What-If</div>
+                <div class="pt-preview-desc">Determine longest project chains and simulate delay impacts.</div>
+                <div style="font-family: 'JetBrains Mono', monospace; font-size: 0.72rem; color: #475569; margin-bottom: 0.8rem;">
+                    Critical Path Time: <strong style="color: #2563EB;">{cp_dur}m</strong> ({_format_duration(cp_dur)})<br>
+                    Simulation: <strong style="color: #0F172A;">In-Memory Safe</strong>
+                </div>
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
+        if st.button("Open Planning Studio ➔", key="mod_cp_btn", use_container_width=True):
+            st.session_state["nav_view"] = "🗺️ Critical Path & What-If Planning (CO5)"
+            st.rerun()
+
+    st.markdown("<hr style='margin: 1.5rem 0 1.2rem 0;'>", unsafe_allow_html=True)
+
+    # -------------------------------------------------------------------------
+    # 5. TASK REGISTRY & WORKSPACE MANAGEMENT
+    # -------------------------------------------------------------------------
+    render_section_header(
+        eyebrow="WORK REGISTRY & SEARCH",
+        title="Task Inventory & Algorithmic Sorting",
+        subtitle="Search, filter, and sort tasks using custom O(n log n) Merge Sort or O(n²) Insertion Sort.",
+    )
 
     # Quick Undo/Redo Action Strip
     if undo_manager is not None:
-        col_undo, col_redo, col_status = st.columns([2, 2, 4])
+        col_undo, col_redo, col_status = st.columns([2.5, 2.5, 5])
         with col_undo:
             peek_u = undo_manager.peek_undo()
             undo_text = f"↩ Undo: {peek_u.summary}" if peek_u else "↩ Undo (Stack Empty)"
@@ -141,14 +416,18 @@ def render_dashboard(
             redo_count = len(undo_manager.get_redo_history())
             st.markdown(
                 f"""
-                <div style="font-family: 'JetBrains Mono', monospace; font-size: 0.78rem; color: #A6A49E; padding-top: 0.55rem;">
-                    Dual-Stack History: <strong style="color: #FFFFFF;">{undo_count}</strong> Undoable &bull; <strong style="color: #FFFFFF;">{redo_count}</strong> Redoable
+                <div style="font-family: 'JetBrains Mono', monospace; font-size: 0.78rem; color: #64748B; padding-top: 0.55rem;">
+                    Dual-Stack History: <strong style="color: #0F172A;">{undo_count}</strong> Undoable &bull; <strong style="color: #0F172A;">{redo_count}</strong> Redoable
                 </div>
                 """,
                 unsafe_allow_html=True,
             )
 
-    st.markdown("<hr style='margin: 1.4rem 0;'>", unsafe_allow_html=True)
+    # State variables for editing and deleting
+    if "editing_task_id" not in st.session_state:
+        st.session_state.editing_task_id = None
+    if "deleting_task_id" not in st.session_state:
+        st.session_state.deleting_task_id = None
 
     # Handle Edit View if active
     if st.session_state.editing_task_id is not None:
@@ -165,7 +444,7 @@ def render_dashboard(
                 st.rerun()
 
             render_edit_task_form(storage, task_to_edit, on_updated, on_cancel, undo_manager=undo_manager)
-            st.markdown("<hr style='margin: 1.4rem 0;'>", unsafe_allow_html=True)
+            st.markdown("<hr style='margin: 1.2rem 0;'>", unsafe_allow_html=True)
         else:
             st.session_state.editing_task_id = None
 
@@ -177,15 +456,8 @@ def render_dashboard(
 
     render_add_task_form(storage, on_created, undo_manager=undo_manager)
 
-    # Section Header for Work Registry
-    render_section_header(
-        eyebrow="WORK REGISTRY & SEARCH",
-        title="Task Inventory & Algorithmic Sorting",
-        subtitle="Filter and sort live tasks using manual O(n log n) Merge Sort or O(n²) Insertion Sort.",
-    )
-
     # Filter Controls
-    col_search, col_status, col_priority, col_reset = st.columns([3, 2, 2, 1])
+    col_search, col_status_f, col_priority_f, col_reset = st.columns([3, 2, 2, 1])
 
     with col_search:
         search_query = st.text_input(
@@ -195,7 +467,7 @@ def render_dashboard(
             key="input_search",
         )
 
-    with col_status:
+    with col_status_f:
         status_filter_options = ["All"] + STATUS_OPTIONS
         selected_status = st.selectbox(
             "Filter by Status",
@@ -204,7 +476,7 @@ def render_dashboard(
             key="input_status_filter",
         )
 
-    with col_priority:
+    with col_priority_f:
         priority_filter_options = ["All"] + [opt[1] for opt in PRIORITY_OPTIONS]
         selected_priority_label = st.selectbox(
             "Filter by Priority",
@@ -280,7 +552,7 @@ def render_dashboard(
 
         if sort_result is not None:
             tasks = sort_result.items
-            sort_metrics_str = f"&bull; Ordered using <strong style='color: #D7FF64;'>{sort_algo.split()[0]} {sort_algo.split()[1]}</strong>: <strong>{sort_result.comparisons}</strong> comparisons, <strong>{sort_result.shifts}</strong> shifts."
+            sort_metrics_str = f"&bull; Sorted with <strong style='color: #2563EB;'>{sort_algo.split()[0]} {sort_algo.split()[1]}</strong>: <strong>{sort_result.comparisons}</strong> comparisons, <strong>{sort_result.shifts}</strong> shifts."
 
     # Search Demonstration by ID (Binary Search vs Linear Search)
     with st.expander("🔎 Algorithm Search Demonstration (Lookup by Task ID)", expanded=False):
@@ -313,8 +585,6 @@ def render_dashboard(
                     else:
                         st.info(f"ℹ️ Task ID #{search_task_id} not found (scanned all {s_res.comparisons} tasks).")
 
-    now = datetime.now()
-
     # Active Deletion Confirmation Alert
     if st.session_state.deleting_task_id is not None:
         task_to_del = storage.get_task(st.session_state.deleting_task_id)
@@ -344,12 +614,12 @@ def render_dashboard(
         else:
             st.session_state.deleting_task_id = None
 
-    # Render Task List Table
+    # Render Task List
     if not tasks:
         st.markdown(
             """
-            <div style="background-color: #141414; border: 1px solid #242424; border-radius: 6px; padding: 2.2rem; text-align: center; color: #9E9E9E;">
-                <div style="font-family: 'Syne', sans-serif; font-size: 1.15rem; color: #FFFFFF; margin-bottom: 0.35rem;">No tasks match the active criteria.</div>
+            <div style="background-color: #FFFFFF; border: 1px solid #E2E8F0; border-radius: 8px; padding: 2.2rem; text-align: center; color: #64748B;">
+                <div style="font-family: 'Syne', sans-serif; font-size: 1.15rem; color: #0F172A; margin-bottom: 0.35rem;">No tasks match the active criteria.</div>
                 <div>Create a new task above or click 'Reset Filters' to view the full registry.</div>
             </div>
             """,
@@ -358,8 +628,8 @@ def render_dashboard(
     else:
         st.markdown(
             f"""
-            <div style="font-family: 'JetBrains Mono', monospace; font-size: 0.78rem; color: #9E9E9E; margin-bottom: 0.8rem;">
-                Showing <strong style="color: #FFFFFF;">{len(tasks)}</strong> task(s) {sort_metrics_str}
+            <div style="font-family: 'JetBrains Mono', monospace; font-size: 0.78rem; color: #64748B; margin-bottom: 0.8rem;">
+                Showing <strong style="color: #0F172A;">{len(tasks)}</strong> task(s) {sort_metrics_str}
             </div>
             """,
             unsafe_allow_html=True,
@@ -379,33 +649,33 @@ def render_dashboard(
                         st.markdown(
                             f"""
                             <div style="display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap; margin-bottom: 0.35rem;">
-                                <span style="font-family: 'JetBrains Mono', monospace; font-size: 0.85rem; font-weight: 700; color: #D7FF64;">#{task.id}</span>
+                                <span style="font-family: 'JetBrains Mono', monospace; font-size: 0.85rem; font-weight: 700; color: #2563EB;">#{task.id}</span>
                                 {p_badge}
                                 {s_badge}
                             </div>
-                            <div style="font-size: 1.05rem; font-weight: 700; color: #FFFFFF; margin-bottom: 0.25rem;">{task.title}</div>
+                            <div style="font-size: 1.05rem; font-weight: 700; color: #0F172A; margin-bottom: 0.25rem;">{task.title}</div>
                             """,
                             unsafe_allow_html=True,
                         )
                         if task.description:
                             st.markdown(
-                                f"""<div style="font-size: 0.85rem; color: #9E9E9E; line-height: 1.45;">{task.description}</div>""",
+                                f"""<div style="font-size: 0.85rem; color: #64748B; line-height: 1.45;">{task.description}</div>""",
                                 unsafe_allow_html=True,
                             )
 
                     with col_meta:
                         st.markdown(
-                            "<div style=\"font-family: 'JetBrains Mono', monospace; font-size: 0.65rem; color: #777777; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 0.35rem;\">DEADLINE & DURATION</div>",
+                            "<div style=\"font-family: 'JetBrains Mono', monospace; font-size: 0.65rem; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 0.35rem;\">DEADLINE & DURATION</div>",
                             unsafe_allow_html=True,
                         )
                         if task.due_date is None:
-                            dl_html = "<span style='color: #6E6D68; font-size: 0.84rem;'>No deadline</span>"
+                            dl_html = "<span style='color: #94A3B8; font-size: 0.84rem;'>No deadline</span>"
                         elif task.is_overdue(as_of=now):
-                            dl_html = f"<span style='color: #F87171; font-weight: 600; font-family: JetBrains Mono; font-size: 0.84rem;'>⚠️ {task.formatted_deadline} (Overdue)</span>"
+                            dl_html = f"<span style='color: #EF4444; font-weight: 600; font-family: JetBrains Mono; font-size: 0.84rem;'>⚠️ {task.formatted_deadline} (Overdue)</span>"
                         else:
-                            dl_html = f"<span style='color: #EDEDED; font-family: JetBrains Mono; font-size: 0.84rem;'>🗓️ {task.formatted_deadline}</span>"
+                            dl_html = f"<span style='color: #0F172A; font-family: JetBrains Mono; font-size: 0.84rem;'>🗓️ {task.formatted_deadline}</span>"
 
-                        dur_html = f"<span style='font-family: JetBrains Mono; color: #9E9E9E; font-size: 0.82rem;'>⏱️ {_format_duration(task.duration)}</span>"
+                        dur_html = f"<span style='font-family: JetBrains Mono; color: #64748B; font-size: 0.82rem;'>⏱️ {_format_duration(task.duration)}</span>"
                         st.markdown(f"<div>{dl_html}</div><div style='margin-top: 0.25rem;'>{dur_html}</div>", unsafe_allow_html=True)
 
                     with col_actions:

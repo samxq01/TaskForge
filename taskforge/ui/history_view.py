@@ -34,10 +34,10 @@ def render_history_view(
     with tab_queue:
         st.markdown(
             """
-            <div style="font-family: 'Syne', sans-serif; font-size: 1.15rem; font-weight: 700; color: #FFFFFF; margin-top: 0.5rem; margin-bottom: 0.2rem;">
+            <div style="font-family: 'Syne', sans-serif; font-size: 1.15rem; font-weight: 700; color: #0F172A; margin-top: 0.5rem; margin-bottom: 0.2rem;">
                 Deterministic FIFO Task Dispatching
             </div>
-            <div style="font-size: 0.85rem; color: #A6A49E; margin-bottom: 1rem;">
+            <div style="font-size: 0.86rem; color: #475569; margin-bottom: 1rem;">
                 Pending tasks queued in strict chronological arrival sequence (<code>created_at ASC, id ASC</code>).
             </div>
             """,
@@ -56,15 +56,15 @@ def render_history_view(
         if next_task:
             st.markdown(
                 f"""
-                <div style="background-color: #1A1F16; border: 1px solid rgba(215, 255, 100, 0.35); border-radius: 3px; padding: 1.2rem 1.4rem; margin-bottom: 1.2rem;">
-                    <div style="font-family: 'JetBrains Mono', monospace; font-size: 0.68rem; letter-spacing: 0.12em; text-transform: uppercase; color: #D7FF64; font-weight: 700; margin-bottom: 0.3rem;">
+                <div style="background-color: #EFF6FF; border: 1px solid #BFDBFE; border-left: 4px solid #2563EB; border-radius: 8px; padding: 1.2rem 1.4rem; margin-bottom: 1.2rem; box-shadow: 0 1px 3px rgba(37, 99, 235, 0.08);">
+                    <div style="font-family: 'JetBrains Mono', monospace; font-size: 0.68rem; letter-spacing: 0.12em; text-transform: uppercase; color: #2563EB; font-weight: 700; margin-bottom: 0.3rem;">
                         ● Next at Head of Queue (FIFO Dispatch)
                     </div>
-                    <div style="font-family: 'Syne', sans-serif; font-size: 1.25rem; font-weight: 700; color: #FFFFFF; margin-bottom: 0.3rem;">
+                    <div style="font-family: 'Syne', sans-serif; font-size: 1.25rem; font-weight: 700; color: #0F172A; margin-bottom: 0.3rem;">
                         Task #{next_task.id}: {next_task.title}
                     </div>
-                    <div style="font-size: 0.85rem; color: #A6A49E;">
-                        Priority: <strong style="color: #F3F1EB;">{next_task.priority_label}</strong> &bull; Duration: <strong style="color: #F3F1EB;">{next_task.duration}m</strong> &bull; Enqueued: <span style="font-family: JetBrains Mono;">{next_task.created_at.strftime('%Y-%m-%d %H:%M:%S')}</span>
+                    <div style="font-size: 0.86rem; color: #475569;">
+                        Priority: <strong style="color: #0F172A;">{next_task.priority_label}</strong> &bull; Duration: <strong style="color: #0F172A;">{next_task.duration}m</strong> &bull; Enqueued: <span style="font-family: JetBrains Mono;">{next_task.created_at.strftime('%Y-%m-%d %H:%M:%S')}</span>
                     </div>
                 </div>
                 """,
@@ -73,7 +73,7 @@ def render_history_view(
         else:
             st.markdown(
                 """
-                <div style="background-color: #1B1B1B; border: 1px solid #2A2A2A; border-radius: 3px; padding: 1.2rem 1.4rem; margin-bottom: 1.2rem; color: #A6A49E; font-size: 0.88rem;">
+                <div style="background-color: #FFFFFF; border: 1px solid #E2E8F0; border-radius: 8px; padding: 1.2rem 1.4rem; margin-bottom: 1.2rem; color: #64748B; font-size: 0.88rem;">
                     Queue is currently empty. No pending tasks ready to process.
                 </div>
                 """,
@@ -90,13 +90,13 @@ def render_history_view(
 
         st.markdown("<hr style='margin: 1.4rem 0 1rem 0;'>", unsafe_allow_html=True)
         st.markdown(
-            '<div style="font-family: Syne, sans-serif; font-size: 1.05rem; font-weight: 700; color: #FFFFFF; margin-bottom: 0.6rem;">Queue Sequence (Front to Rear)</div>',
+            '<div style="font-family: Syne, sans-serif; font-size: 1.05rem; font-weight: 700; color: #0F172A; margin-bottom: 0.6rem;">Queue Sequence (Front to Rear)</div>',
             unsafe_allow_html=True,
         )
 
         queue_tasks = queue_service.get_queue_tasks()
         if not queue_tasks:
-            st.markdown("<span style='color: #6E6D68; font-size: 0.88rem;'>No pending tasks in queue. All tasks are In Progress or Completed.</span>", unsafe_allow_html=True)
+            st.markdown("<span style='color: #94A3B8; font-size: 0.88rem;'>No pending tasks in queue. All tasks are In Progress or Completed.</span>", unsafe_allow_html=True)
         else:
             queue_data = [
                 {
@@ -115,10 +115,10 @@ def render_history_view(
     with tab_undo_redo:
         st.markdown(
             """
-            <div style="font-family: 'Syne', sans-serif; font-size: 1.15rem; font-weight: 700; color: #FFFFFF; margin-top: 0.5rem; margin-bottom: 0.2rem;">
+            <div style="font-family: 'Syne', sans-serif; font-size: 1.15rem; font-weight: 700; color: #0F172A; margin-top: 0.5rem; margin-bottom: 0.2rem;">
                 Reversible Operations via Dual LIFO Stacks
             </div>
-            <div style="font-size: 0.85rem; color: #A6A49E; margin-bottom: 1rem;">
+            <div style="font-size: 0.86rem; color: #475569; margin-bottom: 1rem;">
                 Every creation, modification, deletion, and queue dispatch pushes a reversible action onto the Undo Stack.
             </div>
             """,
@@ -160,25 +160,25 @@ def render_history_view(
             undo_items = undo_manager.get_undo_history()
             st.markdown(
                 f"""
-                <div style="background-color: #1B1B1B; border: 1px solid #2A2A2A; border-radius: 3px; padding: 1.1rem 1.3rem;">
-                    <div style="font-family: 'Syne', sans-serif; font-size: 1.05rem; font-weight: 700; color: #FFFFFF; margin-bottom: 0.2rem;">
+                <div style="background-color: #FFFFFF; border: 1px solid #E2E8F0; border-radius: 8px; padding: 1.1rem 1.3rem; box-shadow: 0 1px 3px rgba(0,0,0,0.03);">
+                    <div style="font-family: 'Syne', sans-serif; font-size: 1.05rem; font-weight: 700; color: #0F172A; margin-bottom: 0.2rem;">
                         📚 Undo Stack (LIFO)
                     </div>
-                    <div style="font-family: 'JetBrains Mono', monospace; font-size: 0.72rem; color: #A6A49E; margin-bottom: 0.8rem;">
-                        Stack Depth: <strong style="color: #D7FF64;">{len(undo_items)}</strong> (Top = Most recent action)
+                    <div style="font-family: 'JetBrains Mono', monospace; font-size: 0.72rem; color: #475569; margin-bottom: 0.8rem;">
+                        Stack Depth: <strong style="color: #2563EB;">{len(undo_items)}</strong> (Top = Most recent action)
                     </div>
                 """,
                 unsafe_allow_html=True,
             )
             if not undo_items:
-                st.markdown("<span style='color: #6E6D68; font-size: 0.85rem;'>Undo stack is empty.</span></div>", unsafe_allow_html=True)
+                st.markdown("<span style='color: #94A3B8; font-size: 0.85rem;'>Undo stack is empty.</span></div>", unsafe_allow_html=True)
             else:
                 for idx, act in enumerate(undo_items):
-                    prefix = "<strong style='color: #D7FF64;'>[TOP]</strong>" if idx == 0 else f"<span style='color: #6E6D68;'>[{idx + 1}]</span>"
+                    prefix = "<strong style='color: #2563EB;'>[TOP]</strong>" if idx == 0 else f"<span style='color: #94A3B8;'>[{idx + 1}]</span>"
                     st.markdown(
                         f"""
-                        <div style="font-family: 'JetBrains Mono', monospace; font-size: 0.78rem; padding: 0.35rem 0; border-bottom: 1px solid #252525;">
-                            {prefix} <strong>{act.action_type.value}</strong>: <span style="color: #A6A49E;">{act.summary}</span>
+                        <div style="font-family: 'JetBrains Mono', monospace; font-size: 0.78rem; padding: 0.35rem 0; border-bottom: 1px solid #F1F5F9;">
+                            {prefix} <strong>{act.action_type.value}</strong>: <span style="color: #475569;">{act.summary}</span>
                         </div>
                         """,
                         unsafe_allow_html=True,
@@ -189,25 +189,25 @@ def render_history_view(
             redo_items = undo_manager.get_redo_history()
             st.markdown(
                 f"""
-                <div style="background-color: #1B1B1B; border: 1px solid #2A2A2A; border-radius: 3px; padding: 1.1rem 1.3rem;">
-                    <div style="font-family: 'Syne', sans-serif; font-size: 1.05rem; font-weight: 700; color: #FFFFFF; margin-bottom: 0.2rem;">
+                <div style="background-color: #FFFFFF; border: 1px solid #E2E8F0; border-radius: 8px; padding: 1.1rem 1.3rem; box-shadow: 0 1px 3px rgba(0,0,0,0.03);">
+                    <div style="font-family: 'Syne', sans-serif; font-size: 1.05rem; font-weight: 700; color: #0F172A; margin-bottom: 0.2rem;">
                         📚 Redo Stack (LIFO)
                     </div>
-                    <div style="font-family: 'JetBrains Mono', monospace; font-size: 0.72rem; color: #A6A49E; margin-bottom: 0.8rem;">
-                        Stack Depth: <strong style="color: #D7FF64;">{len(redo_items)}</strong> (Top = Next action to reapply)
+                    <div style="font-family: 'JetBrains Mono', monospace; font-size: 0.72rem; color: #475569; margin-bottom: 0.8rem;">
+                        Stack Depth: <strong style="color: #2563EB;">{len(redo_items)}</strong> (Top = Next action to reapply)
                     </div>
                 """,
                 unsafe_allow_html=True,
             )
             if not redo_items:
-                st.markdown("<span style='color: #6E6D68; font-size: 0.85rem;'>Redo stack is empty.</span></div>", unsafe_allow_html=True)
+                st.markdown("<span style='color: #94A3B8; font-size: 0.85rem;'>Redo stack is empty.</span></div>", unsafe_allow_html=True)
             else:
                 for idx, act in enumerate(redo_items):
-                    prefix = "<strong style='color: #D7FF64;'>[TOP]</strong>" if idx == 0 else f"<span style='color: #6E6D68;'>[{idx + 1}]</span>"
+                    prefix = "<strong style='color: #2563EB;'>[TOP]</strong>" if idx == 0 else f"<span style='color: #94A3B8;'>[{idx + 1}]</span>"
                     st.markdown(
                         f"""
-                        <div style="font-family: 'JetBrains Mono', monospace; font-size: 0.78rem; padding: 0.35rem 0; border-bottom: 1px solid #252525;">
-                            {prefix} <strong>{act.action_type.value}</strong>: <span style="color: #A6A49E;">{act.summary}</span>
+                        <div style="font-family: 'JetBrains Mono', monospace; font-size: 0.78rem; padding: 0.35rem 0; border-bottom: 1px solid #F1F5F9;">
+                            {prefix} <strong>{act.action_type.value}</strong>: <span style="color: #475569;">{act.summary}</span>
                         </div>
                         """,
                         unsafe_allow_html=True,
@@ -225,13 +225,13 @@ def render_history_view(
     with tab_concepts:
         st.markdown(
             """
-            <div style="background-color: #1B1B1B; border: 1px solid #2A2A2A; border-radius: 3px; padding: 1.6rem 1.8rem; margin-top: 0.5rem;">
-                <div style="font-family: 'Syne', sans-serif; font-size: 1.25rem; font-weight: 700; color: #FFFFFF; margin-bottom: 0.8rem;">
+            <div style="background-color: #FFFFFF; border: 1px solid #E2E8F0; border-radius: 8px; padding: 1.6rem 1.8rem; margin-top: 0.5rem; box-shadow: 0 1px 3px rgba(0,0,0,0.03);">
+                <div style="font-family: 'Syne', sans-serif; font-size: 1.25rem; font-weight: 700; color: #0F172A; margin-bottom: 0.8rem;">
                     Academic Viva Walkthrough: LIFO vs FIFO Theoretical Design
                 </div>
                 
-                <h4 style="color: #D7FF64; margin-top: 1.2rem;">1. Stack Data Structure (LIFO: Last In, First Out)</h4>
-                <ul style="color: #A6A49E; font-size: 0.9rem; line-height: 1.6;">
+                <h4 style="color: #2563EB; margin-top: 1.2rem;">1. Stack Data Structure (LIFO: Last In, First Out)</h4>
+                <ul style="color: #475569; font-size: 0.9rem; line-height: 1.6;">
                     <li><strong>Definition:</strong> Elements are pushed and popped strictly from the same end, designated as the <em>Top</em>.</li>
                     <li><strong>TaskForge Use-Case:</strong> Dual-Stack <em>Undo/Redo</em> transactional history.
                         <ul>
@@ -244,10 +244,10 @@ def render_history_view(
                     <li><strong>Time Complexity:</strong> <code>push</code>: $O(1)$ amortized &bull; <code>pop</code>: $O(1)$ &bull; <code>peek</code>: $O(1)$</li>
                 </ul>
 
-                <hr style="margin: 1.2rem 0; border-color: #2A2A2A;">
+                <hr style="margin: 1.2rem 0; border-color: #E2E8F0;">
 
-                <h4 style="color: #D7FF64; margin-top: 1.2rem;">2. Queue Data Structure (FIFO: First In, First Out)</h4>
-                <ul style="color: #A6A49E; font-size: 0.9rem; line-height: 1.6;">
+                <h4 style="color: #2563EB; margin-top: 1.2rem;">2. Queue Data Structure (FIFO: First In, First Out)</h4>
+                <ul style="color: #475569; font-size: 0.9rem; line-height: 1.6;">
                     <li><strong>Definition:</strong> Elements are appended at the <em>Rear (Tail)</em> and removed from the <em>Front (Head)</em>.</li>
                     <li><strong>TaskForge Use-Case:</strong> Starvation-free, deterministic pending task processing.</li>
                     <li><strong>Custom Linked Implementation:</strong> Manually implemented using a singly-linked list with explicit <code>head</code> and <code>tail</code> pointers, avoiding the $O(n)$ shifting penalty of Python <code>list.pop(0)</code> and eliminating external reliance on <code>collections.deque</code>.</li>

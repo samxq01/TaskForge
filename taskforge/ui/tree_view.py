@@ -84,8 +84,8 @@ def render_tree_view(storage: TaskStorage, index_service: TaskIndexService) -> N
     if index_service.is_empty():
         st.markdown(
             """
-            <div style="background-color: #1B1B1B; border: 1px solid #2A2A2A; border-radius: 3px; padding: 2rem; text-align: center; color: #A6A49E;">
-                <div style="font-family: 'Syne', sans-serif; font-size: 1.15rem; color: #FFFFFF; margin-bottom: 0.35rem;">The Binary Search Tree is currently empty.</div>
+            <div style="background-color: #FFFFFF; border: 1px solid #E2E8F0; border-radius: 8px; padding: 2rem; text-align: center; color: #64748B;">
+                <div style="font-family: 'Syne', sans-serif; font-size: 1.15rem; color: #0F172A; margin-bottom: 0.35rem;">The Binary Search Tree is currently empty.</div>
                 <div>Create tasks with deadlines in the Dashboard or click 'Load Sample Tasks' in the sidebar to populate the tree index.</div>
             </div>
             """,
@@ -106,10 +106,10 @@ def render_tree_view(storage: TaskStorage, index_service: TaskIndexService) -> N
     with tab_inorder:
         st.markdown(
             """
-            <div style="font-family: 'Syne', sans-serif; font-size: 1.15rem; font-weight: 700; color: #FFFFFF; margin-top: 0.5rem; margin-bottom: 0.2rem;">
+            <div style="font-family: 'Syne', sans-serif; font-size: 1.15rem; font-weight: 700; color: #0F172A; margin-top: 0.5rem; margin-bottom: 0.2rem;">
                 Inorder Traversal — Sorted Chronological Retrieval
             </div>
-            <div style="font-size: 0.85rem; color: #A6A49E; margin-bottom: 1.2rem;">
+            <div style="font-size: 0.86rem; color: #475569; margin-bottom: 1.2rem;">
                 An Inorder traversal (<code>Left ➔ Root ➔ Right</code>) guarantees extraction of tasks in strictly ascending chronological order in <code>O(n)</code> linear time.
             </div>
             """,
@@ -119,7 +119,7 @@ def render_tree_view(storage: TaskStorage, index_service: TaskIndexService) -> N
         ordered_tasks = index_service.get_deadline_ordered_tasks()
         st.markdown(
             f"""
-            <div style="background-color: #1A1F16; border: 1px solid rgba(215, 255, 100, 0.35); border-radius: 6px; padding: 0.8rem 1.2rem; margin-bottom: 1rem; font-size: 0.88rem; color: #D7FF64;">
+            <div style="background-color: #EFF6FF; border: 1px solid #BFDBFE; border-radius: 6px; padding: 0.8rem 1.2rem; margin-bottom: 1rem; font-size: 0.88rem; color: #2563EB;">
                 ● Extracted <strong>{len(ordered_tasks)}</strong> task(s) in sorted deadline sequence directly from BST Inorder Traversal.
             </div>
             """,
@@ -144,10 +144,10 @@ def render_tree_view(storage: TaskStorage, index_service: TaskIndexService) -> N
     with tab_search:
         st.markdown(
             """
-            <div style="font-family: 'Syne', sans-serif; font-size: 1.15rem; font-weight: 700; color: #FFFFFF; margin-top: 0.5rem; margin-bottom: 0.2rem;">
+            <div style="font-family: 'Syne', sans-serif; font-size: 1.15rem; font-weight: 700; color: #0F172A; margin-top: 0.5rem; margin-bottom: 0.2rem;">
                 Exact Key Search in Binary Search Tree
             </div>
-            <div style="font-size: 0.85rem; color: #A6A49E; margin-bottom: 1.2rem;">
+            <div style="font-size: 0.86rem; color: #475569; margin-bottom: 1.2rem;">
                 Search invokes <code>bst.search(composite_key)</code> with <code>O(log n)</code> average time complexity.
             </div>
             """,
@@ -169,16 +169,16 @@ def render_tree_view(storage: TaskStorage, index_service: TaskIndexService) -> N
                 if found_task:
                     st.markdown(
                         f"""
-                        <div style="background-color: #1A1F16; border: 1px solid rgba(215, 255, 100, 0.35); border-radius: 3px; padding: 1.2rem 1.4rem; margin-top: 1rem;">
-                            <div style="font-family: 'JetBrains Mono', monospace; font-size: 0.68rem; letter-spacing: 0.12em; text-transform: uppercase; color: #D7FF64; font-weight: 700; margin-bottom: 0.3rem;">
+                        <div style="background-color: #EFF6FF; border: 1px solid #BFDBFE; border-left: 4px solid #2563EB; border-radius: 8px; padding: 1.2rem 1.4rem; margin-top: 1rem; box-shadow: 0 1px 3px rgba(37,99,235,0.06);">
+                            <div style="font-family: 'JetBrains Mono', monospace; font-size: 0.68rem; letter-spacing: 0.12em; text-transform: uppercase; color: #2563EB; font-weight: 700; margin-bottom: 0.3rem;">
                                 ● Match Found in BST Index
                             </div>
-                            <div style="font-family: 'Syne', sans-serif; font-size: 1.25rem; font-weight: 700; color: #FFFFFF; margin-bottom: 0.4rem;">
+                            <div style="font-family: 'Syne', sans-serif; font-size: 1.25rem; font-weight: 700; color: #0F172A; margin-bottom: 0.4rem;">
                                 Task #{found_task.id}: {found_task.title}
                             </div>
-                            <div style="font-size: 0.88rem; color: #A6A49E; line-height: 1.6;">
-                                Composite Key: <code style="color: #D7FF64;">{_format_node_key(search_key)}</code><br>
-                                Deadline: <strong style="color: #FFFFFF;">{found_task.formatted_deadline}</strong> &bull; Priority: <strong style="color: #FFFFFF;">{found_task.priority_label}</strong> &bull; Duration: <strong style="color: #FFFFFF;">{found_task.duration}m</strong> &bull; Status: <strong style="color: #FFFFFF;">{found_task.status}</strong>
+                            <div style="font-size: 0.88rem; color: #475569; line-height: 1.6;">
+                                Composite Key: <code style="color: #2563EB;">{_format_node_key(search_key)}</code><br>
+                                Deadline: <strong style="color: #0F172A;">{found_task.formatted_deadline}</strong> &bull; Priority: <strong style="color: #0F172A;">{found_task.priority_label}</strong> &bull; Duration: <strong style="color: #0F172A;">{found_task.duration}m</strong> &bull; Status: <strong style="color: #0F172A;">{found_task.status}</strong>
                             </div>
                         </div>
                         """,
@@ -188,7 +188,7 @@ def render_tree_view(storage: TaskStorage, index_service: TaskIndexService) -> N
                     st.error("Key not found in BST index.")
 
         st.markdown("<hr style='margin: 1.4rem 0;'>", unsafe_allow_html=True)
-        st.markdown('<div style="font-family: Syne, sans-serif; font-size: 1.05rem; font-weight: 700; color: #FFFFFF; margin-bottom: 0.4rem;">Test Non-Existent Key Search</div>', unsafe_allow_html=True)
+        st.markdown('<div style="font-family: Syne, sans-serif; font-size: 1.05rem; font-weight: 700; color: #0F172A; margin-bottom: 0.4rem;">Test Non-Existent Key Search</div>', unsafe_allow_html=True)
         col_ne1, col_ne2 = st.columns([3, 1])
         with col_ne1:
             dummy_id = st.number_input("Enter Non-Existent Task ID", min_value=9000, value=9999)
@@ -205,10 +205,10 @@ def render_tree_view(storage: TaskStorage, index_service: TaskIndexService) -> N
     with tab_traversals:
         st.markdown(
             """
-            <div style="font-family: 'Syne', sans-serif; font-size: 1.15rem; font-weight: 700; color: #FFFFFF; margin-top: 0.5rem; margin-bottom: 0.2rem;">
+            <div style="font-family: 'Syne', sans-serif; font-size: 1.15rem; font-weight: 700; color: #0F172A; margin-top: 0.5rem; margin-bottom: 0.2rem;">
                 Tree Traversal Laboratory
             </div>
-            <div style="font-size: 0.85rem; color: #A6A49E; margin-bottom: 1.2rem;">
+            <div style="font-size: 0.86rem; color: #475569; margin-bottom: 1.2rem;">
                 Compare recursive tree exploration strategies in <code>O(n)</code> linear time.
             </div>
             """,
@@ -235,35 +235,32 @@ def render_tree_view(storage: TaskStorage, index_service: TaskIndexService) -> N
         seq_items = [f"#{t.id} ('{t.title}')" for _, t in entries]
         st.markdown(
             f"""
-            <div style="background-color: #171717; border: 1px solid #282828; border-radius: 3px; padding: 0.9rem 1.1rem; font-family: 'JetBrains Mono', monospace; font-size: 0.82rem; color: #D7FF64; margin-bottom: 1rem;">
+            <div style="background-color: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 6px; padding: 0.9rem 1.1rem; font-family: 'JetBrains Mono', monospace; font-size: 0.82rem; color: #2563EB; margin-bottom: 1rem;">
                 {' ➔ '.join(seq_items)}
             </div>
             """,
             unsafe_allow_html=True,
         )
 
-        t_cols = st.columns([1, 4, 3, 2])
-        t_cols[0].markdown("<span style='font-family: JetBrains Mono; font-size: 0.72rem; color: #A6A49E;'>Step</span>", unsafe_allow_html=True)
-        t_cols[1].markdown("<span style='font-family: JetBrains Mono; font-size: 0.72rem; color: #A6A49E;'>Composite Key</span>", unsafe_allow_html=True)
-        t_cols[2].markdown("<span style='font-family: JetBrains Mono; font-size: 0.72rem; color: #A6A49E;'>Task Title</span>", unsafe_allow_html=True)
-        t_cols[3].markdown("<span style='font-family: JetBrains Mono; font-size: 0.72rem; color: #A6A49E;'>Priority</span>", unsafe_allow_html=True)
-        st.markdown("<hr style='margin: 0.25rem 0 0.5rem 0;'>", unsafe_allow_html=True)
-
-        for step, (key, task) in enumerate(entries, start=1):
-            cols = st.columns([1, 4, 3, 2])
-            cols[0].markdown(f"<span style='font-family: JetBrains Mono; color: #A6A49E;'>#{step}</span>", unsafe_allow_html=True)
-            cols[1].code(_format_node_key(key))
-            cols[2].markdown(f"<strong style='color: #FFFFFF;'>#{task.id} {task.title}</strong>", unsafe_allow_html=True)
-            cols[3].markdown(f"<span style='font-size: 0.85rem; color: #A6A49E;'>{task.priority_label}</span>", unsafe_allow_html=True)
+        trav_rows = [
+            {
+                "Step": f"#{step}",
+                "Composite Key": _format_node_key(key),
+                "Task": f"#{task.id} {task.title}",
+                "Priority": task.priority_label,
+            }
+            for step, (key, task) in enumerate(entries, start=1)
+        ]
+        st.dataframe(trav_rows, use_container_width=True, hide_index=True)
 
     # ---------------- TAB 4: TREE STRUCTURE VISUALIZATION ----------------
     with tab_diagram:
         st.markdown(
             """
-            <div style="font-family: 'Syne', sans-serif; font-size: 1.15rem; font-weight: 700; color: #FFFFFF; margin-top: 0.5rem; margin-bottom: 0.2rem;">
+            <div style="font-family: 'Syne', sans-serif; font-size: 1.15rem; font-weight: 700; color: #0F172A; margin-top: 0.5rem; margin-bottom: 0.2rem;">
                 Hierarchical Branching Structure
             </div>
-            <div style="font-size: 0.85rem; color: #A6A49E; margin-bottom: 1.2rem;">
+            <div style="font-size: 0.86rem; color: #475569; margin-bottom: 1.2rem;">
                 Tree topology displaying Root, Left subtrees (<code>&lt; parent</code>), and Right subtrees (<code>&gt; parent</code>).
             </div>
             """,
@@ -278,7 +275,7 @@ def render_tree_view(storage: TaskStorage, index_service: TaskIndexService) -> N
             st.code(tree_text, language="text")
 
         st.markdown("<hr style='margin: 1.4rem 0;'>", unsafe_allow_html=True)
-        st.markdown('<div style="font-family: Syne, sans-serif; font-size: 1.05rem; font-weight: 700; color: #FFFFFF; margin-bottom: 0.6rem;">Structural Properties & Balance Analysis</div>', unsafe_allow_html=True)
+        st.markdown('<div style="font-family: Syne, sans-serif; font-size: 1.05rem; font-weight: 700; color: #0F172A; margin-bottom: 0.6rem;">Structural Properties & Balance Analysis</div>', unsafe_allow_html=True)
         col_prop1, col_prop2 = st.columns(2)
         with col_prop1:
             st.markdown(f"- **Total Nodes ($N$):** `{index_service.get_tree_size()}`")

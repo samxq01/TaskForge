@@ -225,39 +225,49 @@ def render_sidebar(
         render_brand_lockup()
 
         st.markdown(
-            '<div class="tf-eyebrow" style="margin-top: 0.5rem;">Navigation Directory</div>',
+            '<div class="pt-eyebrow" style="margin-top: 0.5rem;">Navigation Directory</div>',
             unsafe_allow_html=True,
         )
+
+        nav_options = [
+            "📋 Task Dashboard & Registry",
+            "🔄 Task Processing & History (CO1)",
+            "🧠 Smart Scheduling & Deadline Risks (CO1 + CO5)",
+            "🗺️ Critical Path & What-If Planning (CO5)",
+            "🧮 Data Structure Evaluation (CO2)",
+            "🔬 DSA Performance Lab (CO3)",
+            "🌲 BST Task Index (CO4)",
+            "🔗 Dependency Map (CO5)",
+        ]
+
+        if "nav_view" not in st.session_state or st.session_state.nav_view not in nav_options:
+            st.session_state.nav_view = nav_options[0]
+
+        selected_idx = nav_options.index(st.session_state.nav_view)
+
         view_choice = st.radio(
             "Select Module",
-            options=[
-                "📋 Task Dashboard & Registry",
-                "🔄 Task Processing & History (CO1)",
-                "🧠 Smart Scheduling & Deadline Risks (CO1 + CO5)",
-                "🗺️ Critical Path & What-If Planning (CO5)",
-                "🧮 Data Structure Evaluation (CO2)",
-                "🔬 DSA Performance Lab (CO3)",
-                "🌲 BST Task Index (CO4)",
-                "🔗 Dependency Map (CO5)",
-            ],
-            index=0,
+            options=nav_options,
+            index=selected_idx,
+            key="sidebar_nav_choice",
             label_visibility="collapsed",
             help="Navigate across all Course Outcome modules (CO1–CO5).",
         )
+        st.session_state.nav_view = view_choice
 
         st.markdown("<hr style='margin: 1.2rem 0;'>", unsafe_allow_html=True)
         st.markdown(
-            '<div class="tf-eyebrow">Academic Roadmap</div>',
+            '<div class="pt-eyebrow">Academic Roadmap</div>',
             unsafe_allow_html=True,
         )
         st.markdown(
             """
-<div style="font-size: 0.82rem; color: #A6A49E; line-height: 1.6; font-family: 'JetBrains Mono', monospace;">
-<div><span style="color: #D7FF64;">●</span> CO1 Linear Structures &bull; Verified</div>
-<div><span style="color: #D7FF64;">●</span> CO2 Hash Storage &bull; Verified</div>
-<div><span style="color: #D7FF64;">●</span> CO3 Search & Sort Lab &bull; Verified</div>
-<div><span style="color: #D7FF64;">●</span> CO4 BST Task Index &bull; Verified</div>
-<div><span style="color: #D7FF64;">●</span> CO5 Graph & Critical Path &bull; Verified</div>
+<div style="font-size: 0.82rem; color: #475569; line-height: 1.6; font-family: 'JetBrains Mono', monospace;">
+<div><span style="color: #2563EB;">●</span> CO1 Linear Structures &bull; Verified</div>
+<div><span style="color: #2563EB;">●</span> CO2 Hash Storage &bull; Verified</div>
+<div><span style="color: #2563EB;">●</span> CO3 Search & Sort Lab &bull; Verified</div>
+<div><span style="color: #2563EB;">●</span> CO4 BST Task Index &bull; Verified</div>
+<div><span style="color: #2563EB;">●</span> CO5 Graph & Critical Path &bull; Verified</div>
 </div>
             """,
             unsafe_allow_html=True,
@@ -265,7 +275,7 @@ def render_sidebar(
 
         st.markdown("<hr style='margin: 1.2rem 0;'>", unsafe_allow_html=True)
         st.markdown(
-            '<div class="tf-eyebrow">Demonstration Suite</div>',
+            '<div class="pt-eyebrow">Demonstration Suite</div>',
             unsafe_allow_html=True,
         )
         if st.button("🌱 Load Sample Tasks", use_container_width=True):
@@ -309,9 +319,9 @@ def render_sidebar(
         st.markdown("<hr style='margin: 1.5rem 0;'>", unsafe_allow_html=True)
         st.markdown(
             """
-            <div style="font-family: 'JetBrains Mono', monospace; font-size: 0.65rem; color: #6E6D68; letter-spacing: 0.08em; text-transform: uppercase;">
-                TASKFORGE° v1.0.0<br>
-                DIGITAL CRAFT / CO1–CO5 ACTIVE
+            <div style="font-family: 'JetBrains Mono', monospace; font-size: 0.68rem; color: #94A3B8; letter-spacing: 0.08em; text-transform: uppercase;">
+                TASKFORGE<span style="color: #2563EB;">•</span> v2.0<br>
+                POTADOT PRODUCT EXPERIENCE
             </div>
             """,
             unsafe_allow_html=True,
@@ -352,7 +362,17 @@ def main() -> None:
     )
 
     if current_view == "📋 Task Dashboard & Registry":
-        render_dashboard(storage, undo_manager=undo_manager, queue_service=queue_service)
+        render_dashboard(
+            storage,
+            undo_manager=undo_manager,
+            queue_service=queue_service,
+            scheduler_service=scheduler_service,
+            risk_analyzer=risk_analyzer,
+            dep_service=dep_service,
+            index_service=index_service,
+            hash_index=hash_index,
+            cp_service=cp_service,
+        )
     elif current_view == "🔄 Task Processing & History (CO1)":
         render_history_view(storage, undo_manager, queue_service)
     elif current_view == "🧠 Smart Scheduling & Deadline Risks (CO1 + CO5)":

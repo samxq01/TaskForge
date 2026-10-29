@@ -21,8 +21,9 @@ from taskforge.services.task_queue_service import TaskQueueService
 from taskforge.storage import TaskStorage
 from taskforge.ui.theme import (
     COLOR_BG,
+    COLOR_BRAND,
     COLOR_CORAL,
-    COLOR_LIME,
+    COLOR_EMERALD,
     COLOR_SURFACE,
     COLOR_TEXT_MUTED,
     COLOR_TEXT_PRIMARY,
@@ -44,10 +45,7 @@ def compute_node_positions(
     if not nodes:
         return {}
 
-    # Calculate topological rank / layer for each node (longest path from root)
     layers: dict[int, int] = {}
-    
-    # Try topological ordering to assign layers
     try:
         topo_order = graph.topological_sort()
         for node in topo_order:
@@ -60,7 +58,6 @@ def compute_node_positions(
         for i, node in enumerate(nodes):
             layers[node] = i % 4
 
-    # Group nodes by layer
     layer_groups: dict[int, list[int]] = {}
     for node, layer in layers.items():
         layer_groups.setdefault(layer, []).append(node)
@@ -81,16 +78,16 @@ def draw_dependency_graph(
     tasks_by_id: dict[int, Task],
     scheduler: SchedulerService,
 ) -> plt.Figure:
-    """Render a directed graph visualization using Anthracite Studio styling."""
+    """Render a directed graph visualization using Potadot clean light styling."""
     positions = compute_node_positions(graph, tasks_by_id)
     fig, ax = plt.subplots(figsize=(10, max(4.5, len(positions) * 0.7)), dpi=120)
-    ax.set_facecolor(COLOR_BG)
-    fig.patch.set_facecolor(COLOR_BG)
+    ax.set_facecolor("#FFFFFF")
+    fig.patch.set_facecolor("#FFFFFF")
 
     if not positions:
         ax.text(
             0.5, 0.5, "No tasks or dependencies in graph.\nAdd tasks and dependencies to visualize.",
-            color=COLOR_TEXT_MUTED, fontsize=11, ha="center", va="center", transform=ax.transAxes
+            color="#64748B", fontsize=11, ha="center", va="center", transform=ax.transAxes
         )
         ax.axis("off")
         return fig
@@ -107,12 +104,12 @@ def draw_dependency_graph(
                 xytext=(x1, y1),
                 arrowprops=dict(
                     arrowstyle="-|>",
-                    color="#6E6D68",
-                    lw=1.6,
+                    color="#94A3B8",
+                    lw=1.8,
                     mutation_scale=14,
                     shrinkA=22,
                     shrinkB=22,
-                    alpha=0.85,
+                    alpha=0.9,
                 ),
             )
 
@@ -123,24 +120,24 @@ def draw_dependency_graph(
         is_eligible = scheduler.is_task_eligible(node)
 
         if status == TaskStatus.COMPLETED.value:
-            node_color = COLOR_LIME
-            border_color = "#C2ED4C"
-            text_color = "#121212"
+            node_color = "#10B981"
+            border_color = "#047857"
+            text_color = "#FFFFFF"
             status_text = "Completed"
         elif status == TaskStatus.IN_PROGRESS.value:
-            node_color = "#60A5FA"
-            border_color = "#3B82F6"
-            text_color = "#121212"
+            node_color = "#2563EB"
+            border_color = "#1D4ED8"
+            text_color = "#FFFFFF"
             status_text = "In Progress"
         elif is_eligible:
-            node_color = "#F3F1EB"
-            border_color = "#D9D7D0"
-            text_color = "#121212"
+            node_color = "#F8FAFC"
+            border_color = "#2563EB"
+            text_color = "#0F172A"
             status_text = "Eligible"
         else:
-            node_color = COLOR_CORAL
+            node_color = "#FEF2F2"
             border_color = "#EF4444"
-            text_color = "#121212"
+            text_color = "#991B1B"
             status_text = "Blocked"
 
         # Draw node circle
@@ -159,34 +156,49 @@ def draw_dependency_graph(
             x, y + 0.04,
             f"#{node}",
             color=text_color,
+            fontsize=10,
             fontweight="bold",
-            fontsize=10.5,
             ha="center",
             va="center",
             zorder=4,
         )
 
-        # Task title (truncated)
-        title_text = task.title if task else f"Task {node}"
-        if len(title_text) > 18:
-            title_text = title_text[:16] + ".."
+        # Status text inside or below circle
+        status_sub_color = "#FFFFFF" if status in [TaskStatus.COMPLETED.value, TaskStatus.IN_PROGRESS.value] else text_color
+        ax.text(
+            x, y - 0.22,
+            status_text,
+            color=status_sub_color,
+            fontsize=6.5,
+            fontweight="bold",
+            ha="center",
+            va="center",
+            zorder=4,
+        )
+
+        # Task title caption below node
+        title_str = task.title if task else f"Task {node}"
+        if len(title_str) > 18:
+            title_str = title_str[:16] + ".."
         ax.text(
             x, y - 0.72,
-            f"{title_text}\n({status_text})",
-            color=COLOR_TEXT_PRIMARY,
-            fontsize=8.2,
+            title_str,
+            color="#0F172A",
+            fontsize=8,
+            fontweight="bold",
             ha="center",
             va="top",
             zorder=4,
         )
 
-    # Set plot bounds with padding
-    xs = [p[0] for p in positions.values()]
-    ys = [p[1] for p in positions.values()]
-    margin_x = 1.2
-    margin_y = 1.2
-    ax.set_xlim(min(xs) - margin_x, max(xs) + margin_x)
-    ax.set_ylim(min(ys) - margin_y, max(ys) + margin_y)
+    # Margins and axis cleanup
+    xs = [pos[0] for pos in positions.values()]
+    ys = [pos[1] for pos in positions.values()]
+    x_min, x_max = min(xs) - 1.2, max(xs) + 1.2
+    y_min, y_max = min(ys) - 1.2, max(ys) + 1.0
+
+    ax.set_xlim(x_min, max(x_max, x_min + 3.0))
+    ax.set_ylim(y_min, y_max)
     ax.axis("off")
     plt.tight_layout()
     return fig
@@ -237,10 +249,10 @@ def render_dependency_view(
     with tab_map:
         st.markdown(
             """
-            <div style="font-family: 'Syne', sans-serif; font-size: 1.15rem; font-weight: 700; color: #FFFFFF; margin-top: 0.5rem; margin-bottom: 0.2rem;">
+            <div style="font-family: 'Syne', sans-serif; font-size: 1.15rem; font-weight: 700; color: #0F172A; margin-top: 0.5rem; margin-bottom: 0.2rem;">
                 Directed Dependency Visual Graph
             </div>
-            <div style="font-size: 0.85rem; color: #A6A49E; margin-bottom: 1.2rem;">
+            <div style="font-size: 0.86rem; color: #475569; margin-bottom: 1.2rem;">
                 Arrows indicate execution flow: <code>Prerequisite ➔ Dependent</code> ($A \\to B$ means $A$ must complete before $B$ can start).
             </div>
             """,
@@ -286,10 +298,10 @@ def render_dependency_view(
     with tab_manage:
         st.markdown(
             """
-            <div style="font-family: 'Syne', sans-serif; font-size: 1.15rem; font-weight: 700; color: #FFFFFF; margin-top: 0.5rem; margin-bottom: 0.2rem;">
+            <div style="font-family: 'Syne', sans-serif; font-size: 1.15rem; font-weight: 700; color: #0F172A; margin-top: 0.5rem; margin-bottom: 0.2rem;">
                 Dependency Registration & Constraint Management
             </div>
-            <div style="font-size: 0.85rem; color: #A6A49E; margin-bottom: 1.2rem;">
+            <div style="font-size: 0.86rem; color: #475569; margin-bottom: 1.2rem;">
                 Specify that Task B requires Task A. All additions are pre-tested with 3-color DFS cycle validation.
             </div>
             """,
@@ -345,7 +357,7 @@ def render_dependency_view(
                         dep_title = t_dep.title if t_dep else f"#{dep}"
 
                         with col_text:
-                            st.markdown(f"<span style='font-family: JetBrains Mono;'>#{prereq} ({prereq_title}) ➔ #{dep} ({dep_title})</span>", unsafe_allow_html=True)
+                            st.markdown(f"<span style='font-family: JetBrains Mono; font-size: 0.88rem; color: #0F172A;'>#{prereq} ({prereq_title}) ➔ #{dep} ({dep_title})</span>", unsafe_allow_html=True)
                         with col_btn:
                             if st.button("Remove", key=f"del_dep_{prereq}_{dep}", use_container_width=True):
                                 dep_service.remove_dependency(prereq, dep)
@@ -357,10 +369,10 @@ def render_dependency_view(
     with tab_topo:
         st.markdown(
             """
-            <div style="font-family: 'Syne', sans-serif; font-size: 1.15rem; font-weight: 700; color: #FFFFFF; margin-top: 0.5rem; margin-bottom: 0.2rem;">
+            <div style="font-family: 'Syne', sans-serif; font-size: 1.15rem; font-weight: 700; color: #0F172A; margin-top: 0.5rem; margin-bottom: 0.2rem;">
                 Topological Task Scheduling Order (Kahn's Algorithm)
             </div>
-            <div style="font-size: 0.85rem; color: #A6A49E; margin-bottom: 1.2rem;">
+            <div style="font-size: 0.86rem; color: #475569; margin-bottom: 1.2rem;">
                 Arranges directed graph nodes in a linear sequence such that for every directed edge $A \\to B$, Task $A$ strictly precedes Task $B$.
             </div>
             """,
@@ -380,10 +392,10 @@ def render_dependency_view(
 
                     st.markdown(
                         f"""
-                        <div style="padding: 10px 14px; margin-bottom: 8px; border-radius: 3px; background-color: #1A1A1A; border: 1px solid #282828; border-left: 3px solid #D7FF64;">
-                            <span style="font-family: JetBrains Mono; font-size: 0.72rem; color: #D7FF64; text-transform: uppercase;">Step {step}</span> &bull; 
-                            <strong style="color: #FFFFFF; font-size: 0.95rem;">Task #{task.id}: {task.title}</strong> {status_pill}<br/>
-                            <small style="color: #A6A49E; font-family: JetBrains Mono; font-size: 0.75rem;">Priority: {task.priority_label} &bull; Duration: {task.duration}m &bull; {prereq_desc}</small>
+                        <div style="padding: 10px 14px; margin-bottom: 8px; border-radius: 6px; background-color: #FFFFFF; border: 1px solid #E2E8F0; border-left: 3px solid #2563EB; box-shadow: 0 1px 2px rgba(0,0,0,0.02);">
+                            <span style="font-family: JetBrains Mono; font-size: 0.72rem; color: #2563EB; font-weight: 700; text-transform: uppercase;">Step {step}</span> &bull; 
+                            <strong style="color: #0F172A; font-size: 0.95rem;">Task #{task.id}: {task.title}</strong> {status_pill}<br/>
+                            <small style="color: #64748B; font-family: JetBrains Mono; font-size: 0.75rem;">Priority: {task.priority_label} &bull; Duration: {task.duration}m &bull; {prereq_desc}</small>
                         </div>
                         """,
                         unsafe_allow_html=True,
@@ -392,8 +404,8 @@ def render_dependency_view(
                 st.markdown("<hr style='margin: 1.4rem 0;'>", unsafe_allow_html=True)
                 st.markdown(
                     f"""
-                    <div style="background-color: #171717; border: 1px solid #282828; border-radius: 3px; padding: 1.1rem 1.3rem; font-family: 'JetBrains Mono', monospace; font-size: 0.8rem; color: #A6A49E;">
-                        <strong style="color: #FFFFFF;">Kahn's Algorithm Execution State:</strong><br>
+                    <div style="background-color: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 8px; padding: 1.1rem 1.3rem; font-family: 'JetBrains Mono', monospace; font-size: 0.8rem; color: #475569;">
+                        <strong style="color: #0F172A;">Kahn's Algorithm Execution State:</strong><br>
                         1. In-degrees: { {t.id: graph.in_degree(t.id) for t in tasks if t.id is not None} }<br>
                         2. Zero-indegree queue initial state: { [t.id for t in tasks if t.id is not None and graph.in_degree(t.id) == 0] }<br>
                         3. Linear FIFO dispatch sequence: { [t.id for t in topological_tasks] }<br>
@@ -409,10 +421,10 @@ def render_dependency_view(
     with tab_traverse:
         st.markdown(
             """
-            <div style="font-family: 'Syne', sans-serif; font-size: 1.15rem; font-weight: 700; color: #FFFFFF; margin-top: 0.5rem; margin-bottom: 0.2rem;">
+            <div style="font-family: 'Syne', sans-serif; font-size: 1.15rem; font-weight: 700; color: #0F172A; margin-top: 0.5rem; margin-bottom: 0.2rem;">
                 Graph Traversal Engine: BFS vs DFS
             </div>
-            <div style="font-size: 0.85rem; color: #A6A49E; margin-bottom: 1.2rem;">
+            <div style="font-size: 0.86rem; color: #475569; margin-bottom: 1.2rem;">
                 Traverse the dependency hierarchy from any task root to inspect downstream dependents.
             </div>
             """,
@@ -458,10 +470,10 @@ def render_dependency_view(
                     with cols[i % len(cols)]:
                         st.markdown(
                             f"""
-                            <div style="background-color: #1C1C1C; border: 1px solid #2A2A2A; padding: 10px; border-radius: 3px; text-align: center; margin-bottom: 6px;">
-                                <span style="font-family: JetBrains Mono; font-size: 0.68rem; color: #D7FF64;">Step {i+1}</span><br/>
-                                <strong style="color: #FFFFFF;">#{v_task.id}</strong><br/>
-                                <small style="color: #A6A49E;">{v_task.title[:15]}</small>
+                            <div style="background-color: #FFFFFF; border: 1px solid #E2E8F0; padding: 10px; border-radius: 6px; text-align: center; margin-bottom: 6px; box-shadow: 0 1px 2px rgba(0,0,0,0.02);">
+                                <span style="font-family: JetBrains Mono; font-size: 0.68rem; color: #2563EB; font-weight: 700;">Step {i+1}</span><br/>
+                                <strong style="color: #0F172A;">#{v_task.id}</strong><br/>
+                                <small style="color: #64748B;">{v_task.title[:15]}</small>
                             </div>
                             """,
                             unsafe_allow_html=True,
@@ -471,10 +483,10 @@ def render_dependency_view(
     with tab_sandbox:
         st.markdown(
             """
-            <div style="font-family: 'Syne', sans-serif; font-size: 1.15rem; font-weight: 700; color: #FFFFFF; margin-top: 0.5rem; margin-bottom: 0.2rem;">
+            <div style="font-family: 'Syne', sans-serif; font-size: 1.15rem; font-weight: 700; color: #0F172A; margin-top: 0.5rem; margin-bottom: 0.2rem;">
                 Interactive Circular Dependency Simulator (Viva Sandbox)
             </div>
-            <div style="font-size: 0.85rem; color: #A6A49E; margin-bottom: 1.2rem;">
+            <div style="font-size: 0.86rem; color: #475569; margin-bottom: 1.2rem;">
                 Demonstrates <strong>3-Color DFS cycle detection</strong> in an isolated in-memory sandbox without mutating primary SQLite records.
             </div>
             """,
@@ -486,7 +498,7 @@ def render_dependency_view(
         with sim_col1:
             st.markdown(
                 """
-                <div style="font-family: 'JetBrains Mono', monospace; font-size: 0.82rem; color: #A6A49E; line-height: 1.6;">
+                <div style="font-family: 'JetBrains Mono', monospace; font-size: 0.82rem; color: #475569; line-height: 1.6;">
                     Hypothetical chain:<br>
                     &bull; <code>Task 101 (Database Schema)</code> ➔ <code>Task 102 (API Server)</code><br>
                     &bull; <code>Task 102 (API Server)</code> ➔ <code>Task 103 (Frontend Dashboard)</code><br>
@@ -512,10 +524,10 @@ def render_dependency_view(
                     has_cycle, cycle_path = sample_graph.detect_cycle()
                     st.markdown(
                         f"""
-                        <div style="background-color: #261616; border: 1px solid rgba(248, 113, 113, 0.4); border-radius: 3px; padding: 1.1rem 1.3rem; margin-top: 1rem; color: #F87171;">
+                        <div style="background-color: #FEF2F2; border: 1px solid #FECACA; border-left: 4px solid #EF4444; border-radius: 8px; padding: 1.1rem 1.3rem; margin-top: 1rem; color: #B91C1C;">
                             <strong>🚨 Cycle Detected via 3-Color DFS!</strong><br>
                             Deadlocked Cycle Path: <code>{' ➔ '.join(map(str, cycle_path))}</code><br>
-                            <small style="color: #A6A49E;">Because TaskForge pre-checks dependencies before commit, this edge is rejected and never reaches SQLite storage.</small>
+                            <small style="color: #64748B;">Because TaskForge pre-checks dependencies before commit, this edge is rejected and never reaches SQLite storage.</small>
                         </div>
                         """,
                         unsafe_allow_html=True,
