@@ -676,6 +676,19 @@ def create_app() -> FastAPI:
             is_persistent=False,
         )
 
+    @app.post("/api/seed")
+    def seed_sample_data(
+        c: ServiceContainer = Depends(get_service_container),
+    ) -> dict[str, Any]:
+        """Seed clean realistic sample data and dependencies."""
+        from seed_sample_data import seed_database
+        seed_database(c.storage.db_path)
+        c.dependency_service.rebuild()
+        c.queue_service.refresh()
+        c.index_service.rebuild()
+        c.hash_index.rebuild_index()
+        return {"success": True, "message": "Sample demonstration data seeded successfully."}
+
     return app
 
 

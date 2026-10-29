@@ -188,8 +188,11 @@ def render_scheduling_view(
             with st.expander(f"🔒 Blocked Tasks Waiting on Incomplete Prerequisites ({len(schedule_result.blocked_tasks_info)})", expanded=True):
                 st.caption("These pending tasks are currently held back until their prerequisite tasks complete:")
                 for b_info in schedule_result.blocked_tasks_info:
-                    b_task: Task = b_info["task"]
-                    blocking = b_info["blocking_prerequisites"]
+                    if isinstance(b_info, dict):
+                        b_task: Task = b_info["task"]
+                        blocking = b_info["blocking_prerequisites"]
+                    else:
+                        b_task, blocking = b_info
                     b_prereq_str = ", ".join(f"#{p.id} '{p.title}' ({p.status})" for p in blocking)
                     st.markdown(
                         f"- <span style='font-family: JetBrains Mono; color: #EF4444; font-weight: 600;'>#{b_task.id}</span> **{b_task.title}** ({b_task.priority_label}): Waiting on {b_prereq_str}",

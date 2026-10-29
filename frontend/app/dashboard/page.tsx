@@ -91,6 +91,17 @@ export default function DashboardPage() {
     }
   };
 
+  const handleSeedData = async () => {
+    try {
+      const res = await api.seedData();
+      if (res.success) {
+        loadData();
+      }
+    } catch (err: any) {
+      alert(err.message || 'Error seeding sample data');
+    }
+  };
+
   const topRec = schedule?.recommendation;
 
   // Filter useful dashboard slices
@@ -123,6 +134,15 @@ export default function DashboardPage() {
         </div>
 
         <div className="flex flex-wrap items-center gap-2">
+          <button
+            onClick={handleSeedData}
+            title="Load realistic demonstration tasks and dependencies"
+            className="inline-flex items-center gap-1.5 bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 px-3.5 py-2 rounded-lg text-xs font-semibold shadow-xs transition-colors"
+          >
+            <Sparkles className="w-3.5 h-3.5 text-amber-500" />
+            <span>Load Sample Data</span>
+          </button>
+
           <Link
             href="/tasks"
             className="inline-flex items-center gap-1.5 bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 px-3.5 py-2 rounded-lg text-xs font-semibold shadow-xs transition-colors"
