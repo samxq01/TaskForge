@@ -122,7 +122,7 @@ export default function DashboardPage() {
         <div>
           <div className="flex items-center gap-2">
             <span className="pt-pill pt-pill-blue">OPERATIONAL WORKSPACE</span>
-            <span className="text-xs text-slate-500 font-mono">SQLite Persistent</span>
+            <span className="text-xs text-slate-500 font-sans font-medium">SQLite Persistent</span>
           </div>
           <h1 className="text-2xl sm:text-3xl font-display font-extrabold text-slate-900 mt-1">
             Task Operations &amp; Intelligence
@@ -153,51 +153,51 @@ export default function DashboardPage() {
       {/* ------------------------------------------------------------- */}
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
         <div className="pt-card p-4">
-          <span className="text-[0.68rem] font-mono uppercase text-slate-400">Total Work</span>
-          <div className="text-2xl font-display font-bold text-slate-900 mt-1">
+          <span className="text-[11px] font-sans font-bold uppercase tracking-wider text-slate-400">Total Work</span>
+          <div className="text-2xl font-sans font-extrabold text-slate-900 mt-1 tabular-nums">
             {overview?.total_tasks ?? 0}
           </div>
-          <span className="text-[0.7rem] text-slate-500 mt-1 block">In SQLite registry</span>
+          <span className="text-[0.7rem] font-sans text-slate-500 mt-1 block">In SQLite registry</span>
         </div>
 
         <div className="pt-card p-4 border-l-4 border-l-blue-500">
-          <span className="text-[0.68rem] font-mono uppercase text-blue-600">Pending</span>
-          <div className="text-2xl font-display font-bold text-slate-900 mt-1">
+          <span className="text-[11px] font-sans font-bold uppercase tracking-wider text-blue-600">Pending</span>
+          <div className="text-2xl font-sans font-extrabold text-slate-900 mt-1 tabular-nums">
             {overview?.pending_tasks ?? 0}
           </div>
-          <span className="text-[0.7rem] text-blue-600 mt-1 block">Ready in queue</span>
+          <span className="text-[0.7rem] font-sans text-blue-600 mt-1 block">Ready in queue</span>
         </div>
 
         <div className="pt-card p-4 border-l-4 border-l-amber-500">
-          <span className="text-[0.68rem] font-mono uppercase text-amber-600">In Progress</span>
-          <div className="text-2xl font-display font-bold text-slate-900 mt-1">
+          <span className="text-[11px] font-sans font-bold uppercase tracking-wider text-amber-600">In Progress</span>
+          <div className="text-2xl font-sans font-extrabold text-slate-900 mt-1 tabular-nums">
             {overview?.in_progress_tasks ?? 0}
           </div>
-          <span className="text-[0.7rem] text-amber-600 mt-1 block">Active work</span>
+          <span className="text-[0.7rem] font-sans text-amber-600 mt-1 block">Active work</span>
         </div>
 
         <div className="pt-card p-4 border-l-4 border-l-emerald-500">
-          <span className="text-[0.68rem] font-mono uppercase text-emerald-600">Completed</span>
-          <div className="text-2xl font-display font-bold text-slate-900 mt-1">
+          <span className="text-[11px] font-sans font-bold uppercase tracking-wider text-emerald-600">Completed</span>
+          <div className="text-2xl font-sans font-extrabold text-slate-900 mt-1 tabular-nums">
             {overview?.completed_tasks ?? 0}
           </div>
-          <span className="text-[0.7rem] text-emerald-600 mt-1 block">Satisfied prerequisites</span>
+          <span className="text-[0.7rem] font-sans text-emerald-600 mt-1 block">Satisfied prerequisites</span>
         </div>
 
         <div className="pt-card p-4 border-l-4 border-l-rose-500">
-          <span className="text-[0.68rem] font-mono uppercase text-rose-600">Overdue</span>
-          <div className="text-2xl font-display font-bold text-slate-900 mt-1">
+          <span className="text-[11px] font-sans font-bold uppercase tracking-wider text-rose-600">Overdue</span>
+          <div className="text-2xl font-sans font-extrabold text-slate-900 mt-1 tabular-nums">
             {overview?.overdue_tasks ?? 0}
           </div>
-          <span className="text-[0.7rem] text-rose-600 mt-1 block">Past deadline</span>
+          <span className="text-[0.7rem] font-sans text-rose-600 mt-1 block">Past deadline</span>
         </div>
 
         <div className="pt-card p-4 border-l-4 border-l-slate-400">
-          <span className="text-[0.68rem] font-mono uppercase text-slate-600">Blocked</span>
-          <div className="text-2xl font-display font-bold text-slate-900 mt-1">
+          <span className="text-[11px] font-sans font-bold uppercase tracking-wider text-slate-600">Blocked</span>
+          <div className="text-2xl font-sans font-extrabold text-slate-900 mt-1 tabular-nums">
             {overview?.blocked_tasks ?? 0}
           </div>
-          <span className="text-[0.7rem] text-slate-500 mt-1 block">Awaiting prereqs</span>
+          <span className="text-[0.7rem] font-sans text-slate-500 mt-1 block">Awaiting prereqs</span>
         </div>
       </div>
 
@@ -525,3 +525,4 @@ export default function DashboardPage() {
     </div>
   );
 }
+

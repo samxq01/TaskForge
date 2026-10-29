@@ -88,8 +88,8 @@ export default function PlanningPage() {
       {/* ------------------------------------------------------------- */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <div className="pt-card p-6 border-l-4 border-l-brand space-y-1">
-          <span className="text-[0.68rem] font-mono uppercase text-brand">Estimated Project Duration</span>
-          <div className="text-3xl font-display font-extrabold text-slate-900">
+          <span className="text-[11px] font-sans font-bold uppercase tracking-wider text-brand">Estimated Project Duration</span>
+          <div className="text-3xl font-sans font-extrabold text-slate-900 tracking-tight tabular-nums">
             {criticalPath?.total_duration_formatted ?? '0 min'}
           </div>
           <p className="text-xs text-slate-500">
@@ -98,8 +98,8 @@ export default function PlanningPage() {
         </div>
 
         <div className="pt-card p-6 space-y-1">
-          <span className="text-[0.68rem] font-mono uppercase text-slate-400">Critical Path Tasks</span>
-          <div className="text-3xl font-display font-bold text-slate-900">
+          <span className="text-[11px] font-sans font-bold uppercase tracking-wider text-slate-400">Critical Path Tasks</span>
+          <div className="text-3xl font-sans font-extrabold text-slate-900 tracking-tight tabular-nums">
             {criticalPath?.critical_path_ids.length ?? 0} <span className="text-sm font-normal text-slate-500">of {tasks.length} tasks</span>
           </div>
           <p className="text-xs text-slate-500">
@@ -108,8 +108,8 @@ export default function PlanningPage() {
         </div>
 
         <div className="pt-card p-6 space-y-1">
-          <span className="text-[0.68rem] font-mono uppercase text-slate-400">Critical Chain Sequence</span>
-          <div className="text-base font-mono font-bold text-brand truncate pt-1">
+          <span className="text-[11px] font-sans font-bold uppercase tracking-wider text-slate-400">Critical Chain Sequence</span>
+          <div className="text-base font-sans font-bold text-brand truncate pt-1">
             {criticalPath?.critical_path_ids.length ? (
               criticalPath.critical_path_ids.map((id) => `#${id}`).join(' → ')
             ) : (
@@ -312,3 +312,4 @@ export default function PlanningPage() {
     </div>
   );
 }
+

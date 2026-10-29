@@ -116,7 +116,9 @@ class DeadlineRiskAnalyzer:
         slack_minutes: Optional[float] = None
 
         if has_deadline and task.due_date is not None:
-            time_remaining_minutes = (task.due_date - now).total_seconds() / 60.0
+            t_due = task.due_date.replace(tzinfo=None) if task.due_date.tzinfo else task.due_date
+            t_now = now.replace(tzinfo=None) if now.tzinfo else now
+            time_remaining_minutes = (t_due - t_now).total_seconds() / 60.0
             slack_minutes = time_remaining_minutes - float(task.duration)
 
         # Precedence Rule 1: Completed

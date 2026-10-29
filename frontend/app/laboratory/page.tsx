@@ -182,7 +182,7 @@ export default function LaboratoryPage() {
         <div>
           <div className="flex items-center gap-2">
             <span className="pt-pill pt-pill-blue">ALGORITHM LABORATORY</span>
-            <span className="text-xs font-mono text-slate-500">CO1 &bull; CO2 &bull; CO3 &bull; CO4</span>
+            <span className="text-xs font-sans font-medium text-slate-500">CO1 &bull; CO2 &bull; CO3 &bull; CO4</span>
           </div>
           <h1 className="text-2xl sm:text-3xl font-display font-extrabold text-slate-900 mt-1">
             Data Structures &amp; Empirical Benchmarks
@@ -798,3 +798,4 @@ export default function LaboratoryPage() {
     </div>
   );
 }
+

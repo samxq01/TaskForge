@@ -112,7 +112,7 @@ export default function DependenciesPage() {
         <div>
           <div className="flex items-center gap-2">
             <span className="pt-pill pt-pill-blue">CO5 DIRECTED GRAPH</span>
-            <span className="text-xs font-mono text-slate-500">DAG Cycle Prevention Engine</span>
+            <span className="text-xs font-sans font-medium text-slate-500">DAG Cycle Prevention Engine</span>
           </div>
           <h1 className="text-2xl sm:text-3xl font-display font-extrabold text-slate-900 mt-1">
             Dependency Map &amp; Topological Order
@@ -359,3 +359,4 @@ export default function DependenciesPage() {
     </div>
   );
 }
+

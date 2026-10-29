@@ -239,3 +239,4 @@ def test_scheduling_and_critical_path(client):
     # Check persistence safety: verify t1 duration in database is still 60
     t1_check = tc.get(f"/api/tasks/{t1}").json()
     assert t1_check["duration"] == 60
+

@@ -129,7 +129,12 @@ class Task:
         if self.status == TaskStatus.COMPLETED.value or self.due_date is None:
             return False
         reference_time = as_of if as_of is not None else datetime.now()
-        return self.due_date < reference_time
+        due = self.due_date
+        if due.tzinfo is not None and reference_time.tzinfo is None:
+            due = due.replace(tzinfo=None)
+        elif due.tzinfo is None and reference_time.tzinfo is not None:
+            reference_time = reference_time.replace(tzinfo=None)
+        return due < reference_time
 
     @property
     def formatted_deadline(self) -> str:
@@ -163,9 +168,14 @@ class Task:
         due_date = None
         if data.get("due_date"):
             if isinstance(data["due_date"], str):
-                due_date = datetime.fromisoformat(data["due_date"])
+                dt = datetime.fromisoformat(data["due_date"])
+                due_date = dt.replace(tzinfo=None) if dt.tzinfo else dt
             elif isinstance(data["due_date"], (datetime, date)):
-                due_date = data["due_date"]
+                val = data["due_date"]
+                if isinstance(val, datetime):
+                    due_date = val.replace(tzinfo=None) if val.tzinfo else val
+                else:
+                    due_date = datetime.combine(val, datetime.min.time())
 
         created_at = (
             datetime.fromisoformat(data["created_at"])

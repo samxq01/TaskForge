@@ -49,17 +49,17 @@ export default function LandingPage() {
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
           {/* Left Column: Headline & Calls to Action */}
           <div className="lg:col-span-7 space-y-6">
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-50 border border-blue-200 text-xs font-mono font-semibold text-brand">
+            <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-blue-50/90 border border-blue-200 text-[11px] font-sans font-bold tracking-wider text-brand uppercase">
               <span className="w-2 h-2 rounded-full bg-brand animate-pulse" />
               INTELLIGENT TASK SCHEDULING SYSTEM
             </div>
 
-            <h1 className="text-4xl sm:text-5xl lg:text-6xl font-display font-extrabold text-slate-900 leading-[1.08] tracking-tight">
+            <h1 className="text-4xl sm:text-5xl lg:text-6xl font-sans font-extrabold text-slate-900 leading-[1.12] tracking-tight">
               Plan smarter.<br />
               <span className="text-brand">Work in the right order.</span>
             </h1>
 
-            <p className="text-lg sm:text-xl text-slate-600 max-w-2xl leading-relaxed">
+            <p className="text-base sm:text-lg text-slate-600 max-w-2xl leading-relaxed">
               Manage tasks, understand dependencies, evaluate data structures, and explore project schedules in one intelligent, algorithmically driven workspace.
             </p>
 
@@ -81,14 +81,14 @@ export default function LandingPage() {
             </div>
 
             {/* Quick Proof Pills */}
-            <div className="pt-4 flex flex-wrap gap-2 text-xs font-mono text-slate-500">
-              <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-slate-100 border border-slate-200">
+            <div className="pt-4 flex flex-wrap gap-2 text-xs font-sans text-slate-600">
+              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white border border-slate-200 font-medium text-slate-700 shadow-xs">
                 <Check className="w-3.5 h-3.5 text-emerald-600" /> 213 Pytest Tests Verified
               </span>
-              <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-slate-100 border border-slate-200">
+              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white border border-slate-200 font-medium text-slate-700 shadow-xs">
                 <Check className="w-3.5 h-3.5 text-emerald-600" /> Zero 3rd-Party DSA Libs
               </span>
-              <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-slate-100 border border-slate-200">
+              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white border border-slate-200 font-medium text-slate-700 shadow-xs">
                 <Check className="w-3.5 h-3.5 text-emerald-600" /> Non-Persistent What-If
               </span>
             </div>
@@ -149,20 +149,20 @@ export default function LandingPage() {
                 {/* Micro Metric Preview */}
                 <div className="grid grid-cols-3 gap-2 text-center pt-2">
                   <div className="p-2.5 rounded-lg bg-slate-50 border border-slate-100">
-                    <div className="text-[0.68rem] font-mono uppercase text-slate-400">Total</div>
-                    <div className="font-display font-bold text-lg text-slate-800">
+                    <div className="text-[11px] font-sans font-bold uppercase tracking-wider text-slate-400">Total</div>
+                    <div className="font-sans font-extrabold text-2xl text-slate-900 tracking-tight tabular-nums mt-0.5">
                       {overview?.total_tasks ?? 0}
                     </div>
                   </div>
                   <div className="p-2.5 rounded-lg bg-emerald-50/70 border border-emerald-100">
-                    <div className="text-[0.68rem] font-mono uppercase text-emerald-600">Pending</div>
-                    <div className="font-display font-bold text-lg text-emerald-700">
+                    <div className="text-[11px] font-sans font-bold uppercase tracking-wider text-emerald-600">Pending</div>
+                    <div className="font-sans font-extrabold text-2xl text-emerald-700 tracking-tight tabular-nums mt-0.5">
                       {overview?.pending_tasks ?? 0}
                     </div>
                   </div>
                   <div className="p-2.5 rounded-lg bg-blue-50/70 border border-blue-100">
-                    <div className="text-[0.68rem] font-mono uppercase text-blue-600">BST Nodes</div>
-                    <div className="font-display font-bold text-lg text-brand">
+                    <div className="text-[11px] font-sans font-bold uppercase tracking-wider text-brand">BST Nodes</div>
+                    <div className="font-sans font-extrabold text-2xl text-brand tracking-tight tabular-nums mt-0.5">
                       {overview?.bst_nodes ?? 0}
                     </div>
                   </div>
@@ -402,3 +402,4 @@ export default function LandingPage() {
     </div>
   );
 }
+

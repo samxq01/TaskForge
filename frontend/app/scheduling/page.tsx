@@ -47,7 +47,7 @@ export default function SchedulingPage() {
         <div>
           <div className="flex items-center gap-2">
             <span className="pt-pill pt-pill-blue">CO1 &bull; CO5 DUAL SCHEDULING</span>
-            <span className="text-xs font-mono text-slate-500">Min-Heap &amp; Deadline Feasibility</span>
+            <span className="text-xs font-sans font-medium text-slate-500">Min-Heap &amp; Deadline Feasibility</span>
           </div>
           <h1 className="text-2xl sm:text-3xl font-display font-extrabold text-slate-900 mt-1">
             Smart Auto-Scheduler &amp; Deadline Risks
@@ -203,29 +203,29 @@ export default function SchedulingPage() {
           {/* Risk Metrics */}
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
             <div className="pt-card p-4 border-l-4 border-l-rose-500">
-              <span className="text-[0.68rem] font-mono uppercase text-rose-600">Overdue Tasks</span>
-              <div className="text-2xl font-display font-bold text-rose-700 mt-1">
+              <span className="text-[11px] font-sans font-bold uppercase tracking-wider text-rose-600">Overdue Tasks</span>
+              <div className="text-2xl font-sans font-extrabold text-rose-700 mt-1 tabular-nums">
                 {risks?.overdue_count ?? 0}
               </div>
             </div>
 
             <div className="pt-card p-4 border-l-4 border-l-amber-500">
-              <span className="text-[0.68rem] font-mono uppercase text-amber-600">At Risk</span>
-              <div className="text-2xl font-display font-bold text-amber-700 mt-1">
+              <span className="text-[11px] font-sans font-bold uppercase tracking-wider text-amber-600">At Risk</span>
+              <div className="text-2xl font-sans font-extrabold text-amber-700 mt-1 tabular-nums">
                 {risks?.at_risk_count ?? 0}
               </div>
             </div>
 
             <div className="pt-card p-4 border-l-4 border-l-emerald-500">
-              <span className="text-[0.68rem] font-mono uppercase text-emerald-600">Safe Deadlines</span>
-              <div className="text-2xl font-display font-bold text-emerald-700 mt-1">
+              <span className="text-[11px] font-sans font-bold uppercase tracking-wider text-emerald-600">Safe Deadlines</span>
+              <div className="text-2xl font-sans font-extrabold text-emerald-700 mt-1 tabular-nums">
                 {risks?.safe_count ?? 0}
               </div>
             </div>
 
             <div className="pt-card p-4 border-l-4 border-l-slate-400">
-              <span className="text-[0.68rem] font-mono uppercase text-slate-500">Unscheduled</span>
-              <div className="text-2xl font-display font-bold text-slate-700 mt-1">
+              <span className="text-[11px] font-sans font-bold uppercase tracking-wider text-slate-500">Unscheduled</span>
+              <div className="text-2xl font-sans font-extrabold text-slate-700 mt-1 tabular-nums">
                 {risks?.unscheduled_count ?? 0}
               </div>
             </div>
@@ -234,8 +234,8 @@ export default function SchedulingPage() {
           {/* Assessment Table */}
           <div className="pt-card overflow-hidden">
             <div className="overflow-x-auto">
-              <table className="w-full text-left text-xs font-mono">
-                <thead className="bg-slate-50 border-b border-slate-200 text-slate-500 uppercase text-[0.7rem]">
+              <table className="w-full text-left text-xs font-sans">
+                <thead className="bg-slate-50 border-b border-slate-200 text-slate-500 font-bold uppercase text-[11px] tracking-wider">
                   <tr>
                     <th className="py-3 px-4">Task</th>
                     <th className="py-3 px-4">Risk Category</th>
@@ -288,3 +288,4 @@ export default function SchedulingPage() {
     </div>
   );
 }
+

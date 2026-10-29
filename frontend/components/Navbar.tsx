@@ -73,11 +73,11 @@ export function Navbar() {
           {/* Brand Lockup */}
           <div className="flex items-center gap-8">
             <Link href="/" className="flex items-center gap-2 group">
-              <span className="font-display text-xl font-extrabold tracking-tight text-slate-900 group-hover:text-brand transition-colors">
+              <span className="font-sans text-xl font-extrabold tracking-tight text-slate-900 group-hover:text-brand transition-colors">
                 TaskForge
               </span>
               <span className="w-2 h-2 rounded-full bg-brand group-hover:scale-125 transition-transform" />
-              <span className="hidden sm:inline-block text-[0.7rem] font-mono font-medium text-slate-500 bg-slate-100 px-2 py-0.5 rounded border border-slate-200">
+              <span className="hidden sm:inline-block text-[11px] font-sans font-bold text-slate-600 bg-slate-100 px-2 py-0.5 rounded-full border border-slate-200">
                 DSA 2.0
               </span>
             </Link>
@@ -90,9 +90,9 @@ export function Navbar() {
                   <Link
                     key={link.href}
                     href={link.href}
-                    className={`px-3 py-1.5 rounded-lg text-xs font-semibold tracking-wide transition-all ${
+                    className={`px-3.5 py-1.5 rounded-lg text-xs font-semibold tracking-normal transition-all ${
                       isActive
-                        ? 'bg-brand text-white shadow-sm'
+                        ? 'bg-brand text-white shadow-xs'
                         : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
                     }`}
                   >
@@ -106,13 +106,13 @@ export function Navbar() {
           {/* Right Actions: Undo/Redo & Live Status */}
           <div className="flex items-center gap-3">
             {/* Live API Heartbeat */}
-            <div className="flex items-center gap-2 px-2.5 py-1 rounded-full bg-slate-50 border border-slate-200 text-[0.72rem] font-mono">
+            <div className="flex items-center gap-2 px-3 py-1 rounded-full bg-slate-50 border border-slate-200 text-xs font-sans font-semibold">
               <span
                 className={`w-2 h-2 rounded-full ${
                   isApiOnline ? 'bg-emerald-500 animate-pulse' : 'bg-rose-500'
                 }`}
               />
-              <span className="hidden sm:inline text-slate-600">
+              <span className="hidden sm:inline text-slate-600 font-medium">
                 {isApiOnline ? 'FastAPI 8000' : 'Backend Offline'}
               </span>
             </div>
@@ -179,3 +179,4 @@ export function Navbar() {
     </header>
   );
 }
+

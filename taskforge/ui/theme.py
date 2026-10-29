@@ -121,14 +121,14 @@ html, body, [data-testid="stAppViewContainer"] {
 
 /* Headings Typography Hierarchy */
 h1, h2, h3 {
-    font-family: 'Syne', 'Plus Jakarta Sans', sans-serif !important;
+    font-family: 'Plus Jakarta Sans', 'Inter', 'Syne', sans-serif !important;
     color: var(--pt-text-primary) !important;
     letter-spacing: -0.025em !important;
     font-weight: 700 !important;
 }
 
 h4, h5, h6 {
-    font-family: 'Plus Jakarta Sans', sans-serif !important;
+    font-family: 'Plus Jakarta Sans', 'Inter', sans-serif !important;
     color: var(--pt-text-primary) !important;
     letter-spacing: -0.01em !important;
     font-weight: 600 !important;
@@ -166,7 +166,7 @@ h4, h5, h6 {
 }
 
 .pt-brand-title, .tf-brand-title {
-    font-family: 'Syne', sans-serif;
+    font-family: 'Plus Jakarta Sans', 'Inter', 'Syne', sans-serif;
     font-size: 1.45rem;
     font-weight: 800;
     letter-spacing: -0.03em;
@@ -217,7 +217,7 @@ h4, h5, h6 {
 }
 
 .pt-hero-headline, .tf-hero-headline {
-    font-family: 'Syne', sans-serif;
+    font-family: 'Plus Jakarta Sans', 'Inter', 'Syne', sans-serif;
     font-size: 1.85rem;
     font-weight: 800;
     letter-spacing: -0.03em;
@@ -286,16 +286,17 @@ h4, h5, h6 {
 }
 
 .pt-metric-label, .tf-metric-label {
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 0.68rem;
-    letter-spacing: 0.1em;
+    font-family: 'Plus Jakarta Sans', 'Inter', -apple-system, sans-serif;
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.06em;
     text-transform: uppercase;
     color: var(--pt-text-muted);
     margin-bottom: 0.35rem;
 }
 
 .pt-metric-value, .tf-metric-value {
-    font-family: 'Syne', sans-serif;
+    font-family: 'Plus Jakarta Sans', 'Inter', 'Syne', sans-serif;
     font-size: 1.75rem;
     font-weight: 800;
     letter-spacing: -0.03em;
@@ -327,16 +328,16 @@ h4, h5, h6 {
 }
 
 [data-testid="stMetricLabel"] p {
-    font-family: 'JetBrains Mono', monospace !important;
-    font-size: 0.72rem !important;
-    letter-spacing: 0.08em !important;
+    font-family: 'Plus Jakarta Sans', 'Inter', -apple-system, sans-serif !important;
+    font-size: 0.75rem !important;
+    letter-spacing: 0.06em !important;
     text-transform: uppercase !important;
     color: var(--pt-text-muted) !important;
-    font-weight: 600 !important;
+    font-weight: 700 !important;
 }
 
 [data-testid="stMetricValue"] div {
-    font-family: 'Syne', sans-serif !important;
+    font-family: 'Plus Jakarta Sans', 'Inter', 'Syne', sans-serif !important;
     font-size: 1.8rem !important;
     font-weight: 800 !important;
     letter-spacing: -0.025em !important;
@@ -559,7 +560,7 @@ hr {
 }
 
 .pt-preview-title {
-    font-family: 'Syne', sans-serif;
+    font-family: 'Plus Jakarta Sans', 'Inter', 'Syne', sans-serif;
     font-size: 1.15rem;
     font-weight: 700;
     color: var(--pt-text-primary);
@@ -704,7 +705,7 @@ def render_section_header(eyebrow: str, title: str, subtitle: Optional[str] = No
         f"""
         <div style="margin: 1.4rem 0 0.85rem 0;">
             <div class="pt-eyebrow">{eyebrow}</div>
-            <h3 style="margin: 0; font-family: 'Syne', sans-serif; font-size: 1.35rem; font-weight: 700; color: #0F172A;">{title}</h3>
+            <h3 style="margin: 0; font-family: 'Plus Jakarta Sans', 'Inter', 'Syne', sans-serif; font-size: 1.35rem; font-weight: 700; color: #0F172A;">{title}</h3>
             {sub_html}
         </div>
         """,
