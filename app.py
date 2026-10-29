@@ -9,8 +9,11 @@ from datetime import datetime, timedelta
 import streamlit as st
 
 from taskforge.models import Priority, Task, TaskStatus
+from taskforge.services.task_queue_service import TaskQueueService
+from taskforge.services.undo_manager import ActionType, UndoManager
 from taskforge.storage import TaskStorage
 from taskforge.ui.dashboard import render_dashboard
+from taskforge.ui.history_view import render_history_view
 
 
 def get_storage() -> TaskStorage:
@@ -20,8 +23,24 @@ def get_storage() -> TaskStorage:
     return st.session_state.storage
 
 
-def load_sample_tasks(storage: TaskStorage) -> None:
-    """Seed initial sample tasks for demonstration and testing."""
+def get_undo_manager() -> UndoManager:
+    """Initialize or retrieve session-local UndoManager singleton."""
+    if "undo_manager" not in st.session_state:
+        st.session_state.undo_manager = UndoManager()
+    return st.session_state.undo_manager
+
+
+def get_queue_service(storage: TaskStorage, undo_manager: UndoManager) -> TaskQueueService:
+    """Initialize or retrieve TaskQueueService singleton."""
+    if "queue_service" not in st.session_state:
+        st.session_state.queue_service = TaskQueueService(storage, undo_manager)
+    return st.session_state.queue_service
+
+
+def load_sample_tasks(
+    storage: TaskStorage, undo_manager: UndoManager, queue_service: TaskQueueService
+) -> None:
+    """Seed initial sample tasks for demonstration and viva testing."""
     now = datetime.now()
     sample_data = [
         Task(
@@ -75,30 +94,42 @@ def load_sample_tasks(storage: TaskStorage) -> None:
     ]
 
     for task in sample_data:
-        storage.create_task(task)
+        created = storage.create_task(task)
+        assert created.id is not None
+        undo_manager.record_action(
+            action_type=ActionType.CREATE,
+            task_id=created.id,
+            after_state=created,
+        )
+
+    queue_service.refresh()
 
 
-def render_sidebar(storage: TaskStorage) -> None:
-    """Render the sidebar with navigation, phase status, and database utilities."""
+def render_sidebar(
+    storage: TaskStorage, undo_manager: UndoManager, queue_service: TaskQueueService
+) -> str:
+    """Render the sidebar with navigation, phase status, and demonstration tools."""
     with st.sidebar:
         st.title("⚡ TaskForge")
-        st.caption("College DSA Micro-Project")
+        st.caption("College DSA Micro-Project • CO1 Active")
 
         st.markdown("### 📌 Navigation")
-        st.radio(
+        view_choice = st.radio(
             "Select Module",
-            options=["📋 Task Dashboard (Active)"],
+            options=[
+                "📋 Task Dashboard & Registry",
+                "🔄 Task Processing & History (CO1)",
+            ],
             index=0,
-            disabled=True,
-            help="Phase 01 enables Task Management. Further modules unlock in subsequent phases.",
+            help="Navigate between Phase 01 Dashboard and Phase 02 CO1 Processing & History.",
         )
 
         st.markdown("---")
         st.markdown("### 🗺️ Project Roadmap")
         st.markdown(
             """
-- 🟢 **Phase 01:** Foundation & Tasks *(Current)*
-- 🔒 **Phase 02:** Stack, Queue & Undo/Redo (CO1)
+- 🟢 **Phase 01:** Foundation & Tasks *(Complete)*
+- 🟢 **Phase 02:** Stack, Queue & Undo/Redo (CO1) *(Active)*
 - 🔒 **Phase 03:** Searching & Sorting Lab (CO3)
 - 🔒 **Phase 04:** BST Deadline Index (CO4)
 - 🔒 **Phase 05:** Dependency Graph & Visual Map (CO5)
@@ -112,8 +143,8 @@ def render_sidebar(storage: TaskStorage) -> None:
         st.markdown("---")
         st.markdown("### 🛠️ Demonstration Tools")
         if st.button("🌱 Load Sample Tasks", use_container_width=True):
-            load_sample_tasks(storage)
-            st.success("Sample tasks loaded!")
+            load_sample_tasks(storage, undo_manager, queue_service)
+            st.success("Sample tasks loaded & recorded in history!")
             st.rerun()
 
         counts = storage.count_tasks()
@@ -130,12 +161,13 @@ def render_sidebar(storage: TaskStorage) -> None:
                 col_y, col_n = st.columns(2)
                 with col_y:
                     if st.button("Yes, Clear", type="primary", use_container_width=True):
-                        # Delete all tasks individually to preserve referential safety
                         for t in storage.list_tasks():
                             assert t.id is not None
                             storage.delete_task(t.id)
+                        undo_manager.clear()
+                        queue_service.refresh()
                         st.session_state.confirm_clear_all = False
-                        st.success("All tasks cleared.")
+                        st.success("All tasks and history cleared.")
                         st.rerun()
                 with col_n:
                     if st.button("Cancel", use_container_width=True):
@@ -143,7 +175,9 @@ def render_sidebar(storage: TaskStorage) -> None:
                         st.rerun()
 
         st.markdown("---")
-        st.caption("TaskForge v0.1.0 • Phase 01 Foundation")
+        st.caption("TaskForge v0.2.0 • Phase 02 (CO1)")
+
+    return view_choice
 
 
 def main() -> None:
@@ -156,14 +190,20 @@ def main() -> None:
     )
 
     storage = get_storage()
-    render_sidebar(storage)
+    undo_manager = get_undo_manager()
+    queue_service = get_queue_service(storage, undo_manager)
+
+    current_view = render_sidebar(storage, undo_manager, queue_service)
 
     st.title("⚡ TaskForge — Task Management & Scheduling System")
-    st.markdown(
-        "A rigorous, real-world task management application powered by **Data Structures and Algorithms (DSA)**."
-    )
 
-    render_dashboard(storage)
+    if current_view == "📋 Task Dashboard & Registry":
+        st.markdown(
+            "Manage tasks with persistent SQLite storage, real-time metrics, and instant **Undo/Redo** capabilities."
+        )
+        render_dashboard(storage, undo_manager=undo_manager, queue_service=queue_service)
+    else:
+        render_history_view(storage, undo_manager, queue_service)
 
 
 if __name__ == "__main__":

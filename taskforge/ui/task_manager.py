@@ -2,12 +2,14 @@
 
 from __future__ import annotations
 
+import copy
 from datetime import date, datetime, time, timedelta
-from typing import Callable
+from typing import Callable, Optional
 
 import streamlit as st
 
 from taskforge.models import Priority, Task, TaskStatus
+from taskforge.services.undo_manager import ActionType, UndoManager
 from taskforge.storage import TaskStorage
 
 
@@ -25,7 +27,11 @@ STATUS_OPTIONS = [
 ]
 
 
-def render_add_task_form(storage: TaskStorage, on_task_created: Callable[[], None]) -> None:
+def render_add_task_form(
+    storage: TaskStorage,
+    on_task_created: Callable[[], None],
+    undo_manager: Optional[UndoManager] = None,
+) -> None:
     """Render the form for creating a new task."""
     with st.expander("➕ **Add New Task**", expanded=False):
         with st.form("add_task_form", clear_on_submit=True):
@@ -94,6 +100,16 @@ def render_add_task_form(storage: TaskStorage, on_task_created: Callable[[], Non
                         status=status,
                     )
                     created = storage.create_task(new_task)
+                    assert created.id is not None
+
+                    if undo_manager is not None:
+                        undo_manager.record_action(
+                            action_type=ActionType.CREATE,
+                            task_id=created.id,
+                            before_state=None,
+                            after_state=created,
+                        )
+
                     st.success(f"✅ Task #{created.id} '{created.title}' created successfully!")
                     on_task_created()
                 except ValueError as err:
@@ -107,9 +123,13 @@ def render_edit_task_form(
     task: Task,
     on_task_updated: Callable[[], None],
     on_cancel: Callable[[], None],
+    undo_manager: Optional[UndoManager] = None,
 ) -> None:
     """Render the editing form for an existing task."""
     st.markdown(f"### ✏️ Editing Task #{task.id}: **{task.title}**")
+
+    # Capture snapshot before edit
+    before_state = copy.deepcopy(task)
 
     with st.form(f"edit_task_form_{task.id}"):
         col1, col2 = st.columns([3, 1])
@@ -183,7 +203,16 @@ def render_edit_task_form(
                 task.due_date = due_date
                 task.duration = int(duration)
                 task.status = status
-                storage.update_task(task)
+                updated = storage.update_task(task)
+
+                if undo_manager is not None and task.id is not None:
+                    undo_manager.record_action(
+                        action_type=ActionType.EDIT,
+                        task_id=task.id,
+                        before_state=before_state,
+                        after_state=updated,
+                    )
+
                 st.success(f"✅ Task #{task.id} updated successfully!")
                 on_task_updated()
             except ValueError as err:

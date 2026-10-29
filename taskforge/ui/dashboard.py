@@ -3,11 +3,13 @@
 from __future__ import annotations
 
 from datetime import datetime
-from typing import Any
+from typing import Any, Optional
 
 import streamlit as st
 
 from taskforge.models import Priority, Task, TaskStatus
+from taskforge.services.task_queue_service import TaskQueueService
+from taskforge.services.undo_manager import ActionType, UndoManager
 from taskforge.storage import TaskStorage
 from taskforge.ui.task_manager import (
     PRIORITY_OPTIONS,
@@ -71,8 +73,12 @@ def _status_badge(status: str) -> str:
     return badges.get(status, status)
 
 
-def render_dashboard(storage: TaskStorage) -> None:
-    """Render the full Phase 01 TaskForge dashboard."""
+def render_dashboard(
+    storage: TaskStorage,
+    undo_manager: Optional[UndoManager] = None,
+    queue_service: Optional[TaskQueueService] = None,
+) -> None:
+    """Render the full TaskForge dashboard with CRUD operations and undo/redo integration."""
     # Summary Metrics
     render_summary_metrics(storage)
     st.markdown("---")
@@ -83,28 +89,66 @@ def render_dashboard(storage: TaskStorage) -> None:
     if "deleting_task_id" not in st.session_state:
         st.session_state.deleting_task_id = None
 
+    # Quick Undo/Redo Bar if available
+    if undo_manager is not None:
+        col_undo, col_redo, col_status = st.columns([2, 2, 4])
+        with col_undo:
+            peek_u = undo_manager.peek_undo()
+            undo_text = f"↩️ Undo: {peek_u.summary}" if peek_u else "↩️ Undo (Empty)"
+            if st.button(undo_text, disabled=not undo_manager.can_undo(), key="quick_undo", use_container_width=True):
+                try:
+                    act = undo_manager.undo(storage)
+                    if queue_service:
+                        queue_service.refresh()
+                    st.success(f"Undone: {act.summary}")
+                    st.rerun()
+                except Exception as err:
+                    st.error(f"Undo error: {err}")
+
+        with col_redo:
+            peek_r = undo_manager.peek_redo()
+            redo_text = f"↪️ Redo: {peek_r.summary}" if peek_r else "↪️ Redo (Empty)"
+            if st.button(redo_text, disabled=not undo_manager.can_redo(), key="quick_redo", use_container_width=True):
+                try:
+                    act = undo_manager.redo(storage)
+                    if queue_service:
+                        queue_service.refresh()
+                    st.success(f"Redone: {act.summary}")
+                    st.rerun()
+                except Exception as err:
+                    st.error(f"Redo error: {err}")
+
+        with col_status:
+            undo_count = len(undo_manager.get_undo_history())
+            redo_count = len(undo_manager.get_redo_history())
+            st.caption(f"📚 Stacks: **{undo_count}** Undoable action(s) | **{redo_count}** Redoable action(s)")
+
     # Handle Edit View if active
     if st.session_state.editing_task_id is not None:
         task_to_edit = storage.get_task(st.session_state.editing_task_id)
         if task_to_edit:
             def on_updated() -> None:
                 st.session_state.editing_task_id = None
+                if queue_service:
+                    queue_service.refresh()
                 st.rerun()
 
             def on_cancel() -> None:
                 st.session_state.editing_task_id = None
                 st.rerun()
 
-            render_edit_task_form(storage, task_to_edit, on_updated, on_cancel)
+            render_edit_task_form(storage, task_to_edit, on_updated, on_cancel, undo_manager=undo_manager)
             st.markdown("---")
         else:
             st.session_state.editing_task_id = None
 
     # Add Task Form
     def on_created() -> None:
+        if queue_service:
+            queue_service.refresh()
         st.rerun()
 
-    render_add_task_form(storage, on_created)
+    render_add_task_form(storage, on_created, undo_manager=undo_manager)
 
     st.markdown("### 🔍 Task Registry & Filters")
 
@@ -171,9 +215,19 @@ def render_dashboard(storage: TaskStorage) -> None:
             col_conf1, col_conf2 = st.columns([1, 1])
             with col_conf1:
                 if st.button("🚨 Yes, Delete Task", key=f"confirm_del_{task_to_del.id}", type="primary", use_container_width=True):
+                    # Record deletion action in undo manager before removal
+                    if undo_manager is not None and task_to_del.id is not None:
+                        undo_manager.record_action(
+                            action_type=ActionType.DELETE,
+                            task_id=task_to_del.id,
+                            before_state=task_to_del,
+                            after_state=None,
+                        )
                     storage.delete_task(task_to_del.id)  # type: ignore
                     st.session_state.deleting_task_id = None
-                    st.success(f"Task #{task_to_del.id} deleted.")
+                    if queue_service:
+                        queue_service.refresh()
+                    st.success(f"Task #{task_to_del.id} deleted. (Undoable)")
                     st.rerun()
             with col_conf2:
                 if st.button("Cancel", key="cancel_del", use_container_width=True):

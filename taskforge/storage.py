@@ -128,6 +128,44 @@ class TaskStorage:
             task.id = cursor.lastrowid
         return task
 
+    def restore_task(self, task: Task) -> Task:
+        """Restore a previously deleted or undone task with its original ID and timestamps.
+        
+        Args:
+            task: Task instance with an explicit original ID.
+            
+        Returns:
+            The restored Task instance.
+            
+        Raises:
+            ValueError: If task.id is None or task validation fails.
+        """
+        if task.id is None:
+            raise ValueError("Cannot restore a task without an explicit ID.")
+        task.validate()
+        due_date_str = task.due_date.isoformat() if task.due_date else None
+
+        with self._get_connection() as conn:
+            conn.execute(
+                """
+                INSERT INTO tasks (
+                    id, title, description, priority, due_date, duration, status, created_at, updated_at
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?);
+                """,
+                (
+                    task.id,
+                    task.title,
+                    task.description,
+                    task.priority,
+                    due_date_str,
+                    task.duration,
+                    task.status,
+                    task.created_at.isoformat(),
+                    task.updated_at.isoformat(),
+                ),
+            )
+        return task
+
     def get_task(self, task_id: int) -> Task | None:
         """Retrieve a task by its unique ID.
         
