@@ -54,6 +54,14 @@ TaskForge is a Python web application that combines task management with practic
 - **Multi-Structure Evaluation Lab:** Controlled benchmark comparing Sequential List ($O(n)$), Custom Hash Table ($O(1)$ avg), and Custom BST ($O(\log n)$ avg) using equivalent datasets, targets, and operations.
 - **Interactive UI Lab & Charts:** Collision trigger demo, bucket distribution graphs, real-time comparison tables, and Matplotlib timing/comparison charts.
 
+### Phase 07: Smart Auto-Scheduler and Deadline Risk Analyzer (CO1 + CO5)
+- **Custom Priority Queue (`PriorityQueue`):** Pure Python generic binary Min-Heap with $O(\log N)$ push/pop and $O(1)$ peek, with zero reliance on Python's built-in `heapq` module.
+- **Dynamic Multi-Criteria Ranking:** Ranks eligible pending tasks using lexicographical key tuple `(-priority, has_deadline, normalized_deadline, duration, task_id, seq)`.
+- **Dependency & Cycle Safety:** Verifies directed graph acyclicity before scheduling; automatically excludes completed, in-progress, and prerequisite-blocked tasks.
+- **Deterministic Deadline Risk Analyzer:** Rule-based 5-category evaluation (Completed > Overdue > At Risk > Unscheduled > Safe) calculating exact slack buffer $(\text{Time Remaining} - \text{Duration})$ and identifying blocked prerequisites.
+- **Dual Queue Coexistence:** Demonstrates harmonious coexistence of FIFO background execution queue (`TaskQueueService`) and Heap recommendation engine (`SchedulerService`) without interference or state pollution.
+- **Interactive UI View:** Recommendations card, full heap execution sequence, blocked tasks inspector, risk category cards, and deep-dive slack calculator.
+
 ---
 
 ## 🛠️ Technology Stack
@@ -136,7 +144,8 @@ TaskForge/
 │   │   ├── stack.py                # Generic LIFO Stack implementation (CO1)
 │   │   ├── queue.py                # Generic FIFO Queue (singly-linked list) (CO1)
 │   │   ├── bst.py                  # Generic Binary Search Tree (CO4)
-│   │   └── hash_table.py           # Generic Hash Table with separate chaining (CO2)
+│   │   ├── hash_table.py           # Generic Hash Table with separate chaining (CO2)
+│   │   └── priority_queue.py       # Generic Binary Min-Heap Priority Queue (CO1)
 │   ├── graph/                      # Custom graph implementations (CO5)
 │   │   ├── __init__.py
 │   │   └── dependency_graph.py     # Custom adjacency-list Directed Graph, BFS, DFS, Kahn's sort (CO5)
@@ -153,7 +162,8 @@ TaskForge/
 │   │   ├── task_hash_index.py      # HashTable task-ID indexing service (CO2)
 │   │   ├── structure_evaluation.py # List vs HashTable vs BST evaluation engine (CO2)
 │   │   ├── dependency_service.py   # Graph SQLite sync and cycle validation (CO5)
-│   │   └── scheduler.py            # Dependency-aware task eligibility evaluator (CO5)
+│   │   ├── scheduler.py            # Heap-based task recommendation scheduler (CO1 + CO5)
+│   │   └── risk_analyzer.py        # Rule-based deadline risk & slack analyzer (CO1 + CO5)
 │   └── ui/                         # Modular Streamlit UI components
 │       ├── __init__.py
 │       ├── dashboard.py            # Dashboard metrics, filters, task table, custom sorting
@@ -162,8 +172,9 @@ TaskForge/
 │       ├── dsa_labs.py             # CO3 DSA Performance Lab & Matplotlib charts
 │       ├── tree_view.py            # CO4 BST Task Index, Traversals & Tree Visualizer
 │       ├── dependency_view.py      # CO5 Dependency Map, Topological Order & Traversals
-│       └── structure_evaluation_view.py # CO2 Hash Table Lab & Structure Comparison
-├── tests/                          # Automated test suite (149 tests)
+│       ├── structure_evaluation_view.py # CO2 Hash Table Lab & Structure Comparison
+│       └── scheduling_view.py      # CO1+CO5 Smart Scheduler & Deadline Risk UI
+├── tests/                          # Automated test suite (174 tests)
 │   ├── __init__.py
 │   ├── test_models.py              # Domain model and validation tests
 │   ├── test_storage.py             # SQLite CRUD and persistence tests
@@ -185,7 +196,11 @@ TaskForge/
 │   ├── test_hash_table.py          # Custom HashTable unit tests (CO2)
 │   ├── test_task_hash_index.py     # Task hash index service tests (CO2)
 │   ├── test_structure_evaluation.py # List vs Hash vs BST benchmark tests (CO2)
-│   └── test_phase6_integration.py  # Phase 06 multi-structure integration tests (CO2)
+│   ├── test_phase6_integration.py  # Phase 06 multi-structure integration tests (CO2)
+│   ├── test_priority_queue.py      # Binary Min-Heap unit tests (CO1)
+│   ├── test_smart_scheduler.py     # Heap-based scheduler unit tests (CO1 + CO5)
+│   ├── test_risk_analyzer.py       # Deadline risk analyzer unit tests (CO1 + CO5)
+│   └── test_phase7_integration.py  # Phase 07 end-to-end integration tests (CO1 + CO5)
 └── docs/                           # Project documentation
     ├── CO_MAPPING.md               # Official Course Outcome alignment matrix & viva guide
     └── ALGORITHM_COMPLEXITY.md     # Data structure & algorithm complexity analysis
@@ -195,10 +210,10 @@ TaskForge/
 
 ## 🎓 Course Outcomes (CO) Alignment
 
-- **CO1:** Develop efficient solutions using stack and/or queue data structures. *(Implemented in Phase 02)*
+- **CO1:** Develop efficient solutions using stack and/or queue data structures. *(Implemented in Phase 02 & Phase 07)*
 - **CO2:** Evaluate the suitability of data structures for efficient storage and retrieval. *(Implemented in Phase 06)*
 - **CO3:** Evaluate the performance of searching and sorting algorithms for solving engineering problems. *(Implemented in Phase 03)*
 - **CO4:** Develop tree structure for solving engineering problems. *(Implemented in Phase 04)*
-- **CO5:** Evaluate the applicability of graph data structures and traversal techniques for solving engineering problems. *(Implemented in Phase 05)*
+- **CO5:** Evaluate the applicability of graph data structures and traversal techniques for solving engineering problems. *(Implemented in Phase 05 & Phase 07)*
 
 See [`docs/CO_MAPPING.md`](docs/CO_MAPPING.md) and [`docs/ALGORITHM_COMPLEXITY.md`](docs/ALGORITHM_COMPLEXITY.md) for detailed verification and complexity tables.

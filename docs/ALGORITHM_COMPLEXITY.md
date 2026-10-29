@@ -202,3 +202,65 @@ The custom `HashTable[K, V]` implements an in-memory key-value dictionary using 
 4. **Empirical vs. Theoretical Observations:**
    - On small workloads ($N \le 100$), CPU cache locality and small constant factors can make linear array scanning perform within a few microseconds of hash lookup.
    - As $N$ scales ($N = 1,000$ and $N = 5,000$), linear search time grows strictly linearly with $N$ ($O(n)$), while Hash Table lookup remains flat at $\approx 1$ comparison ($O(1)$) and BST search grows logarithmically ($O(\log n)$).
+
+---
+
+## 9. Priority Queue (Binary Min-Heap) and Smart Auto-Scheduler (CO1 + CO5)
+
+### A. Binary Min-Heap Architecture & Operations (`PriorityQueue[T, P]`)
+
+TaskForge implements a pure Python generic **Binary Min-Heap Priority Queue** (`taskforge/structures/priority_queue.py`) with zero reliance on the Python standard library `heapq` module or third-party queue libraries.
+
+The binary heap is represented as a 0-indexed contiguous dynamic array (`list`), where for any element at index $i$:
+- **Parent index:** $\lfloor (i - 1) / 2 \rfloor$
+- **Left child index:** $2i + 1$
+- **Right child index:** $2i + 2$
+
+| Heap Operation | Time Complexity (Best) | Time Complexity (Average) | Time Complexity (Worst) | Space Complexity | Description |
+| :--- | :--- | :--- | :--- | :--- | :--- |
+| **`push(item, priority)`** | $O(1)$ | $O(\log N)$ | $O(\log N)$ | $O(1)$ auxiliary | Appends item to array end and bubbles up via `_sift_up`. |
+| **`pop()`** | $O(1)$ | $O(\log N)$ | $O(\log N)$ | $O(1)$ auxiliary | Replaces root with last leaf and bubbles down via `_sift_down`. |
+| **`peek()`** | $O(1)$ | $O(1)$ | $O(1)$ | $O(1)$ | Direct inspection of root element at index 0. |
+| **`is_empty()` / `size()`** | $O(1)$ | $O(1)$ | $O(1)$ | $O(1)$ | Query size of internal array. |
+| **`clear()`** | $O(1)$ | $O(1)$ | $O(1)$ | $O(1)$ | Discards internal array. |
+
+### B. Multi-Criteria Task Ranking Tuple
+
+To establish an optimal, deterministic schedule, TaskForge transforms task attributes into a composite lexicographical comparison tuple:
+
+$$\text{Key} = \left(-\text{priority\_value},\; \text{has\_deadline\_flag},\; \text{normalized\_timestamp},\; \text{duration},\; \text{task\_id},\; \text{seq}\right)$$
+
+1. **Primary Key: Priority Level ($-\text{priority}$):**
+   - Higher priority tasks must execute first (Urgent: 4, High: 3, Medium: 2, Low: 1).
+   - In a Min-Heap, negating the priority $(-4 < -3 < -2 < -1)$ ensures Urgent tasks bubble to the root.
+2. **Secondary Key: Deadline Urgency ($\text{has\_deadline}, \text{normalized\_timestamp}$):**
+   - Tasks with deadlines precede tasks without deadlines (`0 < 1`).
+   - For tasks with deadlines, earlier deadlines (smaller Unix timestamps) bubble up before later deadlines.
+3. **Tertiary Key: Shortest Duration ($\text{duration}$):**
+   - Tie-breaker for identical priority and deadline: shorter duration tasks execute first (Shortest Job First heuristic) to maximize completion velocity.
+4. **Quaternary Key: Task ID & Insertion Sequence ($\text{task\_id}, \text{seq}$):**
+   - Deterministic tie-breakers that strictly prevent non-deterministic comparison failures when all other attributes match.
+
+### C. Smart Auto-Scheduler Overall Complexity (`SchedulerService`)
+
+Given a project graph with $V$ tasks, $E$ dependency edges, and $K$ eligible pending tasks ($K \le V$):
+
+1. **Graph Synchronization & Cycle Detection:** $O(V + E)$ using DFS 3-color cycle detection.
+2. **Prerequisite Filtering:** $O(V)$ to filter unblocked tasks where all prerequisites have status `Completed`.
+3. **Heap Construction & Extraction:** Pushing $K$ eligible tasks into `PriorityQueue` takes $O(K \log K)$, and extracting them in order takes $O(K \log K)$.
+4. **Total Time Complexity:** $\mathcal{O}(V + E + K \log K)$.
+5. **Total Space Complexity:** $\mathcal{O}(V + E + K)$ auxiliary memory for the in-memory graph, adjacency sets, and heap elements.
+
+### D. Architectural Comparison: FIFO Dispatch Queue vs. Heap Priority Queue
+
+| Dimension | FIFO Execution Queue (`TaskQueueService`) | Heap Priority Queue (`PriorityQueue`) |
+| :--- | :--- | :--- |
+| **Course Outcome** | **CO1** (Basic linear queue) + **CO5** | **CO1** (Advanced tree-based priority queue) + **CO5** |
+| **Underlying Structure** | Doubly-Linked / Circular Linear Queue | Complete Binary Tree mapped to Array |
+| **Ordering Metric** | Arrival Timestamp (`created_at ASC, id ASC`) | Multi-criteria priority tuple ($-\text{priority}$, deadline, duration) |
+| **Enqueue / Push** | **$O(1)$** | **$O(\log N)$** |
+| **Dequeue / Pop** | **$O(1)$** | **$O(\log N)$** |
+| **Peek Next Task** | **$O(1)$** | **$O(1)$** |
+| **System Role** | Operational execution dispatch (fair background worker) | Strategic planning & schedule optimization (recommendation engine) |
+| **Interference** | **Independent** (both read SQLite; neither mutates the other) | **Independent** (both read SQLite; neither mutates the other) |
+

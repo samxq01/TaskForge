@@ -10,6 +10,7 @@ import streamlit as st
 
 from taskforge.models import Priority, Task, TaskStatus
 from taskforge.services.dependency_service import DependencyService
+from taskforge.services.risk_analyzer import DeadlineRiskAnalyzer
 from taskforge.services.scheduler import SchedulerService
 from taskforge.services.task_hash_index import TaskHashIndexService
 from taskforge.services.task_index import TaskIndexService
@@ -20,6 +21,7 @@ from taskforge.ui.dashboard import render_dashboard
 from taskforge.ui.dependency_view import render_dependency_view
 from taskforge.ui.dsa_labs import render_dsa_performance_lab
 from taskforge.ui.history_view import render_history_view
+from taskforge.ui.scheduling_view import render_scheduling_view
 from taskforge.ui.structure_evaluation_view import render_structure_evaluation_view
 from taskforge.ui.tree_view import render_tree_view
 
@@ -79,6 +81,13 @@ def get_hash_index_service(storage: TaskStorage) -> TaskHashIndexService:
     if "hash_index" not in st.session_state:
         st.session_state.hash_index = TaskHashIndexService(storage)
     return st.session_state.hash_index
+
+
+def get_risk_analyzer_service(storage: TaskStorage, dep_service: DependencyService) -> DeadlineRiskAnalyzer:
+    """Initialize or retrieve DeadlineRiskAnalyzer singleton (CO1 + CO5)."""
+    if "risk_analyzer" not in st.session_state:
+        st.session_state.risk_analyzer = DeadlineRiskAnalyzer(storage, dep_service)
+    return st.session_state.risk_analyzer
 
 
 def load_sample_tasks(
@@ -195,6 +204,7 @@ def render_sidebar(
             options=[
                 "📋 Task Dashboard & Registry",
                 "🔄 Task Processing & History (CO1)",
+                "🧠 Smart Scheduling & Deadline Risks (CO1 + CO5)",
                 "🧮 Data Structure Evaluation (CO2)",
                 "🔬 DSA Performance Lab (CO3)",
                 "🌲 BST Task Index (CO4)",
@@ -213,8 +223,8 @@ def render_sidebar(
 - 🟢 **Phase 03:** Searching & Sorting Lab (CO3) *(Complete)*
 - 🟢 **Phase 04:** BST Deadline Index (CO4) *(Complete)*
 - 🟢 **Phase 05:** Dependency Graph & Visual Map (CO5) *(Complete)*
-- 🟢 **Phase 06:** Hash Table & Storage Lab (CO2) *(Active)*
-- 🔒 **Phase 07:** Smart Auto-Scheduler
+- 🟢 **Phase 06:** Hash Table & Storage Lab (CO2) *(Complete)*
+- 🟢 **Phase 07:** Smart Auto-Scheduler & Risk Analyzer (CO1 + CO5) *(Active)*
 - 🔒 **Phase 08:** Critical Path & Simulator
 - 🔒 **Phase 09:** Final Polish & Integration
             """
@@ -258,7 +268,7 @@ def render_sidebar(
                         st.rerun()
 
         st.markdown("---")
-        st.caption("TaskForge v0.6.0 • Phase 06 (CO2)")
+        st.caption("TaskForge v0.7.0 • Phase 07 (CO1 + CO5)")
 
     return view_choice
 
@@ -276,6 +286,7 @@ def main() -> None:
     undo_manager = get_undo_manager()
     dep_service = get_dependency_service(storage)
     scheduler_service = get_scheduler_service(storage, dep_service)
+    risk_analyzer = get_risk_analyzer_service(storage, dep_service)
     queue_service = get_queue_service(storage, undo_manager, dep_service)
     index_service = get_index_service(storage)
     hash_index = get_hash_index_service(storage)
@@ -298,6 +309,8 @@ def main() -> None:
         render_dashboard(storage, undo_manager=undo_manager, queue_service=queue_service)
     elif current_view == "🔄 Task Processing & History (CO1)":
         render_history_view(storage, undo_manager, queue_service)
+    elif current_view == "🧠 Smart Scheduling & Deadline Risks (CO1 + CO5)":
+        render_scheduling_view(storage, scheduler_service, risk_analyzer, queue_service)
     elif current_view == "🧮 Data Structure Evaluation (CO2)":
         render_structure_evaluation_view(storage, hash_index)
     elif current_view == "🔬 DSA Performance Lab (CO3)":

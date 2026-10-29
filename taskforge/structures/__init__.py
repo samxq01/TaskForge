@@ -2,6 +2,7 @@
 
 from taskforge.structures.bst import BinarySearchTree, TreeNode
 from taskforge.structures.hash_table import HashTable
+from taskforge.structures.priority_queue import EmptyPriorityQueueError, PriorityQueue
 from taskforge.structures.queue import EmptyQueueError, Queue
 from taskforge.structures.stack import EmptyStackError, Stack
 
@@ -13,4 +14,6 @@ __all__ = [
     "BinarySearchTree",
     "TreeNode",
     "HashTable",
+    "PriorityQueue",
+    "EmptyPriorityQueueError",
 ]

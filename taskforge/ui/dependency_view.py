@@ -350,7 +350,7 @@ def render_dependency_view(
                                 st.rerun()
 
     # TAB 3: Topological Order
-    with tab_manage_topo := tab_topo:
+    with tab_topo:
         st.subheader("Topological Task Scheduling Order (Kahn's Algorithm)")
         st.markdown(
             """

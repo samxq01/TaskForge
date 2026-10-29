@@ -28,7 +28,7 @@ This document provides the official Course Outcome (CO) mapping for **TaskForge:
 | **CO4** | **Phase 04** | Custom Binary Search Tree (BST) for deadline indexing and inorder traversal | `taskforge/structures/bst.py`<br>`taskforge/services/task_index.py`<br>`taskforge/ui/tree_view.py` | **Implemented (Phase 04)** | `tests/test_bst.py`<br>`tests/test_bst_integration.py` (20 tests passing) |
 | **CO5** | **Phase 05** | Custom Adjacency-List Graph, BFS/DFS Traversal, Cycle Detection, Topological Sorting (Kahn's), Dependency Scheduler | `taskforge/graph/dependency_graph.py`<br>`taskforge/services/dependency_service.py`<br>`taskforge/services/scheduler.py`<br>`taskforge/ui/dependency_view.py` | **Implemented (Phase 05)** | `tests/test_dependency_graph.py`<br>`tests/test_dependency_service.py`<br>`tests/test_scheduler.py`<br>`tests/test_dependency_integration.py` (28 tests passing) |
 | **CO2** | **Phase 06** | Custom Hash Table (separate chaining), Task-ID Index, & Multi-Structure Evaluation Lab (List vs Hash vs BST) | `taskforge/structures/hash_table.py`<br>`taskforge/services/task_hash_index.py`<br>`taskforge/services/structure_evaluation.py`<br>`taskforge/ui/structure_evaluation_view.py` | **Implemented (Phase 06)** | `tests/test_hash_table.py`<br>`tests/test_task_hash_index.py`<br>`tests/test_structure_evaluation.py`<br>`tests/test_phase6_integration.py` (23 tests passing) |
-| **CO1 + CO5** | **Phase 07** | Custom Heap Priority Queue, Smart Auto-Scheduler, Rule-Based Deadline Risk Analyzer | `taskforge/structures/priority_queue.py`<br>`taskforge/services/scheduler.py`<br>`taskforge/services/risk_analyzer.py` | *Planned (Phase 07)* | Priority heap invariant tests, scheduler eligibility, risk boundary tests |
+| **CO1 + CO5** | **Phase 07** | Custom Heap Priority Queue, Smart Auto-Scheduler, Rule-Based Deadline Risk Analyzer | `taskforge/structures/priority_queue.py`<br>`taskforge/services/scheduler.py`<br>`taskforge/services/risk_analyzer.py`<br>`taskforge/ui/scheduling_view.py` | **Implemented (Phase 07)** | `tests/test_priority_queue.py`<br>`tests/test_smart_scheduler.py`<br>`tests/test_risk_analyzer.py`<br>`tests/test_phase7_integration.py` (25 tests passing) |
 | **CO5** | **Phase 08** | Critical Path Analyzer (DAG Longest Path) & What-If Schedule Simulator (Non-mutating) | `taskforge/services/critical_path.py`<br>`taskforge/services/what_if_simulator.py` | *Planned (Phase 08)* | Critical path duration tests, downstream delay propagation tests, non-mutation proofs |
 | **All COs** | **Phase 09** | Full Integration, System Verification, Performance Audit & Viva Documentation | Whole application integration | *Planned (Phase 09)* | End-to-end integration tests covering all CO criteria |
 
@@ -91,6 +91,60 @@ This document provides the official Course Outcome (CO) mapping for **TaskForge:
 - Kahn's algorithm topological sorting with custom FIFO Queue.
 - Dependency-aware scheduler filtering the FIFO task processing queue.
 - Verified by 28 automated tests.
+
+### Phase 07 Extension (CO1 + CO5): Smart Priority Auto-Scheduler & Deadline Risk Analyzer
+*(Implemented in Phase 07)*
+- **CO1 (Binary Min-Heap Priority Queue):**
+  - Pure Python generic binary Min-Heap `PriorityQueue[T, P]` in `taskforge/structures/priority_queue.py`.
+  - Manual array-based heap with `_sift_up` and `_sift_down` algorithms ($O(\log N)$ push and pop, $O(1)$ peek).
+  - Absolutely zero dependence on Python's built-in `heapq` module or external priority queue libraries.
+  - Generates multi-criteria lexicographical ranking keys: `(-priority, has_deadline, normalized_deadline, duration, task_id, seq)`.
+- **CO5 (Dependency Awareness & Cycle Safety):**
+  - Integrates `detect_cycle()` from `DependencyGraph` prior to scheduling: rejects scheduling and warns user if deadlocked by circular dependencies.
+  - Automatically filters only **eligible** Pending tasks (those with all prerequisite tasks in `Completed` status).
+  - Isolates and reports blocked tasks and their blocking prerequisite task titles.
+- **Deadline Risk Analyzer (`taskforge/services/risk_analyzer.py`):**
+  - Rigorous, deterministic rule-based evaluation (strictly zero probabilistic or ML models).
+  - 5 mutually exclusive primary categories evaluated in strict precedence:
+    `Completed` $\to$ `Overdue` $\to$ `At Risk` $\to$ `Unscheduled` $\to$ `Safe`.
+  - Calculates deterministic slack buffer: $\text{Slack} = \text{Remaining Time} - \text{Task Duration}$.
+  - Flags incomplete prerequisites as risk drivers (`is_blocked = True`).
+- **Coexistence Architecture:**
+  - FIFO Execution Queue (`TaskQueueService`) and Smart Heap Scheduler (`SchedulerService`) coexist seamlessly; both read SQLite independently without mutative side-effects.
+- **Verification:**
+  - `tests/test_priority_queue.py`: 7 tests covering min-heap invariants, sift operations, push/pop/peek, and FIFO tie-breaking.
+  - `tests/test_smart_scheduler.py`: 5 tests covering multi-criteria ranking, prerequisite exclusion, cycle detection abort, and FIFO coexistence.
+  - `tests/test_risk_analyzer.py`: 10 tests covering all 5 categories, boundary conditions, and aggregate metrics.
+  - `tests/test_phase7_integration.py`: 3 end-to-end integration tests verifying prerequisite unblocking, undo/redo synchronization, and queue coexistence.
+  - **Total active tests for Phase 07:** 25 tests (all passing). Total project tests: 174 passing.
+
+---
+
+## Academic Viva Demonstration Procedure (CO1 + CO5: Phase 07)
+
+1. **Launch the application:**
+   ```bash
+   streamlit run app.py
+   ```
+2. **Access the Smart Scheduling & Deadline Risks Module:**
+   - In the sidebar navigation, select **🧠 Smart Scheduling & Deadline Risks (CO1 + CO5)**.
+3. **Demonstrate the Binary Min-Heap Priority Queue (CO1):**
+   - Click the expander **💡 Architectural Insight: FIFO Dispatch Queue vs. Smart Heap Auto-Scheduler**.
+   - Explain to faculty:
+     * *“Notice our dual queue design. In Phase 02, we built a FIFO Queue ($O(1)$ enqueue/dequeue) for fair execution dispatching. Here in Phase 07, we built a custom Binary Min-Heap Priority Queue ($O(\log N)$ push/pop) from scratch without using Python’s `heapq` module.”*
+     * *“The Min-Heap uses a multi-criteria ranking key: $(-priority, has\_deadline, deadline, duration, id)$. This guarantees that urgent tasks and impending deadlines bubble to the root automatically.”*
+4. **Demonstrate Dependency-Aware Scheduling (CO5):**
+   - Show the **🎯 Top Recommended Task** card and the **Recommended Execution Sequence** table.
+   - Point out that blocked tasks (tasks whose prerequisites are not yet completed) are automatically excluded from recommendations.
+   - Inspect the **🔒 Blocked Tasks Waiting on Incomplete Prerequisites** expander to show exactly which prerequisite tasks are currently holding back dependent tasks.
+5. **Demonstrate the Deterministic Deadline Risk Analyzer:**
+   - Switch to the **🛡️ Deadline Risk Analyzer** tab.
+   - Walk through the summary metrics cards: Safe, At Risk, Overdue, Unscheduled, and Blocked.
+   - Explain the deterministic precedence rules:
+     * *“Our risk engine does not guess or hallucinate. It applies deterministic precedence: Completed > Overdue > At Risk > Unscheduled > Safe.”*
+     * *“If a task has available time less than its required duration, its slack buffer is negative, immediately categorizing it as At Risk. Similarly, any task blocked by incomplete prerequisites is flagged as At Risk.”*
+   - Use the **Filter by Risk Category** selectbox to inspect only At Risk or Overdue tasks.
+   - In the **Task Risk Diagnostics Inspector**, select a task to reveal its mathematical slack equation and prerequisite status.
 
 ---
 
