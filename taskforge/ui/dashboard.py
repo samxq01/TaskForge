@@ -1,4 +1,4 @@
-"""Main dashboard view for task management."""
+"""Main dashboard view for task management with custom DSA searching and sorting integration."""
 
 from __future__ import annotations
 
@@ -7,6 +7,15 @@ from typing import Any, Optional
 
 import streamlit as st
 
+from taskforge.algorithms.searching import binary_search, linear_search
+from taskforge.algorithms.sorting import (
+    insertion_sort,
+    merge_sort,
+    task_deadline_key,
+    task_id_key,
+    task_priority_deadline_key,
+    task_priority_key,
+)
 from taskforge.models import Priority, Task, TaskStatus
 from taskforge.services.task_queue_service import TaskQueueService
 from taskforge.services.undo_manager import ActionType, UndoManager
@@ -78,7 +87,7 @@ def render_dashboard(
     undo_manager: Optional[UndoManager] = None,
     queue_service: Optional[TaskQueueService] = None,
 ) -> None:
-    """Render the full TaskForge dashboard with CRUD operations and undo/redo integration."""
+    """Render the full TaskForge dashboard with CRUD operations, undo/redo, and custom sorting/searching."""
     # Summary Metrics
     render_summary_metrics(storage)
     st.markdown("---")
@@ -89,7 +98,7 @@ def render_dashboard(
     if "deleting_task_id" not in st.session_state:
         st.session_state.deleting_task_id = None
 
-    # Quick Undo/Redo Bar if available
+    # Quick Undo/Redo Bar
     if undo_manager is not None:
         col_undo, col_redo, col_status = st.columns([2, 2, 4])
         with col_undo:
@@ -150,7 +159,7 @@ def render_dashboard(
 
     render_add_task_form(storage, on_created, undo_manager=undo_manager)
 
-    st.markdown("### 🔍 Task Registry & Filters")
+    st.markdown("### 🔍 Task Registry, Search & Custom Sorting (CO3)")
 
     # Filter Controls
     col_search, col_status, col_priority, col_reset = st.columns([3, 2, 2, 1])
@@ -182,13 +191,38 @@ def render_dashboard(
         )
 
     with col_reset:
-        st.write("")  # Vertical spacing
+        st.write("")
         st.write("")
         if st.button("Reset Filters", use_container_width=True):
             st.session_state.input_search = ""
             st.session_state.input_status_filter = "All"
             st.session_state.input_priority_filter = "All"
             st.rerun()
+
+    # Custom Sorting Controls (CO3 Demonstration)
+    col_sort_mode, col_sort_algo = st.columns([3, 2])
+    with col_sort_mode:
+        sort_mode = st.selectbox(
+            "⚡ Sort Tasks By (Manual DSA Implementation):",
+            options=[
+                ("db_default", "Default Database Order (Status, Priority, ID)"),
+                ("deadline_asc", "Deadline Ascending (Earliest First, No Deadline Last)"),
+                ("priority_desc", "Priority Descending (Urgent to Low)"),
+                ("priority_deadline", "Priority & Deadline Combined (Tie-break by ID)"),
+                ("id_asc", "Task ID Ascending (Binary Search Order)"),
+            ],
+            format_func=lambda x: x[1],
+            index=0,
+            key="dashboard_sort_mode",
+        )[0]
+
+    with col_sort_algo:
+        sort_algo = st.selectbox(
+            "Sorting Algorithm:",
+            options=["Merge Sort (O(n log n))", "Insertion Sort (O(n²))"],
+            index=0,
+            key="dashboard_sort_algo",
+        )
 
     # Determine filter query values
     status_param = None if selected_status == "All" else selected_status
@@ -205,6 +239,58 @@ def render_dashboard(
         search=search_query if search_query.strip() else None,
     )
 
+    # Apply manual sorting algorithm to in-memory tasks
+    sort_metrics_str = ""
+    if tasks and sort_mode != "db_default":
+        sort_fn = merge_sort if "Merge" in sort_algo else insertion_sort
+
+        if sort_mode == "deadline_asc":
+            sort_result = sort_fn(tasks, key=task_deadline_key)
+        elif sort_mode == "priority_desc":
+            sort_result = sort_fn(tasks, key=task_priority_key)
+        elif sort_mode == "priority_deadline":
+            sort_result = sort_fn(tasks, key=task_priority_deadline_key)
+        elif sort_mode == "id_asc":
+            sort_result = sort_fn(tasks, key=task_id_key)
+        else:
+            sort_result = None
+
+        if sort_result is not None:
+            tasks = sort_result.items
+            sort_metrics_str = f"📊 Ordered using **{sort_algo.split()[0]} {sort_algo.split()[1]}**: **{sort_result.comparisons}** comparisons, **{sort_result.shifts}** shifts."
+
+    # Search Demonstration by ID (Binary Search vs Linear Search)
+    with st.expander("🔎 **Algorithm Search Demonstration (Lookup by Task ID)**", expanded=False):
+        col_s_id, col_s_mode, col_s_btn = st.columns([2, 2, 1])
+        with col_s_id:
+            search_task_id = st.number_input("Target Task ID", min_value=1, step=1, value=1)
+        with col_s_mode:
+            search_method = st.radio("Search Algorithm:", ["Binary Search (O(log n))", "Linear Search (O(n))"], horizontal=True)
+        with col_s_btn:
+            st.write("")
+            st.write("")
+            run_search_clicked = st.button("Search Task", use_container_width=True)
+
+        if run_search_clicked:
+            all_current_tasks = storage.list_tasks()
+            if not all_current_tasks:
+                st.warning("No tasks available to search.")
+            else:
+                if "Binary" in search_method:
+                    # Binary search precondition: sort by task ID first
+                    sorted_tasks = merge_sort(all_current_tasks, key=task_id_key).items
+                    s_res = binary_search(sorted_tasks, target=search_task_id, key=task_id_key)
+                    if s_res.found and s_res.item:
+                        st.success(f"✅ Found #{s_res.item.id} '{s_res.item.title}' in **{s_res.comparisons}** comparison(s) using **Binary Search**! (Index: {s_res.index})")
+                    else:
+                        st.info(f"ℹ️ Task ID #{search_task_id} not found (determined in {s_res.comparisons} comparisons).")
+                else:
+                    s_res = linear_search(all_current_tasks, target=search_task_id, key=task_id_key)
+                    if s_res.found and s_res.item:
+                        st.success(f"✅ Found #{s_res.item.id} '{s_res.item.title}' in **{s_res.comparisons}** comparison(s) using **Linear Search**! (Index: {s_res.index})")
+                    else:
+                        st.info(f"ℹ️ Task ID #{search_task_id} not found (scanned all {s_res.comparisons} tasks).")
+
     now = datetime.now()
 
     # Active Deletion Confirmation Alert
@@ -215,7 +301,6 @@ def render_dashboard(
             col_conf1, col_conf2 = st.columns([1, 1])
             with col_conf1:
                 if st.button("🚨 Yes, Delete Task", key=f"confirm_del_{task_to_del.id}", type="primary", use_container_width=True):
-                    # Record deletion action in undo manager before removal
                     if undo_manager is not None and task_to_del.id is not None:
                         undo_manager.record_action(
                             action_type=ActionType.DELETE,
@@ -241,7 +326,7 @@ def render_dashboard(
     if not tasks:
         st.info("ℹ️ No tasks found matching the criteria. Create a new task above or reset filters.")
     else:
-        st.caption(f"Showing **{len(tasks)}** task(s)")
+        st.caption(f"Showing **{len(tasks)}** task(s). {sort_metrics_str}")
 
         # Table header
         header_cols = st.columns([1, 4, 2, 3, 2, 2, 2])

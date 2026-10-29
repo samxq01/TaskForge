@@ -13,6 +13,7 @@ from taskforge.services.task_queue_service import TaskQueueService
 from taskforge.services.undo_manager import ActionType, UndoManager
 from taskforge.storage import TaskStorage
 from taskforge.ui.dashboard import render_dashboard
+from taskforge.ui.dsa_labs import render_dsa_performance_lab
 from taskforge.ui.history_view import render_history_view
 
 
@@ -111,7 +112,7 @@ def render_sidebar(
     """Render the sidebar with navigation, phase status, and demonstration tools."""
     with st.sidebar:
         st.title("⚡ TaskForge")
-        st.caption("College DSA Micro-Project • CO1 Active")
+        st.caption("College DSA Micro-Project • CO1 & CO3 Active")
 
         st.markdown("### 📌 Navigation")
         view_choice = st.radio(
@@ -119,9 +120,10 @@ def render_sidebar(
             options=[
                 "📋 Task Dashboard & Registry",
                 "🔄 Task Processing & History (CO1)",
+                "🔬 DSA Performance Lab (CO3)",
             ],
             index=0,
-            help="Navigate between Phase 01 Dashboard and Phase 02 CO1 Processing & History.",
+            help="Navigate between Task Management, CO1 Queue/Stack processing, and CO3 Performance Lab.",
         )
 
         st.markdown("---")
@@ -129,8 +131,8 @@ def render_sidebar(
         st.markdown(
             """
 - 🟢 **Phase 01:** Foundation & Tasks *(Complete)*
-- 🟢 **Phase 02:** Stack, Queue & Undo/Redo (CO1) *(Active)*
-- 🔒 **Phase 03:** Searching & Sorting Lab (CO3)
+- 🟢 **Phase 02:** Stack, Queue & Undo/Redo (CO1) *(Complete)*
+- 🟢 **Phase 03:** Searching & Sorting Lab (CO3) *(Active)*
 - 🔒 **Phase 04:** BST Deadline Index (CO4)
 - 🔒 **Phase 05:** Dependency Graph & Visual Map (CO5)
 - 🔒 **Phase 06:** Hash Table & Storage Lab (CO2)
@@ -175,7 +177,7 @@ def render_sidebar(
                         st.rerun()
 
         st.markdown("---")
-        st.caption("TaskForge v0.2.0 • Phase 02 (CO1)")
+        st.caption("TaskForge v0.3.0 • Phase 03 (CO3)")
 
     return view_choice
 
@@ -199,11 +201,13 @@ def main() -> None:
 
     if current_view == "📋 Task Dashboard & Registry":
         st.markdown(
-            "Manage tasks with persistent SQLite storage, real-time metrics, and instant **Undo/Redo** capabilities."
+            "Manage tasks with persistent SQLite storage, real-time metrics, custom sorting, and instant **Undo/Redo**."
         )
         render_dashboard(storage, undo_manager=undo_manager, queue_service=queue_service)
-    else:
+    elif current_view == "🔄 Task Processing & History (CO1)":
         render_history_view(storage, undo_manager, queue_service)
+    elif current_view == "🔬 DSA Performance Lab (CO3)":
+        render_dsa_performance_lab()
 
 
 if __name__ == "__main__":

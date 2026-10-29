@@ -23,8 +23,8 @@ This document provides the official Course Outcome (CO) mapping for **TaskForge:
 | Course Outcome | Project Phase | Planned Feature & Data Structure | Target Implementation Module | Implementation Status | Test Suite & Verification |
 | :--- | :--- | :--- | :--- | :--- | :--- |
 | **Foundation** | **Phase 01** | Task Model, SQLite Storage, Parameterized Queries, Interactive Dashboard | `taskforge/models.py`<br>`taskforge/storage.py`<br>`taskforge/ui/` | **Implemented (Phase 01)** | `tests/test_models.py`<br>`tests/test_storage.py` (18 tests passing) |
-| **CO1** | **Phase 02** | Custom Stack (LIFO undo/redo manager) & Custom Queue (FIFO task execution engine) | `taskforge/structures/stack.py`<br>`taskforge/structures/queue.py`<br>`taskforge/services/undo_manager.py`<br>`taskforge/services/task_queue_service.py` | **Implemented (Active)** | `tests/test_stack.py`<br>`tests/test_queue.py`<br>`tests/test_undo_manager.py`<br>`tests/test_task_queue_service.py`<br>`tests/test_phase2_integration.py` (26 tests passing) |
-| **CO3** | **Phase 03** | Searching (Linear Search, Binary Search) & Sorting (Insertion Sort, Merge Sort) + DSA Performance Lab | `taskforge/algorithms/searching.py`<br>`taskforge/algorithms/sorting.py`<br>`taskforge/services/benchmark_service.py` | *Planned (Phase 03)* | Correctness tests, deterministic tie-breaking, benchmark reproducibility tests |
+| **CO1** | **Phase 02** | Custom Stack (LIFO undo/redo manager) & Custom Queue (FIFO task execution engine) | `taskforge/structures/stack.py`<br>`taskforge/structures/queue.py`<br>`taskforge/services/undo_manager.py`<br>`taskforge/services/task_queue_service.py` | **Implemented (Phase 02)** | `tests/test_stack.py`<br>`tests/test_queue.py`<br>`tests/test_undo_manager.py`<br>`tests/test_task_queue_service.py`<br>`tests/test_phase2_integration.py` (26 tests passing) |
+| **CO3** | **Phase 03** | Searching (Linear Search, Binary Search) & Sorting (Insertion Sort, Merge Sort) + DSA Performance Lab | `taskforge/algorithms/searching.py`<br>`taskforge/algorithms/sorting.py`<br>`taskforge/services/benchmark_service.py`<br>`taskforge/ui/dsa_labs.py` | **Implemented (Active)** | `tests/test_searching.py`<br>`tests/test_sorting.py`<br>`tests/test_benchmarks.py`<br>`tests/test_dsa_integration.py` (34 tests passing) |
 | **CO4** | **Phase 04** | Custom Binary Search Tree (BST) for deadline indexing and inorder traversal | `taskforge/structures/bst.py` | *Planned (Phase 04)* | BST insertion, search, traversals, composite key handling, tree rebuilding tests |
 | **CO5** | **Phase 05** | Custom Adjacency-List Graph, BFS/DFS Traversal, Cycle Detection, Topological Sorting | `taskforge/graph/dependency_graph.py`<br>`taskforge/ui/dependency_map.py` | *Planned (Phase 05)* | Directed graph edge tests, cycle prevention, prerequisite resolution tests |
 | **CO2** | **Phase 06** | Custom Hash Table (separate chaining) & Multi-Structure Storage/Retrieval Evaluation Lab | `taskforge/structures/hash_table.py`<br>`taskforge/services/structure_evaluation.py` | *Planned (Phase 06)* | Collision handling, load-factor analysis, comparative retrieval benchmark tests |
@@ -37,49 +37,55 @@ This document provides the official Course Outcome (CO) mapping for **TaskForge:
 ## Detailed Evidence for Implemented Course Outcomes
 
 ### CO1: Develop efficient solutions using stack and/or queue data structures.
+*(Implemented in Phase 02 — see previous commit `30c3f9c`)*
+- Custom generic `Stack` (LIFO) and `Queue` (FIFO singly-linked list without `collections.deque`).
+- Dual-stack `UndoManager` reversing task creation, editing, deletion, and queue processing.
+- FIFO pending-task dispatching via `TaskQueueService`.
+- Verified by 26 automated tests.
 
-- **Custom Stack Implementation (`taskforge/structures/stack.py`):**
-  - Custom generic `Stack[T]` strictly upholding LIFO principles with `push`, `pop`, `peek`, `is_empty`, and `size` methods.
-  - Guarantees $O(1)$ operations with custom `EmptyStackError` handling.
-- **Custom Queue Implementation (`taskforge/structures/queue.py`):**
-  - Custom generic `Queue[T]` implementing FIFO mechanics using an internal singly-linked list (`_Node`).
-  - Does NOT use `collections.deque` or $O(n)$ `list.pop(0)`. Guarantees strict $O(1)$ enqueue and $O(1)$ dequeue.
-- **Dual-Stack Undo/Redo Engine (`taskforge/services/undo_manager.py`):**
-  - Manages session-level action history across task creation, editing, and deletion using dual LIFO stacks (`_undo_stack` and `_redo_stack`).
-  - Restores exact original task IDs, timestamps, and fields in SQLite.
-  - Automatically resets redo stack upon new mutations to prevent branched history corruption.
-- **FIFO Task Dispatcher (`taskforge/services/task_queue_service.py`):**
-  - Enqueues all `Pending` tasks ordered deterministically by `created_at ASC, id ASC`.
-  - Dispatches tasks via `process_next_task()`, updating status to `In Progress` in SQLite and pushing an undoable action to the Undo Stack.
-- **Supporting Test Evidence:**
-  - `tests/test_stack.py`: 7 tests verifying LIFO order, empty exceptions, and safe inspection.
-  - `tests/test_queue.py`: 8 tests verifying FIFO order, constant time head/tail dispatching, and exceptions.
-  - `tests/test_undo_manager.py`: 6 tests verifying reversible creation, editing, deletion, and redo invalidation.
-  - `tests/test_task_queue_service.py`: 4 tests verifying pending queue ordering and status transitions.
-  - `tests/test_phase2_integration.py`: 1 end-to-end integration test verifying full create-undo-redo-process-undo-redo lifecycle.
-  - **Total active tests for CO1:** 26 tests (all passing).
+### CO3: Evaluate the performance of searching and sorting algorithms for solving engineering problems.
+*(Implemented in Phase 03)*
+- **Manual Searching Algorithms (`taskforge/algorithms/searching.py`):**
+  - `linear_search`: Sequential search with $O(1)$ best, $O(n)$ average/worst case, returning deterministic first-matches.
+  - `binary_search`: Iterative divide-and-conquer search with $O(\log n)$ efficiency on pre-sorted data.
+- **Manual Sorting Algorithms (`taskforge/algorithms/sorting.py`):**
+  - `insertion_sort`: Stable incremental sort ($O(n)$ best case on sorted data, $O(n^2)$ worst case).
+  - `merge_sort`: Stable divide-and-conquer sort with guaranteed $O(n \log n)$ time across all distributions.
+  - Custom key functions: `task_deadline_key` (deadline ascending, unscheduled last), `task_priority_key` (Urgent to Low), `task_priority_deadline_key` (combined tie-break), and `task_id_key`.
+- **DSA Performance Laboratory (`taskforge/services/benchmark_service.py`, `taskforge/ui/dsa_labs.py`):**
+  - Empirical evaluation comparing Linear vs. Binary search across first, middle, last, and absent targets.
+  - Comparison of Insertion vs. Merge sort on randomized, sorted, and reverse-sorted distributions across configurable sizes ($N=100$ to $N=5000$).
+  - Measured with `time.perf_counter()`, recording exact comparison and data-shift operations.
+  - Visualized using Matplotlib bar charts.
+- **Automated Verification:**
+  - `tests/test_searching.py`: 13 tests covering edge cases, positions, duplicates, and task lookups.
+  - `tests/test_sorting.py`: 14 tests covering stability, reverse flags, distributions, and task sorting rules.
+  - `tests/test_benchmarks.py`: 6 tests verifying reproducible benchmark runs, metric shapes, and distributions.
+  - `tests/test_dsa_integration.py`: 1 integration test verifying non-mutating search and sort over live SQLite records.
+  - **Total active tests for CO3:** 34 tests (all passing).
 
 ---
 
-## Academic Viva Demonstration Procedure (CO1)
+## Academic Viva Demonstration Procedure (CO3)
 
 1. **Launch the application:**
    ```bash
    streamlit run app.py
    ```
-2. **Demonstrate FIFO Queue (Task Processing):**
-   - Click **🌱 Load Sample Tasks** in the sidebar.
-   - Navigate to **🔄 Task Processing & History (CO1)** in the sidebar navigation.
-   - Show the **📋 FIFO Pending Queue** tab.
-   - Point out that tasks appear in order of creation time (#1 at the front).
-   - Click **⚡ Process Next Task (FIFO Dequeue)**. Observe the front task status change from `Pending` to `In Progress` and leave the queue.
-3. **Demonstrate LIFO Undo/Redo:**
-   - Switch to the **⏪ LIFO Undo / Redo Stacks** tab.
-   - Show that the processing action sits at the top of the **📚 Undo Stack**.
-   - Click **↩️ Undo**. Observe the task revert back to `Pending` in the database and re-enter the queue.
-   - Point out that the action transferred to the **📚 Redo Stack**.
-   - Click **↪️ Redo**. Observe the action re-applied to `In Progress` and transferred back to the Undo Stack.
-4. **Demonstrate Task Deletion Undo:**
-   - Go to **📋 Task Dashboard & Registry**, delete any task.
-   - Notice the deletion action appear on the Undo Stack.
-   - Click **↩️ Undo** and show that the task is restored with its exact original primary key ID and data!
+2. **Demonstrate Custom Task Sorting on the Dashboard:**
+   - In **📋 Task Dashboard & Registry**, locate the **⚡ Sort Tasks By** selector.
+   - Select **Deadline Ascending** and choose **Merge Sort (O(n log n))**.
+   - Show that tasks immediately reorder with earliest deadlines first, while unscheduled tasks are pushed to the end. Point out the operational counter badge (`Sorted via Merge Sort in X comparisons, Y shifts`).
+   - Switch to **Priority Descending** with **Insertion Sort (O(n²))**. Show that Urgent (P4) tasks appear first, followed by High, Medium, and Low.
+3. **Demonstrate Algorithm Search by Task ID:**
+   - Open the **🔎 Algorithm Search Demonstration** expander on the dashboard.
+   - Enter a target Task ID and select **Binary Search**.
+   - Explain to faculty: *Binary Search requires pre-sorting by Task ID first, then operates in $O(\log n)$ comparisons.* Show that it locates the task in very few comparisons.
+4. **Demonstrate the DSA Performance Lab:**
+   - Navigate to **🔬 DSA Performance Lab (CO3)** from the sidebar.
+   - Under **🔍 Searching Laboratory**, set $N=5000$ and target to **Middle Element**. Click **Run Searching Benchmark**.
+   - Show the resulting chart: Linear Search requires $\approx 2500$ comparisons, whereas Binary Search needs only $\approx 12$ comparisons!
+   - Under **📊 Sorting Laboratory**, set $N=2000$ and distribution to **Randomized**. Click **Run Sorting Benchmark**.
+   - Point out that Merge Sort runs significantly faster and executes far fewer operations than Insertion Sort's quadratic shifts.
+   - Now change distribution to **Already Sorted**. Click **Run Sorting Benchmark**.
+   - Point out that Insertion Sort now executes only $n-1 = 1999$ comparisons ($O(n)$ best case), illustrating why understanding theoretical complexity matters in engineering!
