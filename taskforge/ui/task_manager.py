@@ -53,7 +53,7 @@ def render_add_task_form(
             description = st.text_area(
                 "Description",
                 placeholder="Optional task details, requirements, or notes...",
-                rows=2,
+                height=68,
             )
 
             col3, col4, col5 = st.columns([2, 2, 2])
@@ -146,7 +146,7 @@ def render_edit_task_form(
                 index=current_priority_idx,
             )
 
-        description = st.text_area("Description", value=task.description or "", rows=2)
+        description = st.text_area("Description", value=task.description or "", height=68)
 
         col3, col4, col5 = st.columns([2, 2, 2])
         with col3:
