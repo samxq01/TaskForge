@@ -56,14 +56,16 @@ export function Navbar() {
     }
   };
 
-  const navLinks = [
-    { href: '/', label: 'Product' },
-    { href: '/dashboard', label: 'Dashboard' },
+  const primaryNav = [
+    { href: '/dashboard', label: 'Overview' },
     { href: '/tasks', label: 'Tasks' },
-    { href: '/laboratory', label: 'DSA Labs' },
+    { href: '/scheduling', label: 'Schedule' },
     { href: '/dependencies', label: 'Dependencies' },
-    { href: '/scheduling', label: 'Smart Scheduler' },
-    { href: '/planning', label: 'Critical Path & What-If' },
+    { href: '/planning', label: 'Project Timeline' },
+  ];
+
+  const secondaryNav = [
+    { href: '/laboratory', label: 'Technical Labs' },
   ];
 
   return (
@@ -71,28 +73,25 @@ export function Navbar() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
           {/* Brand Lockup */}
-          <div className="flex items-center gap-8">
-            <Link href="/" className="flex items-center gap-2 group">
+          <div className="flex items-center gap-6">
+            <Link href="/dashboard" className="flex items-center gap-2 group">
               <span className="font-sans text-xl font-extrabold tracking-tight text-slate-900 group-hover:text-brand transition-colors">
                 TaskForge
               </span>
               <span className="w-2 h-2 rounded-full bg-brand group-hover:scale-125 transition-transform" />
-              <span className="hidden sm:inline-block text-[11px] font-sans font-bold text-slate-600 bg-slate-100 px-2 py-0.5 rounded-full border border-slate-200">
-                DSA 2.0
-              </span>
             </Link>
 
-            {/* Navigation Links */}
+            {/* Primary Navigation */}
             <nav className="hidden lg:flex items-center gap-1">
-              {navLinks.map((link) => {
+              {primaryNav.map((link) => {
                 const isActive = pathname === link.href;
                 return (
                   <Link
                     key={link.href}
                     href={link.href}
-                    className={`px-3.5 py-1.5 rounded-lg text-xs font-semibold tracking-normal transition-all ${
+                    className={`px-3 py-1.5 rounded-lg text-xs font-semibold tracking-normal transition-all ${
                       isActive
-                        ? 'bg-brand text-white shadow-xs'
+                        ? 'bg-slate-900 text-white shadow-xs'
                         : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
                     }`}
                   >
@@ -100,20 +99,41 @@ export function Navbar() {
                   </Link>
                 );
               })}
+
+              <div className="h-4 w-[1px] bg-slate-200 mx-1.5" />
+
+              {/* Secondary Navigation: Technical Labs */}
+              {secondaryNav.map((link) => {
+                const isActive = pathname === link.href;
+                return (
+                  <Link
+                    key={link.href}
+                    href={link.href}
+                    className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold tracking-normal transition-all ${
+                      isActive
+                        ? 'bg-blue-50 text-brand border border-blue-200'
+                        : 'text-slate-500 hover:text-slate-800 hover:bg-slate-100'
+                    }`}
+                  >
+                    <FlaskConical className="w-3.5 h-3.5" />
+                    <span>{link.label}</span>
+                  </Link>
+                );
+              })}
             </nav>
           </div>
 
-          {/* Right Actions: Undo/Redo & Live Status */}
+          {/* Right Actions: Undo/Redo & Quick Actions */}
           <div className="flex items-center gap-3">
-            {/* Live API Heartbeat */}
-            <div className="flex items-center gap-2 px-3 py-1 rounded-full bg-slate-50 border border-slate-200 text-xs font-sans font-semibold">
+            {/* Connection Indicator */}
+            <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-slate-50 border border-slate-200 text-xs font-sans">
               <span
                 className={`w-2 h-2 rounded-full ${
-                  isApiOnline ? 'bg-emerald-500 animate-pulse' : 'bg-rose-500'
+                  isApiOnline ? 'bg-emerald-500' : 'bg-rose-500'
                 }`}
               />
-              <span className="hidden sm:inline text-slate-600 font-medium">
-                {isApiOnline ? 'FastAPI 8000' : 'Backend Offline'}
+              <span className="hidden sm:inline text-slate-500 font-medium text-[11px]">
+                {isApiOnline ? 'Ready' : 'Offline'}
               </span>
             </div>
 
@@ -123,7 +143,7 @@ export function Navbar() {
                 <button
                   onClick={handleUndo}
                   disabled={!overview.can_undo}
-                  title="Undo last database action"
+                  title="Undo previous action"
                   className={`p-1.5 rounded text-xs transition-colors ${
                     overview.can_undo
                       ? 'text-slate-700 hover:bg-white hover:text-brand cursor-pointer shadow-xs'
@@ -135,7 +155,7 @@ export function Navbar() {
                 <button
                   onClick={handleRedo}
                   disabled={!overview.can_redo}
-                  title="Redo previous action"
+                  title="Redo action"
                   className={`p-1.5 rounded text-xs transition-colors ${
                     overview.can_redo
                       ? 'text-slate-700 hover:bg-white hover:text-brand cursor-pointer shadow-xs'
@@ -147,12 +167,11 @@ export function Navbar() {
               </div>
             )}
 
-            {/* Action CTA */}
             <Link
-              href="/dashboard"
-              className="inline-flex items-center gap-1.5 bg-slate-900 hover:bg-brand text-white px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all shadow-xs"
+              href="/tasks"
+              className="inline-flex items-center gap-1.5 bg-brand hover:bg-brand-hover text-white px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all shadow-xs"
             >
-              <span>Workspace</span>
+              <span>Tasks</span>
               <ArrowRight className="w-3.5 h-3.5" />
             </Link>
           </div>
@@ -160,14 +179,14 @@ export function Navbar() {
 
         {/* Mobile Navigation Row */}
         <div className="lg:hidden flex items-center gap-1 overflow-x-auto py-2 border-t border-slate-100 text-xs no-scrollbar">
-          {navLinks.map((link) => {
+          {[...primaryNav, ...secondaryNav].map((link) => {
             const isActive = pathname === link.href;
             return (
               <Link
                 key={link.href}
                 href={link.href}
                 className={`whitespace-nowrap px-2.5 py-1 rounded-md text-[0.75rem] font-medium transition-colors ${
-                  isActive ? 'bg-brand text-white' : 'text-slate-600 hover:bg-slate-100'
+                  isActive ? 'bg-slate-900 text-white' : 'text-slate-600 hover:bg-slate-100'
                 }`}
               >
                 {link.label}

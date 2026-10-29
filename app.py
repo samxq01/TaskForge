@@ -230,14 +230,14 @@ def render_sidebar(
         )
 
         nav_options = [
-            "📋 Task Dashboard & Registry",
-            "🔄 Task Processing & History (CO1)",
-            "🧠 Smart Scheduling & Deadline Risks (CO1 + CO5)",
-            "🗺️ Critical Path & What-If Planning (CO5)",
-            "🧮 Data Structure Evaluation (CO2)",
-            "🔬 DSA Performance Lab (CO3)",
-            "🌲 BST Task Index (CO4)",
-            "🔗 Dependency Map (CO5)",
+            "📊 Overview",
+            "📋 Tasks",
+            "🧠 Schedule & Risks",
+            "🔗 Dependencies",
+            "⏱️ Project Timeline",
+            "🔬 Technical Labs: Algorithm Benchmarks",
+            "🧮 Technical Labs: Structure Evaluation",
+            "🌲 Technical Labs: BST Deadline Index",
         ]
 
         if "nav_view" not in st.session_state or st.session_state.nav_view not in nav_options:
@@ -361,7 +361,7 @@ def main() -> None:
         hash_index=hash_index,
     )
 
-    if current_view == "📋 Task Dashboard & Registry":
+    if current_view == "📊 Overview":
         render_dashboard(
             storage,
             undo_manager=undo_manager,
@@ -373,20 +373,20 @@ def main() -> None:
             hash_index=hash_index,
             cp_service=cp_service,
         )
-    elif current_view == "🔄 Task Processing & History (CO1)":
+    elif current_view == "📋 Tasks":
         render_history_view(storage, undo_manager, queue_service)
-    elif current_view == "🧠 Smart Scheduling & Deadline Risks (CO1 + CO5)":
+    elif current_view == "🧠 Schedule & Risks":
         render_scheduling_view(storage, scheduler_service, risk_analyzer, queue_service)
-    elif current_view == "🗺️ Critical Path & What-If Planning (CO5)":
-        render_planning_view(storage, cp_service, what_if_simulator)
-    elif current_view == "🧮 Data Structure Evaluation (CO2)":
-        render_structure_evaluation_view(storage, hash_index)
-    elif current_view == "🔬 DSA Performance Lab (CO3)":
-        render_dsa_performance_lab()
-    elif current_view == "🌲 BST Task Index (CO4)":
-        render_tree_view(storage, index_service)
-    elif current_view == "🔗 Dependency Map (CO5)":
+    elif current_view == "🔗 Dependencies":
         render_dependency_view(storage, dep_service, scheduler_service, queue_service)
+    elif current_view == "⏱️ Project Timeline":
+        render_planning_view(storage, cp_service, what_if_simulator)
+    elif current_view == "🔬 Technical Labs: Algorithm Benchmarks":
+        render_dsa_performance_lab()
+    elif current_view == "🧮 Technical Labs: Structure Evaluation":
+        render_structure_evaluation_view(storage, hash_index)
+    elif current_view == "🌲 Technical Labs: BST Deadline Index":
+        render_tree_view(storage, index_service)
 
 
 if __name__ == "__main__":

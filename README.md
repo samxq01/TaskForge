@@ -101,17 +101,19 @@ graph TD
 
 ---
 
-## 🌟 Key Application Areas
+## 🌟 Simplified Product Experience & Navigation
 
-| View & Module | Capabilities & Course Outcome |
-| :--- | :--- |
-| **Product Landing Page** (`/`) | Editorial Potadot-inspired introduction, live operational preview, 5-stage interactive workflow, and verified academic proof. |
-| **Dashboard** (`/dashboard`) | 6-metric KPI strip, Min-Heap #1 dispatch recommendation, upcoming deadlines, and dual-mode task registry (Cards or Table). |
-| **Task Workspace** (`/tasks`) | Complete CRUD lifecycle, status transitions, dual-stack Undo/Redo (LIFO), and priority filters. |
-| **DSA Performance Lab** (`/laboratory`) | FIFO queue visualizer, stack undo/redo history, empirical search (Linear vs Binary) & sort (Insertion vs Merge) runners, BST traversals, and custom Hash Table bucket exploration. |
-| **Dependency Map** (`/dependencies`) | Directed acyclic graph layout, cycle detection with topological sorting (Kahn's), and BFS/DFS traversal runners. |
-| **Smart Scheduler** (`/scheduling`) | Deterministic binary min-heap rankings with multi-criteria key explanations, FIFO vs Heap comparison, and Deadline Risk Analyzer. |
-| **Critical Path & What-If** (`/planning`) | Longest dependency chain Gantt chart, project duration, and non-persistent What-If delay simulator with zero database mutations. |
+TaskForge features a clean, professional, product-focused user experience that prioritizes real task-management workflows while preserving full academic demonstration capabilities under a separate Technical Labs section:
+
+### Primary Product Navigation
+1. **Overview** (`/dashboard`): Focuses on *what needs attention right now* — a 5-metric summary row (Total, In Progress, Completed, Overdue, Blocked), prominent recommended next task with practical explanation, upcoming deadlines, and blocked tasks.
+2. **Tasks** (`/tasks`): Clean task workspace to create, view, search, filter, and organize tasks, complete with priority labels, deadline tracking, and one-click Undo/Redo.
+3. **Schedule** (`/scheduling`): Action-oriented dispatch advice with ranked execution order, prerequisite fulfillment status, and clear deadline risk classifications (Safe, At Risk, Overdue, Unscheduled).
+4. **Dependencies** (`/dependencies`): Prerequisite management focused on task blockers, readable "Task B is waiting for Task A" relationships, and cycle-prevention protection.
+5. **Project Timeline** (`/planning`): Critical path schedule breakdown identifying the exact tasks that determine project completion time, plus a non-persistent What-If delay simulator.
+
+### Secondary / Academic Navigation
+- **Technical Labs** (`/laboratory`): The dedicated portal for faculty evaluation and viva presentation — custom Stack & Queue visualizers, microsecond search (Linear vs Binary) and sort (Insertion vs Merge) benchmarks, BST composite deadline index traversals, and custom separate-chaining Hash Table bucket and collision inspection.
 
 ---
 

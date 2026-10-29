@@ -181,22 +181,25 @@ export default function LaboratoryPage() {
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pb-4 border-b border-slate-200">
         <div>
           <div className="flex items-center gap-2">
-            <span className="pt-pill pt-pill-blue">ALGORITHM LABORATORY</span>
-            <span className="text-xs font-sans font-medium text-slate-500">CO1 &bull; CO2 &bull; CO3 &bull; CO4</span>
+            <span className="pt-pill pt-pill-blue">ACADEMIC &amp; TECHNICAL LABS</span>
+            <span className="text-xs font-sans font-medium text-slate-500">Course Outcomes CO1 &ndash; CO5</span>
           </div>
-          <h1 className="text-2xl sm:text-3xl font-display font-extrabold text-slate-900 mt-1">
-            Data Structures &amp; Empirical Benchmarks
+          <h1 className="text-2xl sm:text-3xl font-sans font-extrabold text-slate-900 tracking-tight mt-1">
+            Technical Labs &amp; Benchmarks
           </h1>
+          <p className="text-xs sm:text-sm text-slate-500 mt-0.5">
+            Empirical runtime measurements, structural inspection, and viva preparation demos.
+          </p>
         </div>
 
         {/* Tab Switcher */}
-        <div className="flex items-center gap-1 bg-white p-1 rounded-lg border border-slate-200 text-xs font-semibold">
+        <div className="flex items-center gap-1 bg-white p-1 rounded-lg border border-slate-200 text-xs font-semibold flex-wrap">
           {[
-            { id: 'queue', label: 'FIFO Queue & Stack' },
+            { id: 'queue', label: 'Queue & Stack' },
             { id: 'search-sort', label: 'Search & Sort Lab' },
             { id: 'bst', label: 'BST Deadline Index' },
             { id: 'hash', label: 'Custom Hash Table' },
-            { id: 'eval', label: 'CO2 Structure Eval' },
+            { id: 'eval', label: 'Structure Evaluation' },
           ].map((tab) => (
             <button
               key={tab.id}

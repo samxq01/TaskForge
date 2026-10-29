@@ -45,13 +45,12 @@ export default function SchedulingPage() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pb-4 border-b border-slate-200">
         <div>
-          <div className="flex items-center gap-2">
-            <span className="pt-pill pt-pill-blue">CO1 &bull; CO5 DUAL SCHEDULING</span>
-            <span className="text-xs font-sans font-medium text-slate-500">Min-Heap &amp; Deadline Feasibility</span>
-          </div>
-          <h1 className="text-2xl sm:text-3xl font-display font-extrabold text-slate-900 mt-1">
-            Smart Auto-Scheduler &amp; Deadline Risks
+          <h1 className="text-2xl sm:text-3xl font-sans font-extrabold text-slate-900 tracking-tight">
+            Schedule
           </h1>
+          <p className="text-xs sm:text-sm text-slate-500 mt-1">
+            Recommended tasks, priority order, and deadline risk assessment.
+          </p>
         </div>
 
         {/* Tab switch */}
@@ -62,7 +61,7 @@ export default function SchedulingPage() {
               activeTab === 'scheduler' ? 'bg-slate-900 text-white shadow-xs' : 'text-slate-600 hover:bg-slate-100'
             }`}
           >
-            Min-Heap Auto-Scheduler
+            Recommended Schedule
           </button>
           <button
             onClick={() => setActiveTab('risks')}
@@ -70,7 +69,7 @@ export default function SchedulingPage() {
               activeTab === 'risks' ? 'bg-slate-900 text-white shadow-xs' : 'text-slate-600 hover:bg-slate-100'
             }`}
           >
-            Deadline Risk Analyzer
+            Deadline Risks
           </button>
         </div>
       </div>
@@ -86,14 +85,14 @@ export default function SchedulingPage() {
               <div className="flex items-center justify-between">
                 <span className="pt-pill pt-pill-blue">
                   <span className="pt-dot pt-dot-blue" />
-                  TOP DISPATCH RECOMMENDATION &bull; RANK #1
+                  RECOMMENDED NEXT TASK
                 </span>
-                <span className="text-xs font-mono font-bold text-brand bg-blue-50 px-2 py-0.5 rounded border border-blue-200">
+                <span className="text-xs font-sans font-bold text-brand bg-blue-50 px-2.5 py-0.5 rounded border border-blue-200">
                   {schedule.recommendation.task.priority_label}
                 </span>
               </div>
 
-              <h2 className="text-2xl font-display font-bold text-slate-900">
+              <h2 className="text-xl sm:text-2xl font-sans font-bold text-slate-900">
                 #{schedule.recommendation.task.id}: {schedule.recommendation.task.title}
               </h2>
 
@@ -101,52 +100,49 @@ export default function SchedulingPage() {
                 {schedule.recommendation.explanation}
               </p>
 
-              <div className="pt-3 border-t border-slate-100 flex flex-wrap gap-4 text-xs font-mono text-slate-500">
+              <div className="pt-3 border-t border-slate-100 flex flex-wrap gap-4 text-xs font-sans text-slate-500">
                 <span>⏱️ Duration: <strong className="text-slate-800">{schedule.recommendation.task.duration_formatted}</strong></span>
                 <span>🗓️ Deadline: <strong className="text-slate-800">{schedule.recommendation.task.due_date_formatted}</strong></span>
                 <span className="text-emerald-600 font-semibold">✓ All Prerequisites Satisfied</span>
               </div>
             </div>
           ) : (
-            <div className="pt-card p-8 text-center text-xs font-mono text-slate-400">
+            <div className="pt-card p-8 text-center text-xs text-slate-400">
               No eligible Pending tasks available for recommendation. All pending tasks may be blocked by prerequisites or completed.
             </div>
           )}
 
-          {/* Min-Heap Ranked Eligible Tasks */}
+          {/* Ranked Eligible Tasks */}
           <div className="pt-card p-6 space-y-4">
             <div className="flex items-center justify-between pb-3 border-b border-slate-100">
               <div>
-                <span className="pt-pill pt-pill-green">PRIORITY QUEUE HEAP</span>
-                <h3 className="font-display font-bold text-slate-900 mt-1">
-                  Eligible Tasks Ranked by Min-Heap ({schedule?.ranked_tasks.length ?? 0})
+                <h3 className="font-sans font-bold text-slate-900 text-sm">
+                  Recommended Execution Order ({schedule?.ranked_tasks.length ?? 0})
                 </h3>
+                <p className="text-xs text-slate-500">Ranked by priority, approaching deadlines, and shortest duration</p>
               </div>
-              <span className="text-xs font-mono text-slate-500">
-                O(log N) Extraction Order
-              </span>
             </div>
 
             <div className="divide-y divide-slate-100">
               {schedule?.ranked_tasks.map((item) => (
-                <div key={item.task.id} className="py-4 flex flex-col md:flex-row items-start md:items-center justify-between gap-3 text-xs">
+                <div key={item.task.id} className="py-3.5 flex flex-col md:flex-row items-start md:items-center justify-between gap-3 text-xs">
                   <div className="flex items-start gap-3">
-                    <span className="w-7 h-7 rounded-full bg-slate-100 border border-slate-200 font-mono text-slate-700 font-bold flex items-center justify-center shrink-0">
-                      #{item.rank}
+                    <span className="w-6 h-6 rounded-full bg-slate-100 border border-slate-200 text-slate-700 font-bold flex items-center justify-center shrink-0 text-xs">
+                      {item.rank}
                     </span>
                     <div>
                       <div className="flex items-center gap-2">
-                        <span className="font-mono font-bold text-brand">#{item.task.id}</span>
+                        <span className="font-bold text-brand">#{item.task.id}</span>
                         <span className="font-semibold text-slate-900 text-sm">{item.task.title}</span>
-                        <span className="text-[0.68rem] font-mono px-2 py-0.5 rounded bg-slate-100 text-slate-600">
+                        <span className="text-[11px] font-sans px-2 py-0.5 rounded bg-slate-100 text-slate-700 font-medium">
                           {item.task.priority_label}
                         </span>
                       </div>
-                      <p className="text-slate-600 text-[0.75rem] mt-0.5">{item.explanation}</p>
+                      <p className="text-slate-600 text-xs mt-0.5">{item.explanation}</p>
                     </div>
                   </div>
 
-                  <div className="flex items-center gap-4 text-xs font-mono text-slate-500 self-end md:self-center">
+                  <div className="flex items-center gap-4 text-xs font-sans text-slate-500 self-end md:self-center">
                     <span>⏱️ {item.task.duration_formatted}</span>
                     <span>🗓️ {item.task.due_date_formatted}</span>
                   </div>
@@ -155,22 +151,24 @@ export default function SchedulingPage() {
             </div>
           </div>
 
-          {/* Blocked Tasks Inspection */}
+          {/* Blocked Tasks */}
           {schedule?.blocked_tasks && schedule.blocked_tasks.length > 0 && (
             <div className="pt-card p-6 space-y-4">
-              <span className="pt-pill pt-pill-amber">BLOCKED FROM DISPATCH</span>
-              <h3 className="font-display font-bold text-slate-900">
-                Tasks Awaiting Prerequisites ({schedule.blocked_tasks.length})
-              </h3>
+              <div>
+                <h3 className="font-sans font-bold text-slate-900 text-sm">
+                  Tasks Waiting on Prerequisites ({schedule.blocked_tasks.length})
+                </h3>
+                <p className="text-xs text-slate-500">These tasks become eligible once their prerequisites are completed</p>
+              </div>
 
               <div className="divide-y divide-slate-100 text-xs">
                 {schedule.blocked_tasks.map(({ task, blocking_prerequisites }) => (
                   <div key={task.id} className="py-3 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
                     <div>
-                      <span className="font-mono text-brand font-bold">#{task.id}</span>{' '}
+                      <span className="text-brand font-bold">#{task.id}</span>{' '}
                       <span className="font-semibold text-slate-800">{task.title}</span>
                     </div>
-                    <div className="text-[0.72rem] font-mono text-slate-500">
+                    <div className="text-xs text-slate-500">
                       Waiting for:{' '}
                       <span className="text-amber-700 font-semibold">
                         {blocking_prerequisites.map((p) => `#${p.id} (${p.title})`).join(', ')}
@@ -181,17 +179,6 @@ export default function SchedulingPage() {
               </div>
             </div>
           )}
-
-          {/* Educational Note: FIFO Queue vs Heap Scheduler */}
-          <div className="p-4 rounded-xl bg-slate-100 border border-slate-200 text-xs space-y-2">
-            <h4 className="font-display font-bold text-slate-800">
-              Theoretical Contrast: FIFO Processing Queue vs. Min-Heap Auto-Scheduler
-            </h4>
-            <p className="text-slate-600 leading-relaxed">
-              <strong>Task Queue (CO1):</strong> Enforces strict arrival chronological order (FIFO) for standard workflow pipelines.<br />
-              <strong>Smart Auto-Scheduler (CO1 + CO5):</strong> Evaluates topological prerequisites, filters out blocked tasks, and orders eligible work by priority, deadline, and duration using a binary min-heap.
-            </p>
-          </div>
         </div>
       )}
 

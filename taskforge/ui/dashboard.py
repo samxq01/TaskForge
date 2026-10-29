@@ -119,14 +119,15 @@ def render_dashboard(
     # 1. OPENING PRODUCT HERO
     # -------------------------------------------------------------------------
     render_editorial_hero(
-        eyebrow="INTELLIGENT TASK SCHEDULING PLATFORM",
-        headline="Your work. Clearly planned.",
-        subhead="Manage tasks, understand dependencies, and make better scheduling decisions from one cohesive workspace powered by pure data structures.",
+        eyebrow="INTELLIGENT TASK SCHEDULING SYSTEM",
+        headline="Good to see you.",
+        subhead="Your tasks, deadlines, and project progress — all in one place.",
         meta_tags=[
-            ("TOTAL INVENTORY", f"{counts['total']} Items"),
-            ("ARRIVAL QUEUE", f"{counts['pending']} Pending"),
-            ("STORAGE ENGINE", "SQLite ACID Persistence"),
-            ("GRAPH TOPOLOGY", "Directed Acyclic Graph (DAG)"),
+            ("TOTAL WORK", f"{counts['total']} Items"),
+            ("IN PROGRESS", f"{counts.get('in_progress', 0)} Active"),
+            ("COMPLETED", f"{counts.get('completed', 0)} Done"),
+            ("OVERDUE", f"{counts.get('overdue', 0)} Past Due"),
+            ("BLOCKED", f"{counts.get('blocked', 0)} Waiting"),
         ],
     )
 
@@ -136,12 +137,12 @@ def render_dashboard(
         if st.button("➕ Create Task", key="hero_create_btn", use_container_width=True, type="primary"):
             st.session_state["expand_add_form"] = True
     with col_act2:
-        if st.button("⚡ View Smart Schedule", key="hero_schedule_btn", use_container_width=True):
-            st.session_state["nav_view"] = "🧠 Smart Scheduling & Deadline Risks (CO1 + CO5)"
+        if st.button("⚡ Open Schedule", key="hero_schedule_btn", use_container_width=True):
+            st.session_state["nav_view"] = "🧠 Schedule & Risks"
             st.rerun()
     with col_act3:
-        if st.button("🔬 Explore DSA Labs", key="hero_labs_btn", use_container_width=True):
-            st.session_state["nav_view"] = "🔬 DSA Performance Lab (CO3)"
+        if st.button("🔬 Technical Labs", key="hero_labs_btn", use_container_width=True):
+            st.session_state["nav_view"] = "🔬 Technical Labs: Algorithm Benchmarks"
             st.rerun()
 
     st.write("")
@@ -292,7 +293,7 @@ def render_dashboard(
             unsafe_allow_html=True,
         )
         if st.button("Open Task Queue ➔", key="mod_queue_btn", use_container_width=True):
-            st.session_state["nav_view"] = "🔄 Task Processing & History (CO1)"
+            st.session_state["nav_view"] = "📋 Tasks"
             st.rerun()
 
     # Module 02: DSA Laboratory (CO3 + CO4 + CO2)
@@ -303,7 +304,7 @@ def render_dashboard(
         st.markdown(
             f"""
             <div class="pt-preview-card">
-                <div class="pt-preview-number">MODULE 02 &bull; CO3 / CO4</div>
+                <div class="pt-preview-number">TECHNICAL LABS</div>
                 <div class="pt-preview-title">Algorithm Labs</div>
                 <div class="pt-preview-desc">High-precision benchmarks and BST deadline index.</div>
                 <div style="font-family: 'JetBrains Mono', monospace; font-size: 0.72rem; color: #475569; margin-bottom: 0.8rem;">
@@ -315,7 +316,7 @@ def render_dashboard(
             unsafe_allow_html=True,
         )
         if st.button("Open Algorithm Labs ➔", key="mod_labs_btn", use_container_width=True):
-            st.session_state["nav_view"] = "🔬 DSA Performance Lab (CO3)"
+            st.session_state["nav_view"] = "🔬 Technical Labs: Algorithm Benchmarks"
             st.rerun()
 
     # Module 03: Dependency Planning (CO5)
@@ -331,7 +332,7 @@ def render_dashboard(
         st.markdown(
             f"""
             <div class="pt-preview-card">
-                <div class="pt-preview-number">MODULE 03 &bull; CO5</div>
+                <div class="pt-preview-number">CORE CAPABILITY</div>
                 <div class="pt-preview-title">Dependency Map</div>
                 <div class="pt-preview-desc">Directed Acyclic Graph execution flow and cycle detection.</div>
                 <div style="font-family: 'JetBrains Mono', monospace; font-size: 0.72rem; color: #475569; margin-bottom: 0.8rem;">
@@ -343,7 +344,7 @@ def render_dashboard(
             unsafe_allow_html=True,
         )
         if st.button("Open Dependency Map ➔", key="mod_dep_btn", use_container_width=True):
-            st.session_state["nav_view"] = "🔗 Dependency Map (CO5)"
+            st.session_state["nav_view"] = "🔗 Dependencies"
             st.rerun()
 
     # Module 04: Intelligent Scheduling (CO1 + CO5)
@@ -356,8 +357,8 @@ def render_dashboard(
         st.markdown(
             f"""
             <div class="pt-preview-card">
-                <div class="pt-preview-number">MODULE 04 &bull; CO5</div>
-                <div class="pt-preview-title">Critical Path & What-If</div>
+                <div class="pt-preview-number">CORE CAPABILITY</div>
+                <div class="pt-preview-title">Project Timeline & Critical Path</div>
                 <div class="pt-preview-desc">Determine longest project chains and simulate delay impacts.</div>
                 <div style="font-family: 'JetBrains Mono', monospace; font-size: 0.72rem; color: #475569; margin-bottom: 0.8rem;">
                     Critical Path Time: <strong style="color: #2563EB;">{cp_dur}m</strong> ({_format_duration(cp_dur)})<br>
@@ -368,7 +369,7 @@ def render_dashboard(
             unsafe_allow_html=True,
         )
         if st.button("Open Planning Studio ➔", key="mod_cp_btn", use_container_width=True):
-            st.session_state["nav_view"] = "🗺️ Critical Path & What-If Planning (CO5)"
+            st.session_state["nav_view"] = "⏱️ Project Timeline"
             st.rerun()
 
     st.markdown("<hr style='margin: 1.5rem 0 1.2rem 0;'>", unsafe_allow_html=True)

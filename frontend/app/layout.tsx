@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import Link from 'next/link';
 import './globals.css';
 import { Navbar } from '@/components/Navbar';
 
@@ -25,12 +26,18 @@ export default function RootLayout({
               <span>&bull;</span>
               <span>Intelligent Task Scheduling &amp; Dependency Management System</span>
             </div>
-            <div className="flex items-center gap-2 font-sans text-xs flex-wrap justify-center">
-              <span className="px-2.5 py-0.5 rounded-full bg-slate-100 font-medium text-slate-600 border border-slate-200">CO1 Stacks &amp; Queues</span>
-              <span className="px-2.5 py-0.5 rounded-full bg-slate-100 font-medium text-slate-600 border border-slate-200">CO2 Hash Table</span>
-              <span className="px-2.5 py-0.5 rounded-full bg-slate-100 font-medium text-slate-600 border border-slate-200">CO3 BST Index</span>
-              <span className="px-2.5 py-0.5 rounded-full bg-slate-100 font-medium text-slate-600 border border-slate-200">CO4 Search &amp; Sort</span>
-              <span className="px-2.5 py-0.5 rounded-full bg-slate-100 font-medium text-slate-600 border border-slate-200">CO5 Graph &amp; Critical Path</span>
+            <div className="flex items-center gap-3 font-sans text-xs flex-wrap justify-center text-slate-500">
+              <Link href="/dashboard" className="hover:text-slate-900 transition-colors">Overview</Link>
+              <span>&bull;</span>
+              <Link href="/tasks" className="hover:text-slate-900 transition-colors">Tasks</Link>
+              <span>&bull;</span>
+              <Link href="/scheduling" className="hover:text-slate-900 transition-colors">Schedule</Link>
+              <span>&bull;</span>
+              <Link href="/dependencies" className="hover:text-slate-900 transition-colors">Dependencies</Link>
+              <span>&bull;</span>
+              <Link href="/planning" className="hover:text-slate-900 transition-colors">Project Timeline</Link>
+              <span>&bull;</span>
+              <Link href="/laboratory" className="text-brand font-semibold hover:underline">Technical Labs</Link>
             </div>
           </div>
         </footer>
