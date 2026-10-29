@@ -69,6 +69,23 @@ class TaskStorage:
             conn.execute(
                 "CREATE INDEX IF NOT EXISTS idx_tasks_due_date ON tasks(due_date);"
             )
+            conn.execute(
+                """
+                CREATE TABLE IF NOT EXISTS task_dependencies (
+                    prerequisite_id INTEGER NOT NULL,
+                    dependent_id INTEGER NOT NULL,
+                    PRIMARY KEY (prerequisite_id, dependent_id),
+                    FOREIGN KEY (prerequisite_id) REFERENCES tasks(id) ON DELETE CASCADE,
+                    FOREIGN KEY (dependent_id) REFERENCES tasks(id) ON DELETE CASCADE
+                );
+                """
+            )
+            conn.execute(
+                "CREATE INDEX IF NOT EXISTS idx_dep_prereq ON task_dependencies(prerequisite_id);"
+            )
+            conn.execute(
+                "CREATE INDEX IF NOT EXISTS idx_dep_dependent ON task_dependencies(dependent_id);"
+            )
 
     def _row_to_task(self, row: sqlite3.Row) -> Task:
         """Convert a SQLite row to a Task model instance."""
@@ -276,10 +293,112 @@ class TaskStorage:
             True if a record was deleted, False if no task was found.
         """
         with self._get_connection() as conn:
+            # Explicit cleanup of dependencies
+            conn.execute(
+                "DELETE FROM task_dependencies WHERE prerequisite_id = ? OR dependent_id = ?;",
+                (task_id, task_id),
+            )
             cursor = conn.execute(
                 "DELETE FROM tasks WHERE id = ?;", (task_id,)
             )
             return cursor.rowcount > 0
+
+    def add_dependency(self, prerequisite_id: int, dependent_id: int) -> bool:
+        """Persist a directed dependency (prerequisite_id -> dependent_id).
+        
+        Args:
+            prerequisite_id: ID of the prerequisite task.
+            dependent_id: ID of the dependent task.
+            
+        Returns:
+            True if inserted, False if already present.
+            
+        Raises:
+            ValueError: If either task does not exist or if prerequisite_id == dependent_id.
+        """
+        if prerequisite_id == dependent_id:
+            raise ValueError(f"Self-dependency not allowed: task {prerequisite_id} cannot depend on itself.")
+
+        with self._get_connection() as conn:
+            cursor = conn.execute(
+                "SELECT id FROM tasks WHERE id IN (?, ?);",
+                (prerequisite_id, dependent_id),
+            )
+            existing_ids = {row["id"] for row in cursor.fetchall()}
+            if prerequisite_id not in existing_ids:
+                raise ValueError(f"Prerequisite task with ID {prerequisite_id} does not exist.")
+            if dependent_id not in existing_ids:
+                raise ValueError(f"Dependent task with ID {dependent_id} does not exist.")
+
+            try:
+                conn.execute(
+                    """
+                    INSERT INTO task_dependencies (prerequisite_id, dependent_id)
+                    VALUES (?, ?);
+                    """,
+                    (prerequisite_id, dependent_id),
+                )
+                return True
+            except sqlite3.IntegrityError:
+                return False
+
+    def remove_dependency(self, prerequisite_id: int, dependent_id: int) -> bool:
+        """Remove a directed dependency between two tasks.
+        
+        Args:
+            prerequisite_id: ID of prerequisite task.
+            dependent_id: ID of dependent task.
+            
+        Returns:
+            True if removed, False if no such dependency existed.
+        """
+        with self._get_connection() as conn:
+            cursor = conn.execute(
+                """
+                DELETE FROM task_dependencies
+                WHERE prerequisite_id = ? AND dependent_id = ?;
+                """,
+                (prerequisite_id, dependent_id),
+            )
+            return cursor.rowcount > 0
+
+    def has_dependency(self, prerequisite_id: int, dependent_id: int) -> bool:
+        """Check whether a dependency exists in SQLite."""
+        with self._get_connection() as conn:
+            cursor = conn.execute(
+                """
+                SELECT 1 FROM task_dependencies
+                WHERE prerequisite_id = ? AND dependent_id = ?;
+                """,
+                (prerequisite_id, dependent_id),
+            )
+            return cursor.fetchone() is not None
+
+    def get_dependencies(self) -> list[tuple[int, int]]:
+        """Retrieve all registered dependencies as (prerequisite_id, dependent_id) tuples."""
+        with self._get_connection() as conn:
+            cursor = conn.execute(
+                "SELECT prerequisite_id, dependent_id FROM task_dependencies ORDER BY prerequisite_id, dependent_id;"
+            )
+            return [(row["prerequisite_id"], row["dependent_id"]) for row in cursor.fetchall()]
+
+    def get_prerequisites(self, task_id: int) -> list[int]:
+        """Retrieve all prerequisite IDs for a given task ID."""
+        with self._get_connection() as conn:
+            cursor = conn.execute(
+                "SELECT prerequisite_id FROM task_dependencies WHERE dependent_id = ? ORDER BY prerequisite_id;",
+                (task_id,),
+            )
+            return [row["prerequisite_id"] for row in cursor.fetchall()]
+
+    def get_dependents(self, task_id: int) -> list[int]:
+        """Retrieve all dependent task IDs for a given task ID."""
+        with self._get_connection() as conn:
+            cursor = conn.execute(
+                "SELECT dependent_id FROM task_dependencies WHERE prerequisite_id = ? ORDER BY dependent_id;",
+                (task_id,),
+            )
+            return [row["dependent_id"] for row in cursor.fetchall()]
 
     def count_tasks(self, as_of: datetime | None = None) -> dict[str, int]:
         """Calculate summary counts for dashboard metrics.

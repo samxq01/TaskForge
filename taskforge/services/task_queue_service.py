@@ -1,9 +1,9 @@
-"""Task queue service implementing deterministic FIFO pending-task processing."""
+"""Task queue service implementing deterministic FIFO pending-task processing with dependency awareness (CO1, CO5)."""
 
 from __future__ import annotations
 
 import copy
-from typing import Optional
+from typing import Any, Optional
 
 from taskforge.models import Task, TaskStatus
 from taskforge.services.undo_manager import ActionType, UndoManager
@@ -16,17 +16,29 @@ class TaskQueueService:
     
     Pending tasks are queued according to creation timestamp (oldest first),
     with task ID used as a deterministic tie-breaker.
+    
+    Dependency Integration (CO5):
+        Only tasks that are eligible to start (i.e. all their prerequisites are Completed)
+        are placed in the active processing queue. Blocked pending tasks remain out of the queue
+        until their prerequisites finish.
     """
 
-    def __init__(self, storage: TaskStorage, undo_manager: Optional[UndoManager] = None) -> None:
-        """Initialize the queue service with persistent storage and optional undo manager.
+    def __init__(
+        self,
+        storage: TaskStorage,
+        undo_manager: Optional[UndoManager] = None,
+        dependency_service: Optional[Any] = None,
+    ) -> None:
+        """Initialize the queue service with persistent storage, optional undo manager, and dependency service.
         
         Args:
             storage: SQLite task storage interface.
             undo_manager: Optional UndoManager for recording state changes.
+            dependency_service: Optional DependencyService for relationship tracking.
         """
         self.storage = storage
         self.undo_manager = undo_manager
+        self.dependency_service = dependency_service
         self._queue: Queue[Task] = Queue()
         self.refresh()
 
@@ -34,7 +46,8 @@ class TaskQueueService:
         """Rebuild the queue from current SQLite records to prevent stale state.
         
         Fetches all tasks with status 'Pending' ordered deterministically by
-        created_at ASC, id ASC, and enqueues them into the custom Queue.
+        created_at ASC, id ASC, and enqueues only ELIGIBLE tasks (those whose
+        prerequisites are all Completed) into the custom Queue.
         """
         self._queue.clear()
         with self.storage._get_connection() as conn:
@@ -47,6 +60,22 @@ class TaskQueueService:
             )
             for row in cursor.fetchall():
                 task = self.storage._row_to_task(row)
+                assert task.id is not None
+                # Check prerequisites: task is blocked if any prerequisite is not Completed
+                prereq_ids = self.storage.get_prerequisites(task.id)
+                if prereq_ids:
+                    placeholders = ",".join("?" for _ in prereq_ids)
+                    check_cursor = conn.execute(
+                        f"""
+                        SELECT COUNT(*) FROM tasks
+                        WHERE id IN ({placeholders}) AND status != 'Completed';
+                        """,
+                        prereq_ids,
+                    )
+                    incomplete_count = check_cursor.fetchone()[0]
+                    if incomplete_count > 0:
+                        # Task is blocked by incomplete prerequisites; skip enqueuing
+                        continue
                 self._queue.enqueue(task)
 
     def size(self) -> int:

@@ -39,6 +39,14 @@ TaskForge is a Python web application that combines task management with practic
 - **Deadline-Ordered Inorder Retrieval:** Inorder traversal ($O(n)$) extracts all tasks in chronological deadline order directly from the tree structure.
 - **Interactive Tree Visualizer & Lab:** Traversal laboratory for Inorder, Preorder, and Postorder sequences, interactive exact key search, hierarchical ASCII tree diagram, and skewness diagnostics.
 
+### Phase 05: Dependency Graph, Traversal, and Visual Map (CO5)
+- **Custom Directed Graph (`DependencyGraph`):** Manual adjacency-list directed graph implementation representing $A \to B$ prerequisites without external graph packages (no NetworkX).
+- **Cycle Detection & Prevention:** Pre-validation reachability check (`would_create_cycle`) and 3-color DFS state tracking (WHITE, GRAY, BLACK) preventing circular dependencies from being persisted to SQLite.
+- **Topological Sorting (Kahn's Algorithm):** Derives deterministic linear task execution order using in-degrees and Phase 02 custom **FIFO Queue**.
+- **Graph Traversals:** Interactive Breadth-First Search (BFS) using custom **Queue** and Depth-First Search (DFS) using custom **Stack**.
+- **Dependency-Aware Scheduling:** Identifies blocked tasks with incomplete prerequisites and filters the active FIFO processing queue so only unblocked tasks are dispatched.
+- **Interactive UI Dependency Map:** Visual Matplotlib directed graph with execution status color-coding, adjacency and in/out-degree tables, and a dedicated viva cycle simulator.
+
 ---
 
 ## 🛠️ Technology Stack
@@ -115,12 +123,15 @@ TaskForge/
 ├── taskforge/                      # Core package
 │   ├── __init__.py                 # Package initialization
 │   ├── models.py                   # Typed Task dataclass and validation
-│   ├── storage.py                  # SQLite storage layer with parameterized queries
+│   ├── storage.py                  # SQLite storage layer with parameterized queries & dependency table
 │   ├── structures/                 # Custom manual DSA implementations (CO1 & CO4)
 │   │   ├── __init__.py
 │   │   ├── stack.py                # Generic LIFO Stack implementation
 │   │   ├── queue.py                # Generic FIFO Queue (singly-linked list)
 │   │   └── bst.py                  # Generic Binary Search Tree (CO4)
+│   ├── graph/                      # Custom graph implementations (CO5)
+│   │   ├── __init__.py
+│   │   └── dependency_graph.py     # Custom adjacency-list Directed Graph, BFS, DFS, Kahn's sort (CO5)
 │   ├── algorithms/                 # Custom manual algorithms (CO3)
 │   │   ├── __init__.py
 │   │   ├── searching.py            # Manual Linear Search & Binary Search
@@ -128,17 +139,20 @@ TaskForge/
 │   ├── services/                   # Application service layer
 │   │   ├── __init__.py
 │   │   ├── undo_manager.py         # Dual-stack Undo/Redo manager
-│   │   ├── task_queue_service.py   # FIFO pending task dispatcher
+│   │   ├── task_queue_service.py   # FIFO pending task dispatcher with dependency awareness
 │   │   ├── benchmark_service.py    # Searching & Sorting benchmark runner
-│   │   └── task_index.py           # BST deadline indexing service (CO4)
+│   │   ├── task_index.py           # BST deadline indexing service (CO4)
+│   │   ├── dependency_service.py   # Graph SQLite sync and cycle validation (CO5)
+│   │   └── scheduler.py            # Dependency-aware task eligibility evaluator (CO5)
 │   └── ui/                         # Modular Streamlit UI components
 │       ├── __init__.py
 │       ├── dashboard.py            # Dashboard metrics, filters, task table, custom sorting
 │       ├── task_manager.py         # Task creation and editing forms
 │       ├── history_view.py         # CO1 Queue & Stack visualizer and viva guide
 │       ├── dsa_labs.py             # CO3 DSA Performance Lab & Matplotlib charts
-│       └── tree_view.py            # CO4 BST Task Index, Traversals & Tree Visualizer
-├── tests/                          # Automated test suite (98 tests)
+│       ├── tree_view.py            # CO4 BST Task Index, Traversals & Tree Visualizer
+│       └── dependency_view.py      # CO5 Dependency Map, Topological Order & Traversals
+├── tests/                          # Automated test suite (126 tests)
 │   ├── __init__.py
 │   ├── test_models.py              # Domain model and validation tests
 │   ├── test_storage.py             # SQLite CRUD and persistence tests
@@ -152,7 +166,11 @@ TaskForge/
 │   ├── test_benchmarks.py          # BenchmarkService unit tests
 │   ├── test_dsa_integration.py     # Live task sorting & searching integration tests
 │   ├── test_bst.py                 # Custom BST unit tests (CO4)
-│   └── test_bst_integration.py     # Task index service & SQLite integration tests (CO4)
+│   ├── test_bst_integration.py     # Task index service & SQLite integration tests (CO4)
+│   ├── test_dependency_graph.py    # Custom DependencyGraph unit tests (CO5)
+│   ├── test_dependency_service.py  # Dependency service & SQLite persistence tests (CO5)
+│   ├── test_scheduler.py           # Scheduler eligibility & blocker tests (CO5)
+│   └── test_dependency_integration.py # End-to-end dependency & queue lifecycle tests (CO5)
 └── docs/                           # Project documentation
     ├── CO_MAPPING.md               # Official Course Outcome alignment matrix & viva guide
     └── ALGORITHM_COMPLEXITY.md     # Data structure & algorithm complexity analysis
@@ -166,6 +184,6 @@ TaskForge/
 - **CO2:** Evaluate the suitability of data structures for efficient storage and retrieval. *(Planned for Phase 06)*
 - **CO3:** Evaluate the performance of searching and sorting algorithms for solving engineering problems. *(Implemented in Phase 03)*
 - **CO4:** Develop tree structure for solving engineering problems. *(Implemented in Phase 04)*
-- **CO5:** Evaluate the applicability of graph data structures and traversal techniques for solving engineering problems. *(Planned for Phase 05)*
+- **CO5:** Evaluate the applicability of graph data structures and traversal techniques for solving engineering problems. *(Implemented in Phase 05)*
 
 See [`docs/CO_MAPPING.md`](docs/CO_MAPPING.md) and [`docs/ALGORITHM_COMPLEXITY.md`](docs/ALGORITHM_COMPLEXITY.md) for detailed verification and complexity tables.

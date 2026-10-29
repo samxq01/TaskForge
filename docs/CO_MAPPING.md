@@ -25,8 +25,8 @@ This document provides the official Course Outcome (CO) mapping for **TaskForge:
 | **Foundation** | **Phase 01** | Task Model, SQLite Storage, Parameterized Queries, Interactive Dashboard | `taskforge/models.py`<br>`taskforge/storage.py`<br>`taskforge/ui/` | **Implemented (Phase 01)** | `tests/test_models.py`<br>`tests/test_storage.py` (18 tests passing) |
 | **CO1** | **Phase 02** | Custom Stack (LIFO undo/redo manager) & Custom Queue (FIFO task execution engine) | `taskforge/structures/stack.py`<br>`taskforge/structures/queue.py`<br>`taskforge/services/undo_manager.py`<br>`taskforge/services/task_queue_service.py` | **Implemented (Phase 02)** | `tests/test_stack.py`<br>`tests/test_queue.py`<br>`tests/test_undo_manager.py`<br>`tests/test_task_queue_service.py`<br>`tests/test_phase2_integration.py` (26 tests passing) |
 | **CO3** | **Phase 03** | Searching (Linear Search, Binary Search) & Sorting (Insertion Sort, Merge Sort) + DSA Performance Lab | `taskforge/algorithms/searching.py`<br>`taskforge/algorithms/sorting.py`<br>`taskforge/services/benchmark_service.py`<br>`taskforge/ui/dsa_labs.py` | **Implemented (Phase 03)** | `tests/test_searching.py`<br>`tests/test_sorting.py`<br>`tests/test_benchmarks.py`<br>`tests/test_dsa_integration.py` (34 tests passing) |
-| **CO4** | **Phase 04** | Custom Binary Search Tree (BST) for deadline indexing and inorder traversal | `taskforge/structures/bst.py`<br>`taskforge/services/task_index.py`<br>`taskforge/ui/tree_view.py` | **Implemented (Active)** | `tests/test_bst.py`<br>`tests/test_bst_integration.py` (20 tests passing) |
-| **CO5** | **Phase 05** | Custom Adjacency-List Graph, BFS/DFS Traversal, Cycle Detection, Topological Sorting | `taskforge/graph/dependency_graph.py`<br>`taskforge/ui/dependency_map.py` | *Planned (Phase 05)* | Directed graph edge tests, cycle prevention, prerequisite resolution tests |
+| **CO4** | **Phase 04** | Custom Binary Search Tree (BST) for deadline indexing and inorder traversal | `taskforge/structures/bst.py`<br>`taskforge/services/task_index.py`<br>`taskforge/ui/tree_view.py` | **Implemented (Phase 04)** | `tests/test_bst.py`<br>`tests/test_bst_integration.py` (20 tests passing) |
+| **CO5** | **Phase 05** | Custom Adjacency-List Graph, BFS/DFS Traversal, Cycle Detection, Topological Sorting (Kahn's), Dependency Scheduler | `taskforge/graph/dependency_graph.py`<br>`taskforge/services/dependency_service.py`<br>`taskforge/services/scheduler.py`<br>`taskforge/ui/dependency_view.py` | **Implemented (Phase 05)** | `tests/test_dependency_graph.py`<br>`tests/test_dependency_service.py`<br>`tests/test_scheduler.py`<br>`tests/test_dependency_integration.py` (28 tests passing) |
 | **CO2** | **Phase 06** | Custom Hash Table (separate chaining) & Multi-Structure Storage/Retrieval Evaluation Lab | `taskforge/structures/hash_table.py`<br>`taskforge/services/structure_evaluation.py` | *Planned (Phase 06)* | Collision handling, load-factor analysis, comparative retrieval benchmark tests |
 | **CO1 + CO5** | **Phase 07** | Custom Heap Priority Queue, Smart Auto-Scheduler, Rule-Based Deadline Risk Analyzer | `taskforge/structures/priority_queue.py`<br>`taskforge/services/scheduler.py`<br>`taskforge/services/risk_analyzer.py` | *Planned (Phase 07)* | Priority heap invariant tests, scheduler eligibility, risk boundary tests |
 | **CO5** | **Phase 08** | Critical Path Analyzer (DAG Longest Path) & What-If Schedule Simulator (Non-mutating) | `taskforge/services/critical_path.py`<br>`taskforge/services/what_if_simulator.py` | *Planned (Phase 08)* | Critical path duration tests, downstream delay propagation tests, non-mutation proofs |
@@ -50,47 +50,77 @@ This document provides the official Course Outcome (CO) mapping for **TaskForge:
 - Verified by 34 automated tests.
 
 ### CO4: Develop tree structure for solving engineering problems.
-*(Implemented in Phase 04)*
-- **Custom Binary Search Tree (`taskforge/structures/bst.py`):**
-  - Pure manual implementation of generic `TreeNode[K, V]` and `BinarySearchTree[K, V]`.
-  - Implements `insert`, `search`, `delete` (3-case node deletion: leaf, 1 child, 2 children via in-order successor), and tree height calculation.
-  - Implements tree traversals: `inorder_traversal()` (sorted key order), `preorder_traversal()` (prefix/reconstruction), and `postorder_traversal()` (postfix/bottom-up).
-- **Task Deadline Indexing Service (`taskforge/services/task_index.py`):**
-  - Dynamically builds the BST index from persistent SQLite records using composite keys:
-    `key = (has_no_deadline_flag, normalized_deadline, task_id)`
-  - Guarantees tasks with deadlines precede unscheduled tasks, and equal deadlines are deterministically tie-broken by task ID without key collisions or node overwrite.
-  - Synchronizes seamlessly with task mutations and Undo/Redo cycles without modifying underlying SQLite data.
-- **Interactive UI Tree View (`taskforge/ui/tree_view.py`):**
-  - Live deadline-ordered table generated strictly from BST Inorder Traversal.
-  - Interactive BST search widget testing exact key presence and absence.
-  - Traversal laboratory comparing Inorder, Preorder, and Postorder sequences.
-  - Hierarchical ASCII tree structure diagram and skewness diagnostic.
+*(Implemented in Phase 04 — see commit `b2a6b7b`)*
+- Custom generic `BinarySearchTree` implementing manual 3-case node deletion, height calculation, and tree traversals.
+- Composite key indexing `(has_no_deadline_flag, normalized_deadline, task_id)` preventing collisions.
+- Verified by 20 automated tests.
+
+### CO5: Evaluate the applicability of graph data structures and traversal techniques for solving engineering problems.
+*(Implemented in Phase 05)*
+- **Custom Adjacency-List Directed Graph (`taskforge/graph/dependency_graph.py`):**
+  - Pure manual implementation of directed dependency graph without external algorithmic graph libraries (no NetworkX).
+  - Enforces strict edge convention: $A \to B$ means Task B depends on Task A (Task A is a prerequisite for Task B).
+  - Forward adjacency mapping $u \to \{v\}$ and reverse adjacency mapping $v \to \{u\}$ for $O(1)$ edge lookups and immediate in/out-degree inspection.
+  - Cycle detection using 3-color Depth-First Search (WHITE=0, GRAY=1, BLACK=2) identifying back-edges and extracting circular loop sequences.
+  - Pre-validation reachability check: `would_create_cycle(prereq, dep)` evaluates `has_path(dep, prereq)` to reject circular dependencies *before* persisting to SQLite.
+  - Topological sorting via **Kahn's Algorithm** utilizing Phase 02 custom **FIFO Queue** with deterministic tie-breaking.
+  - Traversals:
+    - **BFS:** Uses custom generic `Queue` to explore task dependents level-by-level.
+    - **DFS:** Uses custom generic `Stack` to explore deep prerequisite chains.
+- **SQLite Dependency Persistence (`taskforge/storage.py`):**
+  - Normalized `task_dependencies` table with composite primary key `(prerequisite_id, dependent_id)` and foreign key cascading deletes.
+- **Dependency & Eligibility Services (`taskforge/services/dependency_service.py` & `scheduler.py`):**
+  - Synchronizes in-memory graph with persistent SQLite storage.
+  - Computes task eligibility: a task is eligible if its status is Pending and **all** prerequisites are Completed.
+  - Identifies blocked tasks and surfaces their unresolved blockers.
+- **FIFO Queue Integration (`taskforge/services/task_queue_service.py`):**
+  - Only eligible pending tasks are enqueued into the FIFO processing queue; blocked tasks are safely deferred until prerequisites complete.
+- **Interactive UI Dependency Map (`taskforge/ui/dependency_view.py`):**
+  - Visual Matplotlib directed graph layout with status color-coding (Green=Completed, Yellow=In Progress, Blue=Eligible, Red=Blocked).
+  - Dependency management forms with real-time cycle rejection warnings.
+  - Step-by-step Topological Order execution sequence runner.
+  - Interactive BFS and DFS traversal comparisons.
+  - Sandbox circular dependency simulator for viva demonstration.
 - **Automated Verification:**
-  - `tests/test_bst.py`: 15 unit tests covering empty trees, insertion, search, duplicates, 3-case deletion, traversals, and left/right skewness.
-  - `tests/test_bst_integration.py`: 5 integration tests covering SQLite index rebuilding, composite key sorting, search by deadline/ID, and consistency through mutations/undo/redo.
-  - **Total active tests for CO4:** 20 tests (all passing).
+  - `tests/test_dependency_graph.py`: 15 unit tests covering nodes, edges, reachability, BFS, DFS, cycle detection, Kahn's sort, and tie-breaking.
+  - `tests/test_dependency_service.py`: 7 tests covering SQLite persistence, self-dependency rejection, cycle rejection, cascading deletes, and topological models.
+  - `tests/test_scheduler.py`: 4 tests covering independent task readiness, blocker tracking, prerequisite completion unblocking, and multi-prerequisite satisfaction.
+  - `tests/test_dependency_integration.py`: 2 full workflow tests verifying queue filtering, multi-stage completion, and undo/redo interaction.
+  - **Total active tests for CO5:** 28 tests (all passing).
 
 ---
 
-## Academic Viva Demonstration Procedure (CO4)
+## Academic Viva Demonstration Procedure (CO5)
 
 1. **Launch the application:**
    ```bash
    streamlit run app.py
    ```
-2. **Access the BST Task Index:**
-   - In the sidebar navigation, select **🌲 BST Task Index (CO4)**.
-   - Click **🌱 Load Sample Tasks** in the sidebar to populate diverse tasks if the database is empty.
-3. **Demonstrate Deadline-Ordered Retrieval (Inorder Traversal):**
-   - In the **📋 Inorder Traversal (Deadline Order)** tab, observe the list of tasks.
-   - Point out to faculty: *The order of these rows was NOT produced by SQL `ORDER BY` or Python `sorted()`. It is generated by an Inorder traversal (Left $\to$ Root $\to$ Right) on our custom Binary Search Tree, extracting nodes in strictly increasing deadline order ($O(n)$ time).*
-   - Notice that tasks with deadlines appear first, and unscheduled tasks appear at the bottom.
-4. **Demonstrate Tree Search:**
-   - Switch to the **🔍 BST Key Search** tab.
-   - Select any task from the dropdown and click **Execute BST Search**.
-   - Explain to faculty: *The search traverses the tree nodes using key comparison, achieving $O(\log n)$ average search complexity without scanning the entire list.*
-   - Click **Search Missing Key** and observe that it safely returns `None`.
-5. **Demonstrate Tree Traversals & Structure:**
-   - Open the **🔄 Traversal Laboratory** tab. Toggle between **Inorder**, **Preorder**, and **Postorder**. Point out how the visited sequence changes.
-   - Open the **🌳 Visual Tree Structure** tab. Show the hierarchical tree diagram displaying the root, `├── (L)` subtrees, and `└── (R)` subtrees.
-   - Highlight the **Skewness Analysis** metric showing tree height vs. minimum theoretical height.
+2. **Access the Dependency Map:**
+   - In the sidebar navigation, select **🔗 Dependency Map (CO5)**.
+   - Click **🌱 Load Sample Tasks** in the sidebar to populate realistic sample tasks and dependency links.
+3. **Demonstrate the Visual Graph & Adjacency Structure:**
+   - In the **🗺️ Visual Graph** tab, inspect the directed dependency diagram.
+   - Point out to faculty:
+     * *“Each arrow $A \to B$ denotes that Task A must complete before Task B can start.”*
+     * *“Notice the color coding: Completed tasks are green, In-Progress tasks are amber, Eligible tasks ready to start are blue, and Blocked tasks waiting for prerequisites are red.”*
+   - Expand the **Raw Adjacency List & Degrees Table** to demonstrate in-degrees, out-degrees, and incoming/outgoing edges.
+4. **Demonstrate Circular Dependency Rejection (Safety Invariant):**
+   - Switch to the **➕ Manage Dependencies** tab.
+   - Show how attempting to make an earlier task depend on a later task raises a cycle error:
+     * Try adding a dependency from a downstream task to an upstream prerequisite.
+     * Show the red warning: *“🚨 Cycle Prevention: Circular dependency rejected... Adding this dependency would cause a deadlock cycle.”*
+     * Explain to faculty: *“Our `DependencyService` runs `would_create_cycle()` in memory using 3-color DFS before writing to SQLite, ensuring the schedule never deadlocks.”*
+5. **Demonstrate Topological Sorting (Kahn’s Algorithm):**
+   - Switch to the **📊 Topological Order (Kahn's)** tab.
+   - Walk faculty through the computed linear sequence:
+     * *“Kahn’s algorithm begins with tasks that have in-degree 0 (root prerequisites). It enqueues them into our custom FIFO Queue from Phase 02, dequeues each task, decrements the in-degrees of its dependent neighbors, and enqueues newly freed tasks.”*
+     * *“This proves mathematically that all engineering dependencies are strictly honored.”*
+6. **Demonstrate Graph Traversals (BFS vs. DFS):**
+   - Switch to the **🔍 BFS & DFS Traversal** tab.
+   - Select a root task (e.g. `#1 Setup Database Schema`).
+   - Run **BFS**: Observe level-by-level exploration powered by our custom **Queue**.
+   - Run **DFS**: Observe branch-by-branch deep exploration powered by our custom **Stack**.
+7. **Demonstrate Cycle Simulation Sandbox:**
+   - Switch to the **🧪 Cycle Simulator (Viva Demo)** tab.
+   - Click **🧪 Simulate Cycle Detection** to demonstrate how a cycle `101 -> 102 -> 103 -> 101` is trapped and unpacked into an explicit cycle loop string.

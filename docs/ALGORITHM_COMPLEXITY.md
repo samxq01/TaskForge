@@ -118,3 +118,47 @@ The custom `BinarySearchTree` implements a hierarchical, ordered data structure 
 - **Composite Key Invariant:** TaskForge employs composite keys:
   `key = (has_no_deadline_flag, normalized_deadline, task_id)`
   This guarantees that every task occupies a unique node even when deadlines are identical, preventing node overwrite while strictly enforcing that scheduled tasks precede unscheduled tasks in Inorder traversal.
+
+
+---
+
+## 7. Directed Dependency Graph & Graph Algorithms (`taskforge/graph/dependency_graph.py` & `taskforge/services/scheduler.py`)
+
+The custom `DependencyGraph` represents directed task prerequisites using manual adjacency lists without external graph libraries (such as NetworkX).
+
+### A. Graph Representation and Storage Complexity
+- **Directed Edge Convention:** An edge $A \to B$ signifies that **Task B depends on Task A** (Task A is a prerequisite for Task B; A must finish before B can start).
+- **Adjacency Lists:**
+  - `_adj`: Forward adjacency list mapping $u \to \{v \mid u \to v\}$ (dependents).
+  - `_rev_adj`: Reverse adjacency list mapping $v \to \{u \mid u \to v\}$ (prerequisites).
+  - `_nodes`: Set of all registered task IDs $V$.
+- **Graph Space Complexity:** $O(|V| + |E|)$, where $|V|$ is the number of task nodes and $|E|$ is the number of directed dependency edges.
+
+### B. Graph Operation Complexities
+
+| Graph Operation | Method Signature | Time Complexity | Auxiliary Space | Description & Engineering Notes |
+| :--- | :--- | :--- | :--- | :--- |
+| **Add Node** | `add_node(node: int) -> None` | $O(1)$ | $O(1)$ | Initializes empty adjacency sets in `_adj` and `_rev_adj`. |
+| **Remove Node** | `remove_node(node: int) -> bool` | $O(|V| + |E|)$ | $O(1)$ | Discards node and all incident incoming and outgoing edges. |
+| **Add Edge** | `add_edge(prereq, dep) -> None` | $O(1)$ | $O(1)$ | Adds `dep` to `_adj[prereq]` and `prereq` to `_rev_adj[dep]`. Raises `InvalidDependencyError` on self-loops. |
+| **Remove Edge** | `remove_edge(prereq, dep) -> bool` | $O(1)$ | $O(1)$ | Discards directed edge from forward and reverse adjacency sets. |
+| **Has Edge** | `has_edge(prereq, dep) -> bool` | $O(1)$ | $O(1)$ | Hash-set lookup in `_adj[prereq]`. |
+| **In-Degree / Prerequisites** | `get_prerequisites(task_id)` | $O(\text{deg}^-(u) \log \text{deg}^-(u))$ | $O(\text{deg}^-(u))$ | Returns sorted list of prerequisite task IDs. |
+| **Out-Degree / Dependents** | `get_dependents(task_id)` | $O(\text{deg}^+(u) \log \text{deg}^+(u))$ | $O(\text{deg}^+(u))$ | Returns sorted list of dependent task IDs. |
+| **Path Reachability** | `has_path(start, target) -> bool` | $O(|V| + |E|)$ | $O(|V|)$ | Explores reachability using BFS with custom `Queue`. |
+| **Cycle Pre-Validation** | `would_create_cycle(prereq, dep)` | $O(|V| + |E|)$ | $O(|V|)$ | Evaluates if `has_path(dep, prereq)`. If true, adding `prereq -> dep` would induce a cycle. |
+| **Breadth-First Search (BFS)** | `bfs(start_node) -> list[int]` | $O(|V| + |E|)$ | $O(|V|)$ | Traverses downstream dependents level by level using Phase 02 custom `Queue`. |
+| **Depth-First Search (DFS)** | `dfs(start_node) -> list[int]` | $O(|V| + |E|)$ | $O(|V|)$ | Traverses deep dependency chains using Phase 02 custom `Stack`. |
+| **Cycle Detection (3-Color DFS)** | `detect_cycle() -> (bool, list[int])` | $O(|V| + |E|)$ | $O(|V|)$ | Colors nodes WHITE (0), GRAY (1), BLACK (2). Encountering a GRAY node identifies a back-edge and extracts the circular loop. |
+| **Topological Sort (Kahn's)** | `topological_sort() -> list[int]` | $O(|V| + |E|)$ | $O(|V|)$ | Computes in-degrees, enqueues 0-in-degree nodes to custom `Queue`, decrements neighbors. Raises `CycleDetectedError` on cyclic graph. |
+
+### C. Dependency-Aware Scheduling Complexity (`SchedulerService`)
+- **Eligibility Check:** `is_task_eligible(task_id)`:
+  - Fetches task: $O(1)$
+  - Checks status: $O(1)$
+  - Validates all prerequisites $\in \text{Completed}$: $O(k)$ where $k = \text{in\_degree}(task\_id)$.
+- **Global Ready Tasks Extraction:** `get_eligible_pending_tasks()`:
+  - $O(N_{pending} \times \bar{k})$ where $\bar{k}$ is the average prerequisite count per task.
+- **Queue Filtering (`TaskQueueService.refresh()`):**
+  - Runs parameterized SQLite query to exclude tasks with incomplete prerequisites.
+  - Guarantees $O(N_{tasks})$ database pass with single-index lookups.

@@ -9,11 +9,14 @@ from datetime import datetime, timedelta
 import streamlit as st
 
 from taskforge.models import Priority, Task, TaskStatus
+from taskforge.services.dependency_service import DependencyService
+from taskforge.services.scheduler import SchedulerService
 from taskforge.services.task_index import TaskIndexService
 from taskforge.services.task_queue_service import TaskQueueService
 from taskforge.services.undo_manager import ActionType, UndoManager
 from taskforge.storage import TaskStorage
 from taskforge.ui.dashboard import render_dashboard
+from taskforge.ui.dependency_view import render_dependency_view
 from taskforge.ui.dsa_labs import render_dsa_performance_lab
 from taskforge.ui.history_view import render_history_view
 from taskforge.ui.tree_view import render_tree_view
@@ -33,10 +36,32 @@ def get_undo_manager() -> UndoManager:
     return st.session_state.undo_manager
 
 
-def get_queue_service(storage: TaskStorage, undo_manager: UndoManager) -> TaskQueueService:
+def get_dependency_service(storage: TaskStorage) -> DependencyService:
+    """Initialize or retrieve DependencyService singleton."""
+    if "dep_service" not in st.session_state:
+        st.session_state.dep_service = DependencyService(storage)
+    return st.session_state.dep_service
+
+
+def get_scheduler_service(storage: TaskStorage, dep_service: DependencyService) -> SchedulerService:
+    """Initialize or retrieve SchedulerService singleton."""
+    if "scheduler_service" not in st.session_state:
+        st.session_state.scheduler_service = SchedulerService(storage, dep_service)
+    return st.session_state.scheduler_service
+
+
+def get_queue_service(
+    storage: TaskStorage,
+    undo_manager: UndoManager,
+    dep_service: DependencyService,
+) -> TaskQueueService:
     """Initialize or retrieve TaskQueueService singleton."""
     if "queue_service" not in st.session_state:
-        st.session_state.queue_service = TaskQueueService(storage, undo_manager)
+        st.session_state.queue_service = TaskQueueService(
+            storage=storage,
+            undo_manager=undo_manager,
+            dependency_service=dep_service,
+        )
     return st.session_state.queue_service
 
 
@@ -52,8 +77,9 @@ def load_sample_tasks(
     undo_manager: UndoManager,
     queue_service: TaskQueueService,
     index_service: TaskIndexService,
+    dep_service: DependencyService,
 ) -> None:
-    """Seed initial sample tasks for demonstration and viva testing."""
+    """Seed initial sample tasks and realistic dependencies for demonstration and viva testing."""
     now = datetime.now()
     sample_data = [
         Task(
@@ -106,15 +132,35 @@ def load_sample_tasks(
         ),
     ]
 
+    created_ids: list[int] = []
     for task in sample_data:
         created = storage.create_task(task)
         assert created.id is not None
+        created_ids.append(created.id)
         undo_manager.record_action(
             action_type=ActionType.CREATE,
             task_id=created.id,
             after_state=created,
         )
 
+    # Establish realistic dependency relationships:
+    # Task 1 (DB) is prerequisite for Task 2 (Undo/Redo) and Task 3 (Searching/Sorting)
+    # Task 2 is prerequisite for Task 4 (BST)
+    # Task 3 & Task 4 are prerequisites for Task 5 (Dependency Graph)
+    # Task 5 is prerequisite for Task 6 (Viva Presentation)
+    if len(created_ids) >= 6:
+        dep_service.rebuild()
+        try:
+            dep_service.add_dependency(created_ids[0], created_ids[1])
+            dep_service.add_dependency(created_ids[0], created_ids[2])
+            dep_service.add_dependency(created_ids[1], created_ids[3])
+            dep_service.add_dependency(created_ids[2], created_ids[4])
+            dep_service.add_dependency(created_ids[3], created_ids[4])
+            dep_service.add_dependency(created_ids[4], created_ids[5])
+        except Exception:
+            pass
+
+    dep_service.rebuild()
     queue_service.refresh()
     index_service.rebuild()
 
@@ -124,11 +170,12 @@ def render_sidebar(
     undo_manager: UndoManager,
     queue_service: TaskQueueService,
     index_service: TaskIndexService,
+    dep_service: DependencyService,
 ) -> str:
     """Render the sidebar with navigation, phase status, and demonstration tools."""
     with st.sidebar:
         st.title("⚡ TaskForge")
-        st.caption("College DSA Micro-Project • CO1, CO3, CO4 Active")
+        st.caption("College DSA Micro-Project • CO1, CO3, CO4, CO5 Active")
 
         st.markdown("### 📌 Navigation")
         view_choice = st.radio(
@@ -138,9 +185,10 @@ def render_sidebar(
                 "🔄 Task Processing & History (CO1)",
                 "🔬 DSA Performance Lab (CO3)",
                 "🌲 BST Task Index (CO4)",
+                "🔗 Dependency Map (CO5)",
             ],
             index=0,
-            help="Navigate across Phase 01 (Dashboard), Phase 02 (CO1), Phase 03 (CO3), and Phase 04 (CO4).",
+            help="Navigate across Phase 01 (Dashboard), Phase 02 (CO1), Phase 03 (CO3), Phase 04 (CO4), and Phase 05 (CO5).",
         )
 
         st.markdown("---")
@@ -150,8 +198,8 @@ def render_sidebar(
 - 🟢 **Phase 01:** Foundation & Tasks *(Complete)*
 - 🟢 **Phase 02:** Stack, Queue & Undo/Redo (CO1) *(Complete)*
 - 🟢 **Phase 03:** Searching & Sorting Lab (CO3) *(Complete)*
-- 🟢 **Phase 04:** BST Deadline Index (CO4) *(Active)*
-- 🔒 **Phase 05:** Dependency Graph & Visual Map (CO5)
+- 🟢 **Phase 04:** BST Deadline Index (CO4) *(Complete)*
+- 🟢 **Phase 05:** Dependency Graph & Visual Map (CO5) *(Active)*
 - 🔒 **Phase 06:** Hash Table & Storage Lab (CO2)
 - 🔒 **Phase 07:** Smart Auto-Scheduler
 - 🔒 **Phase 08:** Critical Path & Simulator
@@ -162,8 +210,8 @@ def render_sidebar(
         st.markdown("---")
         st.markdown("### 🛠️ Demonstration Tools")
         if st.button("🌱 Load Sample Tasks", use_container_width=True):
-            load_sample_tasks(storage, undo_manager, queue_service, index_service)
-            st.success("Sample tasks loaded & indexed!")
+            load_sample_tasks(storage, undo_manager, queue_service, index_service, dep_service)
+            st.success("Sample tasks & graph dependencies loaded!")
             st.rerun()
 
         counts = storage.count_tasks()
@@ -176,7 +224,7 @@ def render_sidebar(
                     st.session_state.confirm_clear_all = True
                     st.rerun()
             else:
-                st.warning("Erase all stored tasks?")
+                st.warning("Erase all stored tasks and dependencies?")
                 col_y, col_n = st.columns(2)
                 with col_y:
                     if st.button("Yes, Clear", type="primary", use_container_width=True):
@@ -184,10 +232,11 @@ def render_sidebar(
                             assert t.id is not None
                             storage.delete_task(t.id)
                         undo_manager.clear()
+                        dep_service.rebuild()
                         queue_service.refresh()
                         index_service.rebuild()
                         st.session_state.confirm_clear_all = False
-                        st.success("All tasks, queue, and BST index cleared.")
+                        st.success("All tasks, graph dependencies, queue, and BST index cleared.")
                         st.rerun()
                 with col_n:
                     if st.button("Cancel", use_container_width=True):
@@ -195,7 +244,7 @@ def render_sidebar(
                         st.rerun()
 
         st.markdown("---")
-        st.caption("TaskForge v0.4.0 • Phase 04 (CO4)")
+        st.caption("TaskForge v0.5.0 • Phase 05 (CO5)")
 
     return view_choice
 
@@ -211,10 +260,12 @@ def main() -> None:
 
     storage = get_storage()
     undo_manager = get_undo_manager()
-    queue_service = get_queue_service(storage, undo_manager)
+    dep_service = get_dependency_service(storage)
+    scheduler_service = get_scheduler_service(storage, dep_service)
+    queue_service = get_queue_service(storage, undo_manager, dep_service)
     index_service = get_index_service(storage)
 
-    current_view = render_sidebar(storage, undo_manager, queue_service, index_service)
+    current_view = render_sidebar(storage, undo_manager, queue_service, index_service, dep_service)
 
     st.title("⚡ TaskForge — Task Management & Scheduling System")
 
@@ -229,6 +280,8 @@ def main() -> None:
         render_dsa_performance_lab()
     elif current_view == "🌲 BST Task Index (CO4)":
         render_tree_view(storage, index_service)
+    elif current_view == "🔗 Dependency Map (CO5)":
+        render_dependency_view(storage, dep_service, scheduler_service, queue_service)
 
 
 if __name__ == "__main__":
