@@ -62,3 +62,8 @@ htmlcov/
 # Streamlit local state
 .streamlit/*
 !.streamlit/config.toml
+
+# Node / Next.js
+frontend/node_modules/
+frontend/.next/
+frontend/out/
