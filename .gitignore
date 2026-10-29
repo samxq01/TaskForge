@@ -60,4 +60,5 @@ htmlcov/
 .DS_Store
 
 # Streamlit local state
-.streamlit/
+.streamlit/*
+!.streamlit/config.toml

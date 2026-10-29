@@ -119,33 +119,26 @@ def render_tree_view(storage: TaskStorage, index_service: TaskIndexService) -> N
         ordered_tasks = index_service.get_deadline_ordered_tasks()
         st.markdown(
             f"""
-            <div style="background-color: #1A1F16; border: 1px solid rgba(215, 255, 100, 0.35); border-radius: 3px; padding: 0.8rem 1.2rem; margin-bottom: 1rem; font-size: 0.88rem; color: #D7FF64;">
+            <div style="background-color: #1A1F16; border: 1px solid rgba(215, 255, 100, 0.35); border-radius: 6px; padding: 0.8rem 1.2rem; margin-bottom: 1rem; font-size: 0.88rem; color: #D7FF64;">
                 ● Extracted <strong>{len(ordered_tasks)}</strong> task(s) in sorted deadline sequence directly from BST Inorder Traversal.
             </div>
             """,
             unsafe_allow_html=True,
         )
 
-        header_cols = st.columns([1, 1, 4, 3, 2, 2, 2])
-        header_cols[0].markdown("<span style='font-family: JetBrains Mono; font-size: 0.72rem; color: #A6A49E; text-transform: uppercase;'>Seq</span>", unsafe_allow_html=True)
-        header_cols[1].markdown("<span style='font-family: JetBrains Mono; font-size: 0.72rem; color: #A6A49E; text-transform: uppercase;'>ID</span>", unsafe_allow_html=True)
-        header_cols[2].markdown("<span style='font-family: JetBrains Mono; font-size: 0.72rem; color: #A6A49E; text-transform: uppercase;'>Title</span>", unsafe_allow_html=True)
-        header_cols[3].markdown("<span style='font-family: JetBrains Mono; font-size: 0.72rem; color: #A6A49E; text-transform: uppercase;'>Deadline</span>", unsafe_allow_html=True)
-        header_cols[4].markdown("<span style='font-family: JetBrains Mono; font-size: 0.72rem; color: #A6A49E; text-transform: uppercase;'>Priority</span>", unsafe_allow_html=True)
-        header_cols[5].markdown("<span style='font-family: JetBrains Mono; font-size: 0.72rem; color: #A6A49E; text-transform: uppercase;'>Duration</span>", unsafe_allow_html=True)
-        header_cols[6].markdown("<span style='font-family: JetBrains Mono; font-size: 0.72rem; color: #A6A49E; text-transform: uppercase;'>Status</span>", unsafe_allow_html=True)
-        st.markdown("<hr style='margin: 0.3rem 0 0.6rem 0;'>", unsafe_allow_html=True)
-
-        for idx, task in enumerate(ordered_tasks, start=1):
-            cols = st.columns([1, 1, 4, 3, 2, 2, 2])
-            cols[0].markdown(f"<span style='font-family: JetBrains Mono; color: #A6A49E;'>#{idx}</span>", unsafe_allow_html=True)
-            cols[1].markdown(f"<span style='font-family: JetBrains Mono; color: #D7FF64; font-weight: 600;'>#{task.id}</span>", unsafe_allow_html=True)
-            cols[2].markdown(f"<strong style='color: #FFFFFF;'>{task.title}</strong>", unsafe_allow_html=True)
-            cols[3].markdown(f"<span style='font-family: JetBrains Mono; font-size: 0.85rem; color: #F3F1EB;'>{task.formatted_deadline}</span>", unsafe_allow_html=True)
-            cols[4].markdown(f"<span style='font-size: 0.85rem; color: #A6A49E;'>{task.priority_label}</span>", unsafe_allow_html=True)
-            cols[5].markdown(f"<span style='font-family: JetBrains Mono; font-size: 0.85rem; color: #A6A49E;'>{task.duration}m</span>", unsafe_allow_html=True)
-            cols[6].markdown(render_pill(task.status, variant="lime" if task.status == "Completed" else "muted"), unsafe_allow_html=True)
-            st.markdown("<hr style='margin: 0.25rem 0; opacity: 0.35;'>", unsafe_allow_html=True)
+        inorder_table = [
+            {
+                "Seq": f"#{idx}",
+                "ID": f"#{task.id}",
+                "Title": task.title,
+                "Deadline": task.formatted_deadline,
+                "Priority": task.priority_label,
+                "Duration": f"{task.duration}m",
+                "Status": task.status,
+            }
+            for idx, task in enumerate(ordered_tasks, start=1)
+        ]
+        st.dataframe(inorder_table, use_container_width=True, hide_index=True)
 
     # ---------------- TAB 2: BST KEY SEARCH ----------------
     with tab_search:

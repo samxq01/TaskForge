@@ -48,3 +48,4 @@ def test_matplotlib_anthracite_theming():
         assert ax.get_title() == "Test Chart"
     finally:
         plt.close(fig)
+

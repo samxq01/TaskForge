@@ -98,25 +98,18 @@ def render_history_view(
         if not queue_tasks:
             st.markdown("<span style='color: #6E6D68; font-size: 0.88rem;'>No pending tasks in queue. All tasks are In Progress or Completed.</span>", unsafe_allow_html=True)
         else:
-            q_cols = st.columns([1, 1, 4, 2, 2, 3])
-            q_cols[0].markdown("<span style='font-family: JetBrains Mono; font-size: 0.72rem; color: #A6A49E; text-transform: uppercase;'>Pos</span>", unsafe_allow_html=True)
-            q_cols[1].markdown("<span style='font-family: JetBrains Mono; font-size: 0.72rem; color: #A6A49E; text-transform: uppercase;'>ID</span>", unsafe_allow_html=True)
-            q_cols[2].markdown("<span style='font-family: JetBrains Mono; font-size: 0.72rem; color: #A6A49E; text-transform: uppercase;'>Title</span>", unsafe_allow_html=True)
-            q_cols[3].markdown("<span style='font-family: JetBrains Mono; font-size: 0.72rem; color: #A6A49E; text-transform: uppercase;'>Priority</span>", unsafe_allow_html=True)
-            q_cols[4].markdown("<span style='font-family: JetBrains Mono; font-size: 0.72rem; color: #A6A49E; text-transform: uppercase;'>Duration</span>", unsafe_allow_html=True)
-            q_cols[5].markdown("<span style='font-family: JetBrains Mono; font-size: 0.72rem; color: #A6A49E; text-transform: uppercase;'>Enqueued Time</span>", unsafe_allow_html=True)
-            st.markdown("<hr style='margin: 0.3rem 0 0.6rem 0;'>", unsafe_allow_html=True)
-
-            for idx, task in enumerate(queue_tasks, start=1):
-                cols = st.columns([1, 1, 4, 2, 2, 3])
-                badge_html = render_pill("Head", variant="lime") if idx == 1 else f"<span style='font-family: JetBrains Mono; color: #A6A49E;'>#{idx}</span>"
-                cols[0].markdown(badge_html, unsafe_allow_html=True)
-                cols[1].markdown(f"<span style='font-family: JetBrains Mono; color: #D7FF64; font-weight: 600;'>#{task.id}</span>", unsafe_allow_html=True)
-                cols[2].markdown(f"<strong style='color: #FFFFFF;'>{task.title}</strong>", unsafe_allow_html=True)
-                cols[3].markdown(f"<span style='font-size: 0.85rem; color: #A6A49E;'>{task.priority_label}</span>", unsafe_allow_html=True)
-                cols[4].markdown(f"<span style='font-family: JetBrains Mono; font-size: 0.85rem; color: #A6A49E;'>{task.duration}m</span>", unsafe_allow_html=True)
-                cols[5].markdown(f"<span style='font-family: JetBrains Mono; font-size: 0.8rem; color: #6E6D68;'>{task.created_at.strftime('%Y-%m-%d %H:%M:%S')}</span>", unsafe_allow_html=True)
-                st.markdown("<hr style='margin: 0.25rem 0; opacity: 0.35;'>", unsafe_allow_html=True)
+            queue_data = [
+                {
+                    "Queue Pos": "🟢 HEAD (Next)" if idx == 1 else f"#{idx}",
+                    "Task ID": f"#{task.id}",
+                    "Title": task.title,
+                    "Priority": task.priority_label,
+                    "Duration": f"{task.duration}m",
+                    "Enqueued At": task.created_at.strftime("%Y-%m-%d %H:%M:%S"),
+                }
+                for idx, task in enumerate(queue_tasks, start=1)
+            ]
+            st.dataframe(queue_data, use_container_width=True, hide_index=True)
 
     # ---------------- TAB 2: LIFO UNDO / REDO ----------------
     with tab_undo_redo:

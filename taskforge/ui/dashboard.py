@@ -348,7 +348,7 @@ def render_dashboard(
     if not tasks:
         st.markdown(
             """
-            <div style="background-color: #1B1B1B; border: 1px solid #2A2A2A; border-radius: 3px; padding: 2rem; text-align: center; color: #A6A49E;">
+            <div style="background-color: #141414; border: 1px solid #242424; border-radius: 6px; padding: 2.2rem; text-align: center; color: #9E9E9E;">
                 <div style="font-family: 'Syne', sans-serif; font-size: 1.15rem; color: #FFFFFF; margin-bottom: 0.35rem;">No tasks match the active criteria.</div>
                 <div>Create a new task above or click 'Reset Filters' to view the full registry.</div>
             </div>
@@ -358,69 +358,78 @@ def render_dashboard(
     else:
         st.markdown(
             f"""
-            <div style="font-family: 'JetBrains Mono', monospace; font-size: 0.78rem; color: #A6A49E; margin-bottom: 0.8rem;">
+            <div style="font-family: 'JetBrains Mono', monospace; font-size: 0.78rem; color: #9E9E9E; margin-bottom: 0.8rem;">
                 Showing <strong style="color: #FFFFFF;">{len(tasks)}</strong> task(s) {sort_metrics_str}
             </div>
             """,
             unsafe_allow_html=True,
         )
 
-        # Table header
-        header_cols = st.columns([1, 4, 2, 3, 2, 2, 2])
-        header_cols[0].markdown("<span style='font-family: JetBrains Mono; font-size: 0.75rem; text-transform: uppercase; color: #A6A49E;'>ID</span>", unsafe_allow_html=True)
-        header_cols[1].markdown("<span style='font-family: JetBrains Mono; font-size: 0.75rem; text-transform: uppercase; color: #A6A49E;'>Title & Details</span>", unsafe_allow_html=True)
-        header_cols[2].markdown("<span style='font-family: JetBrains Mono; font-size: 0.75rem; text-transform: uppercase; color: #A6A49E;'>Priority</span>", unsafe_allow_html=True)
-        header_cols[3].markdown("<span style='font-family: JetBrains Mono; font-size: 0.75rem; text-transform: uppercase; color: #A6A49E;'>Deadline</span>", unsafe_allow_html=True)
-        header_cols[4].markdown("<span style='font-family: JetBrains Mono; font-size: 0.75rem; text-transform: uppercase; color: #A6A49E;'>Duration</span>", unsafe_allow_html=True)
-        header_cols[5].markdown("<span style='font-family: JetBrains Mono; font-size: 0.75rem; text-transform: uppercase; color: #A6A49E;'>Status</span>", unsafe_allow_html=True)
-        header_cols[6].markdown("<span style='font-family: JetBrains Mono; font-size: 0.75rem; text-transform: uppercase; color: #A6A49E;'>Actions</span>", unsafe_allow_html=True)
+        tab_cards, tab_table = st.tabs(["🗂️ Task Registry Cards", "📋 Data Table View"])
 
-        st.markdown("<hr style='margin: 0.4rem 0 0.8rem 0;'>", unsafe_allow_html=True)
+        with tab_cards:
+            for task in tasks:
+                assert task.id is not None
+                with st.container(border=True):
+                    col_main, col_meta, col_actions = st.columns([6, 3, 2])
 
-        for task in tasks:
-            assert task.id is not None
-            cols = st.columns([1, 4, 2, 3, 2, 2, 2])
+                    with col_main:
+                        p_badge = _priority_badge(task.priority)
+                        s_badge = _status_badge(task.status)
+                        st.markdown(
+                            f"""
+                            <div style="display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap; margin-bottom: 0.35rem;">
+                                <span style="font-family: 'JetBrains Mono', monospace; font-size: 0.85rem; font-weight: 700; color: #D7FF64;">#{task.id}</span>
+                                {p_badge}
+                                {s_badge}
+                            </div>
+                            <div style="font-size: 1.05rem; font-weight: 700; color: #FFFFFF; margin-bottom: 0.25rem;">{task.title}</div>
+                            """,
+                            unsafe_allow_html=True,
+                        )
+                        if task.description:
+                            st.markdown(
+                                f"""<div style="font-size: 0.85rem; color: #9E9E9E; line-height: 1.45;">{task.description}</div>""",
+                                unsafe_allow_html=True,
+                            )
 
-            # ID
-            cols[0].markdown(f"<span style='font-family: JetBrains Mono; font-weight: 600; color: #D7FF64;'>#{task.id}</span>", unsafe_allow_html=True)
+                    with col_meta:
+                        st.markdown(
+                            "<div style=\"font-family: 'JetBrains Mono', monospace; font-size: 0.65rem; color: #777777; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 0.35rem;\">DEADLINE & DURATION</div>",
+                            unsafe_allow_html=True,
+                        )
+                        if task.due_date is None:
+                            dl_html = "<span style='color: #6E6D68; font-size: 0.84rem;'>No deadline</span>"
+                        elif task.is_overdue(as_of=now):
+                            dl_html = f"<span style='color: #F87171; font-weight: 600; font-family: JetBrains Mono; font-size: 0.84rem;'>⚠️ {task.formatted_deadline} (Overdue)</span>"
+                        else:
+                            dl_html = f"<span style='color: #EDEDED; font-family: JetBrains Mono; font-size: 0.84rem;'>🗓️ {task.formatted_deadline}</span>"
 
-            # Title and description
-            with cols[1]:
-                st.markdown(f"<strong style='color: #FFFFFF; font-size: 0.95rem;'>{task.title}</strong>", unsafe_allow_html=True)
-                if task.description:
-                    st.caption(task.description)
+                        dur_html = f"<span style='font-family: JetBrains Mono; color: #9E9E9E; font-size: 0.82rem;'>⏱️ {_format_duration(task.duration)}</span>"
+                        st.markdown(f"<div>{dl_html}</div><div style='margin-top: 0.25rem;'>{dur_html}</div>", unsafe_allow_html=True)
 
-            # Priority
-            cols[2].markdown(_priority_badge(task.priority), unsafe_allow_html=True)
+                    with col_actions:
+                        st.markdown("<div style=\"height: 0.3rem;\"></div>", unsafe_allow_html=True)
+                        if st.button("✏️ Edit", key=f"btn_edit_{task.id}", help="Edit this task", use_container_width=True):
+                            st.session_state.editing_task_id = task.id
+                            st.session_state.deleting_task_id = None
+                            st.rerun()
+                        if st.button("🗑️ Delete", key=f"btn_del_{task.id}", help="Delete this task", use_container_width=True):
+                            st.session_state.deleting_task_id = task.id
+                            st.session_state.editing_task_id = None
+                            st.rerun()
 
-            # Deadline with overdue alert if applicable
-            with cols[3]:
-                if task.due_date is None:
-                    st.markdown("<span style='color: #6E6D68; font-size: 0.85rem;'>No deadline</span>", unsafe_allow_html=True)
-                else:
-                    if task.is_overdue(as_of=now):
-                        st.markdown(f"<span style='color: #F87171; font-weight: 600; font-family: JetBrains Mono; font-size: 0.85rem;'>⚠ {task.formatted_deadline}</span>", unsafe_allow_html=True)
-                    else:
-                        st.markdown(f"<span style='color: #F3F1EB; font-family: JetBrains Mono; font-size: 0.85rem;'>{task.formatted_deadline}</span>", unsafe_allow_html=True)
-
-            # Duration
-            cols[4].markdown(f"<span style='font-family: JetBrains Mono; color: #A6A49E; font-size: 0.85rem;'>{_format_duration(task.duration)}</span>", unsafe_allow_html=True)
-
-            # Status
-            cols[5].markdown(_status_badge(task.status), unsafe_allow_html=True)
-
-            # Action Buttons: Edit and Delete
-            with cols[6]:
-                action_col1, action_col2 = st.columns(2)
-                with action_col1:
-                    if st.button("✏️", key=f"btn_edit_{task.id}", help="Edit this task"):
-                        st.session_state.editing_task_id = task.id
-                        st.session_state.deleting_task_id = None
-                        st.rerun()
-                with action_col2:
-                    if st.button("🗑️", key=f"btn_del_{task.id}", help="Delete this task"):
-                        st.session_state.deleting_task_id = task.id
-                        st.session_state.editing_task_id = None
-                        st.rerun()
-
-            st.markdown("<hr style='margin: 0.35rem 0; opacity: 0.4;'>", unsafe_allow_html=True)
+        with tab_table:
+            table_rows = []
+            for t in tasks:
+                is_ov = t.is_overdue(as_of=now) if t.due_date else False
+                table_rows.append({
+                    "ID": f"#{t.id}",
+                    "Title": t.title,
+                    "Priority": t.priority_label,
+                    "Status": t.status,
+                    "Deadline": t.formatted_deadline if t.due_date else "None",
+                    "Duration": _format_duration(t.duration),
+                    "Overdue": "⚠️ Past Due" if is_ov else "Current",
+                })
+            st.dataframe(table_rows, use_container_width=True, hide_index=True)
