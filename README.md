@@ -31,11 +31,13 @@ TaskForge is a Python web application that combines task management with practic
   - **Insertion Sort:** Stable incremental sorting with $O(n)$ best case on sorted data and $O(n^2)$ worst case.
   - **Merge Sort:** Stable divide-and-conquer sorting with guaranteed $O(n \log n)$ performance across all input distributions.
   - **Task Sorting Rules:** Deterministic ordering by Deadline (earliest first), Priority (Urgent to Low), Priority & Deadline combined, and Task ID ascending.
-- **DSA Performance Laboratory:**
-  - Interactive benchmark runner measuring execution time using `time.perf_counter()` and recording exact operation counts.
-  - Empirical comparison of Linear vs. Binary search (sizes 100 to 5,000; scenarios: first, middle, last, absent).
-  - Empirical comparison of Insertion vs. Merge sort (sizes 100 to 3,000; distributions: random, sorted, reversed).
-  - Visualization via Matplotlib charts and academic viva walkthrough.
+- **DSA Performance Laboratory:** Interactive benchmark runner measuring execution time using `time.perf_counter()` and recording comparisons/shifts, visualized with Matplotlib.
+
+### Phase 04: Binary Search Tree Task Index (CO4)
+- **Custom Binary Search Tree (BST):** Generic `TreeNode[K, V]` and `BinarySearchTree[K, V]` implementing manual `insert`, `search`, and 3-case `delete`.
+- **Composite Deadline Indexing:** Indexes tasks using `(has_no_deadline_flag, normalized_deadline, task_id)` ensuring scheduled tasks precede unscheduled tasks and identical deadlines are uniquely preserved.
+- **Deadline-Ordered Inorder Retrieval:** Inorder traversal ($O(n)$) extracts all tasks in chronological deadline order directly from the tree structure.
+- **Interactive Tree Visualizer & Lab:** Traversal laboratory for Inorder, Preorder, and Postorder sequences, interactive exact key search, hierarchical ASCII tree diagram, and skewness diagnostics.
 
 ---
 
@@ -114,10 +116,11 @@ TaskForge/
 │   ├── __init__.py                 # Package initialization
 │   ├── models.py                   # Typed Task dataclass and validation
 │   ├── storage.py                  # SQLite storage layer with parameterized queries
-│   ├── structures/                 # Custom manual DSA implementations (CO1)
+│   ├── structures/                 # Custom manual DSA implementations (CO1 & CO4)
 │   │   ├── __init__.py
 │   │   ├── stack.py                # Generic LIFO Stack implementation
-│   │   └── queue.py                # Generic FIFO Queue (singly-linked list)
+│   │   ├── queue.py                # Generic FIFO Queue (singly-linked list)
+│   │   └── bst.py                  # Generic Binary Search Tree (CO4)
 │   ├── algorithms/                 # Custom manual algorithms (CO3)
 │   │   ├── __init__.py
 │   │   ├── searching.py            # Manual Linear Search & Binary Search
@@ -126,14 +129,16 @@ TaskForge/
 │   │   ├── __init__.py
 │   │   ├── undo_manager.py         # Dual-stack Undo/Redo manager
 │   │   ├── task_queue_service.py   # FIFO pending task dispatcher
-│   │   └── benchmark_service.py    # Searching & Sorting benchmark runner
+│   │   ├── benchmark_service.py    # Searching & Sorting benchmark runner
+│   │   └── task_index.py           # BST deadline indexing service (CO4)
 │   └── ui/                         # Modular Streamlit UI components
 │       ├── __init__.py
 │       ├── dashboard.py            # Dashboard metrics, filters, task table, custom sorting
 │       ├── task_manager.py         # Task creation and editing forms
 │       ├── history_view.py         # CO1 Queue & Stack visualizer and viva guide
-│       └── dsa_labs.py             # CO3 DSA Performance Lab & Matplotlib charts
-├── tests/                          # Automated test suite (78 tests)
+│       ├── dsa_labs.py             # CO3 DSA Performance Lab & Matplotlib charts
+│       └── tree_view.py            # CO4 BST Task Index, Traversals & Tree Visualizer
+├── tests/                          # Automated test suite (98 tests)
 │   ├── __init__.py
 │   ├── test_models.py              # Domain model and validation tests
 │   ├── test_storage.py             # SQLite CRUD and persistence tests
@@ -145,7 +150,9 @@ TaskForge/
 │   ├── test_searching.py           # Linear Search & Binary Search unit tests
 │   ├── test_sorting.py             # Insertion Sort & Merge Sort unit tests
 │   ├── test_benchmarks.py          # BenchmarkService unit tests
-│   └── test_dsa_integration.py     # Live task sorting & searching integration tests
+│   ├── test_dsa_integration.py     # Live task sorting & searching integration tests
+│   ├── test_bst.py                 # Custom BST unit tests (CO4)
+│   └── test_bst_integration.py     # Task index service & SQLite integration tests (CO4)
 └── docs/                           # Project documentation
     ├── CO_MAPPING.md               # Official Course Outcome alignment matrix & viva guide
     └── ALGORITHM_COMPLEXITY.md     # Data structure & algorithm complexity analysis
@@ -158,7 +165,7 @@ TaskForge/
 - **CO1:** Develop efficient solutions using stack and/or queue data structures. *(Implemented in Phase 02)*
 - **CO2:** Evaluate the suitability of data structures for efficient storage and retrieval. *(Planned for Phase 06)*
 - **CO3:** Evaluate the performance of searching and sorting algorithms for solving engineering problems. *(Implemented in Phase 03)*
-- **CO4:** Develop tree structure for solving engineering problems. *(Planned for Phase 04)*
+- **CO4:** Develop tree structure for solving engineering problems. *(Implemented in Phase 04)*
 - **CO5:** Evaluate the applicability of graph data structures and traversal techniques for solving engineering problems. *(Planned for Phase 05)*
 
 See [`docs/CO_MAPPING.md`](docs/CO_MAPPING.md) and [`docs/ALGORITHM_COMPLEXITY.md`](docs/ALGORITHM_COMPLEXITY.md) for detailed verification and complexity tables.

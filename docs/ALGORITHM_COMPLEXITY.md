@@ -1,6 +1,6 @@
 # TaskForge — Algorithm & Data Structure Complexity Analysis
 
-This document details the theoretical time and space complexity of custom data structures, operations, searching algorithms, sorting algorithms, and benchmark methodologies implemented in **TaskForge**.
+This document details the theoretical time and space complexity of custom data structures, operations, searching algorithms, sorting algorithms, trees, and benchmark methodologies implemented in **TaskForge**.
 
 ---
 
@@ -65,12 +65,12 @@ The `UndoManager` utilizes two `Stack[Action]` instances: the **Undo Stack** and
 - **Auxiliary Space:** $O(1)$ — Operates directly via an index pointer without allocating auxiliary arrays.
 
 ### B. Binary Search (`binary_search`)
-- **Working Principle:** Divide-and-conquer strategy on pre-sorted arrays. Computes the middle index `mid = low + (high - low) // 2`. If `target == mid_val`, it records the match and continues left to guarantee finding the first occurrence deterministically. If `target < mid_val`, eliminates the right half; otherwise eliminates the left half.
-- **Preconditions:** **CRITICAL:** Input sequence MUST be strictly ordered in ascending order by the comparison key. This precondition is not checked at runtime to avoid $O(n)$ verification overhead.
+- **Working Principle:** Divide-and-conquer strategy on pre-sorted arrays. Computes `mid = low + (high - low) // 2`. If `target == mid_val`, continues left to find the first occurrence deterministically.
+- **Preconditions:** **CRITICAL:** Input sequence MUST be strictly ordered in ascending order by the comparison key.
 - **Time Complexity:**
-  - **Best Case:** $O(1)$ — Element found on the initial middle comparison (though duplicate-safe continuation will perform $\approx \log n$ steps).
-  - **Average Case:** $O(\log n)$ — Each iteration halves the search space.
-  - **Worst Case:** $O(\log n)$ — Search space reduced from $n \to n/2 \to n/4 \dots \to 1$, requiring $\lfloor \log_2 n \rfloor + 1$ iterations.
+  - **Best Case:** $O(1)$ — Initial middle element match.
+  - **Average Case:** $O(\log n)$ — Search space halved at each step.
+  - **Worst Case:** $O(\log n)$ — Up to $\lfloor \log_2 n \rfloor + 1$ iterations.
 - **Auxiliary Space:** $O(1)$ — Iterative implementation uses only pointer variables (`low`, `high`, `mid`).
 
 ---
@@ -80,34 +80,41 @@ The `UndoManager` utilizes two `Stack[Action]` instances: the **Undo Stack** and
 ### A. Insertion Sort (`insertion_sort`)
 - **Working Principle:** Incrementally builds the sorted array by consuming one element per iteration and shifting previously sorted elements that are greater to the right.
 - **Stability:** **Guaranteed Stable**. Equal elements are not shifted past one another.
-- **Input Preservation:** Operates on an allocated copy of the input, leaving caller collections unmutated.
 - **Time Complexity:**
-  - **Best Case:** $O(n)$ — Occurs when the input is **already sorted**. The inner loop performs exactly 1 comparison per element and 0 shifts ($n-1$ total comparisons).
-  - **Average Case:** $O(n^2)$ — On randomized input, each element is compared with half of the preceding elements ($\approx n^2/4$ comparisons).
-  - **Worst Case:** $O(n^2)$ — Occurs when the input is **reverse-sorted**. Every element must be compared against and shifted past all preceding elements ($\approx n(n-1)/2$ comparisons and shifts).
-- **Auxiliary Space:** $O(1)$ in-place sorting memory beyond the $O(n)$ return copy.
+  - **Best Case:** $O(n)$ — Already sorted input ($n-1$ comparisons, 0 shifts).
+  - **Average Case:** $O(n^2)$ — Random input ($\approx n^2/4$ comparisons).
+  - **Worst Case:** $O(n^2)$ — Reverse-sorted input ($\approx n(n-1)/2$ comparisons and shifts).
+- **Auxiliary Space:** $O(1)$ sorting auxiliary space beyond the $O(n)$ return copy.
 
 ### B. Merge Sort (`merge_sort`)
-- **Working Principle:** Classic divide-and-conquer algorithm. Recursively bisects the sequence until single-element sub-arrays are reached, then merges pairs of sorted sub-arrays into a unified sorted array.
-- **Stability:** **Guaranteed Stable**. During the merge phase, when keys are identical, elements from the left partition are selected before elements from the right partition.
+- **Working Principle:** Classic divide-and-conquer algorithm. Recursively bisects the sequence into halves, sorts each half, and merges sorted sub-arrays.
+- **Stability:** **Guaranteed Stable**. Left elements are picked first when keys match.
 - **Time Complexity:**
   - **Best Case:** $O(n \log n)$
   - **Average Case:** $O(n \log n)$
   - **Worst Case:** $O(n \log n)$
-  - The tree of recursive bisections has height $\lceil \log_2 n \rceil$, and at each level, $O(n)$ merge operations occur regardless of initial distribution.
-- **Auxiliary Space:** $O(n)$ — Requires memory buffers for allocating left and right sub-arrays and merging them into the final output.
+- **Auxiliary Space:** $O(n)$ for sub-array allocations during the merge phase.
 
 ---
 
-## 6. Theoretical Big-O vs. Measured Benchmark Performance
+## 6. Custom Binary Search Tree (`taskforge/structures/bst.py` & `taskforge/services/task_index.py`)
 
-When demonstrating in a college viva, explain the divergence between theoretical operation bounds and empirical wall-clock measurements:
+The custom `BinarySearchTree` implements a hierarchical, ordered data structure where each node satisfies $Left.key < Node.key < Right.key$.
 
-1. **Constant Factors ($c \cdot g(n)$):**
-   - Merge Sort incurs overhead from Python function call recursion, list slicing, and memory allocation of sub-arrays.
-   - For small arrays ($n \lesssim 30$), Insertion Sort's inner loop runs tightly in Python and can exhibit lower wall-clock time despite its higher asymptotic growth rate.
-2. **Distribution Sensitivity:**
-   - On **already-sorted** data, Insertion Sort drops to $O(n)$ ($n-1$ comparisons, 0 shifts) and dramatically beats Merge Sort.
-   - On **reverse-sorted** data, Insertion Sort degrades to maximum quadratic shifts, whereas Merge Sort remains strictly $O(n \log n)$.
-3. **Binary Search Preprocessing Trade-off:**
-   - Binary Search execution is virtually instantaneous ($O(\log n)$), but requires pre-sorted data ($O(n \log n)$ preprocessing). If performing only a single search on an unsorted list, Linear Search ($O(n)$) is more efficient than sorting followed by binary searching. Binary search is justified when multiple queries are amortized over the same dataset.
+| BST Operation | Average Case Time | Worst Case Time | Auxiliary Space | Description & Notes |
+| :--- | :--- | :--- | :--- | :--- |
+| **Search (`search`)** | $O(\log n)$ | $O(n)$ | $O(1)$ iterative | Traverses left/right branches based on key comparison. Skews to $O(n)$ if degenerate. |
+| **Insert (`insert`)** | $O(\log n)$ | $O(n)$ | $O(1)$ iterative | Locates insertion point and attaches new `TreeNode`. In-place updates on exact key match. |
+| **Delete (`delete`)** | $O(\log n)$ | $O(n)$ | $O(h)$ recursion | Standard 3-case deletion (leaf, 1 child, 2 children using in-order successor). |
+| **Inorder (`inorder_traversal`)** | $O(n)$ | $O(n)$ | $O(h)$ recursion | Left $\to$ Root $\to$ Right. **Guaranteed sorted deadline order.** |
+| **Preorder (`preorder_traversal`)** | $O(n)$ | $O(n)$ | $O(h)$ recursion | Root $\to$ Left $\to$ Right. Prefix order for tree reconstruction/cloning. |
+| **Postorder (`postorder_traversal`)** | $O(n)$ | $O(n)$ | $O(h)$ recursion | Left $\to$ Right $\to$ Root. Postfix order for bottom-up cleanup. |
+| **Tree Rebuild from SQLite** | $O(n \log n)$ | $O(n^2)$ | $O(n)$ | $n$ sequential `insert` operations reading tasks from SQLite. |
+
+### Structural Invariants and Degeneracy (Skewness)
+- **What $n$ represents:** The total number of unique indexed tasks in the tree.
+- **Why a BST can become skewed:** If keys are inserted in monotonic sorted order (e.g. $[1, 2, 3, 4, 5]$), every new node is attached exclusively to the right child pointer. The tree height degenerates from $\lfloor \log_2 n \rfloor$ to $n-1$, behaving identically to a singly-linked list with $O(n)$ search and insertion.
+- **Un-balanced Design:** The TaskForge BST is deliberately implemented as a **standard un-balanced BST** to demonstrate structural properties and viva trade-offs transparently, without falsely claiming to be an AVL or Red-Black tree.
+- **Composite Key Invariant:** TaskForge employs composite keys:
+  `key = (has_no_deadline_flag, normalized_deadline, task_id)`
+  This guarantees that every task occupies a unique node even when deadlines are identical, preventing node overwrite while strictly enforcing that scheduled tasks precede unscheduled tasks in Inorder traversal.

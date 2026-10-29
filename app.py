@@ -9,12 +9,14 @@ from datetime import datetime, timedelta
 import streamlit as st
 
 from taskforge.models import Priority, Task, TaskStatus
+from taskforge.services.task_index import TaskIndexService
 from taskforge.services.task_queue_service import TaskQueueService
 from taskforge.services.undo_manager import ActionType, UndoManager
 from taskforge.storage import TaskStorage
 from taskforge.ui.dashboard import render_dashboard
 from taskforge.ui.dsa_labs import render_dsa_performance_lab
 from taskforge.ui.history_view import render_history_view
+from taskforge.ui.tree_view import render_tree_view
 
 
 def get_storage() -> TaskStorage:
@@ -38,8 +40,18 @@ def get_queue_service(storage: TaskStorage, undo_manager: UndoManager) -> TaskQu
     return st.session_state.queue_service
 
 
+def get_index_service(storage: TaskStorage) -> TaskIndexService:
+    """Initialize or retrieve TaskIndexService singleton."""
+    if "index_service" not in st.session_state:
+        st.session_state.index_service = TaskIndexService(storage)
+    return st.session_state.index_service
+
+
 def load_sample_tasks(
-    storage: TaskStorage, undo_manager: UndoManager, queue_service: TaskQueueService
+    storage: TaskStorage,
+    undo_manager: UndoManager,
+    queue_service: TaskQueueService,
+    index_service: TaskIndexService,
 ) -> None:
     """Seed initial sample tasks for demonstration and viva testing."""
     now = datetime.now()
@@ -104,15 +116,19 @@ def load_sample_tasks(
         )
 
     queue_service.refresh()
+    index_service.rebuild()
 
 
 def render_sidebar(
-    storage: TaskStorage, undo_manager: UndoManager, queue_service: TaskQueueService
+    storage: TaskStorage,
+    undo_manager: UndoManager,
+    queue_service: TaskQueueService,
+    index_service: TaskIndexService,
 ) -> str:
     """Render the sidebar with navigation, phase status, and demonstration tools."""
     with st.sidebar:
         st.title("⚡ TaskForge")
-        st.caption("College DSA Micro-Project • CO1 & CO3 Active")
+        st.caption("College DSA Micro-Project • CO1, CO3, CO4 Active")
 
         st.markdown("### 📌 Navigation")
         view_choice = st.radio(
@@ -121,9 +137,10 @@ def render_sidebar(
                 "📋 Task Dashboard & Registry",
                 "🔄 Task Processing & History (CO1)",
                 "🔬 DSA Performance Lab (CO3)",
+                "🌲 BST Task Index (CO4)",
             ],
             index=0,
-            help="Navigate between Task Management, CO1 Queue/Stack processing, and CO3 Performance Lab.",
+            help="Navigate across Phase 01 (Dashboard), Phase 02 (CO1), Phase 03 (CO3), and Phase 04 (CO4).",
         )
 
         st.markdown("---")
@@ -132,8 +149,8 @@ def render_sidebar(
             """
 - 🟢 **Phase 01:** Foundation & Tasks *(Complete)*
 - 🟢 **Phase 02:** Stack, Queue & Undo/Redo (CO1) *(Complete)*
-- 🟢 **Phase 03:** Searching & Sorting Lab (CO3) *(Active)*
-- 🔒 **Phase 04:** BST Deadline Index (CO4)
+- 🟢 **Phase 03:** Searching & Sorting Lab (CO3) *(Complete)*
+- 🟢 **Phase 04:** BST Deadline Index (CO4) *(Active)*
 - 🔒 **Phase 05:** Dependency Graph & Visual Map (CO5)
 - 🔒 **Phase 06:** Hash Table & Storage Lab (CO2)
 - 🔒 **Phase 07:** Smart Auto-Scheduler
@@ -145,8 +162,8 @@ def render_sidebar(
         st.markdown("---")
         st.markdown("### 🛠️ Demonstration Tools")
         if st.button("🌱 Load Sample Tasks", use_container_width=True):
-            load_sample_tasks(storage, undo_manager, queue_service)
-            st.success("Sample tasks loaded & recorded in history!")
+            load_sample_tasks(storage, undo_manager, queue_service, index_service)
+            st.success("Sample tasks loaded & indexed!")
             st.rerun()
 
         counts = storage.count_tasks()
@@ -168,8 +185,9 @@ def render_sidebar(
                             storage.delete_task(t.id)
                         undo_manager.clear()
                         queue_service.refresh()
+                        index_service.rebuild()
                         st.session_state.confirm_clear_all = False
-                        st.success("All tasks and history cleared.")
+                        st.success("All tasks, queue, and BST index cleared.")
                         st.rerun()
                 with col_n:
                     if st.button("Cancel", use_container_width=True):
@@ -177,7 +195,7 @@ def render_sidebar(
                         st.rerun()
 
         st.markdown("---")
-        st.caption("TaskForge v0.3.0 • Phase 03 (CO3)")
+        st.caption("TaskForge v0.4.0 • Phase 04 (CO4)")
 
     return view_choice
 
@@ -194,8 +212,9 @@ def main() -> None:
     storage = get_storage()
     undo_manager = get_undo_manager()
     queue_service = get_queue_service(storage, undo_manager)
+    index_service = get_index_service(storage)
 
-    current_view = render_sidebar(storage, undo_manager, queue_service)
+    current_view = render_sidebar(storage, undo_manager, queue_service, index_service)
 
     st.title("⚡ TaskForge — Task Management & Scheduling System")
 
@@ -208,6 +227,8 @@ def main() -> None:
         render_history_view(storage, undo_manager, queue_service)
     elif current_view == "🔬 DSA Performance Lab (CO3)":
         render_dsa_performance_lab()
+    elif current_view == "🌲 BST Task Index (CO4)":
+        render_tree_view(storage, index_service)
 
 
 if __name__ == "__main__":

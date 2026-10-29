@@ -24,8 +24,8 @@ This document provides the official Course Outcome (CO) mapping for **TaskForge:
 | :--- | :--- | :--- | :--- | :--- | :--- |
 | **Foundation** | **Phase 01** | Task Model, SQLite Storage, Parameterized Queries, Interactive Dashboard | `taskforge/models.py`<br>`taskforge/storage.py`<br>`taskforge/ui/` | **Implemented (Phase 01)** | `tests/test_models.py`<br>`tests/test_storage.py` (18 tests passing) |
 | **CO1** | **Phase 02** | Custom Stack (LIFO undo/redo manager) & Custom Queue (FIFO task execution engine) | `taskforge/structures/stack.py`<br>`taskforge/structures/queue.py`<br>`taskforge/services/undo_manager.py`<br>`taskforge/services/task_queue_service.py` | **Implemented (Phase 02)** | `tests/test_stack.py`<br>`tests/test_queue.py`<br>`tests/test_undo_manager.py`<br>`tests/test_task_queue_service.py`<br>`tests/test_phase2_integration.py` (26 tests passing) |
-| **CO3** | **Phase 03** | Searching (Linear Search, Binary Search) & Sorting (Insertion Sort, Merge Sort) + DSA Performance Lab | `taskforge/algorithms/searching.py`<br>`taskforge/algorithms/sorting.py`<br>`taskforge/services/benchmark_service.py`<br>`taskforge/ui/dsa_labs.py` | **Implemented (Active)** | `tests/test_searching.py`<br>`tests/test_sorting.py`<br>`tests/test_benchmarks.py`<br>`tests/test_dsa_integration.py` (34 tests passing) |
-| **CO4** | **Phase 04** | Custom Binary Search Tree (BST) for deadline indexing and inorder traversal | `taskforge/structures/bst.py` | *Planned (Phase 04)* | BST insertion, search, traversals, composite key handling, tree rebuilding tests |
+| **CO3** | **Phase 03** | Searching (Linear Search, Binary Search) & Sorting (Insertion Sort, Merge Sort) + DSA Performance Lab | `taskforge/algorithms/searching.py`<br>`taskforge/algorithms/sorting.py`<br>`taskforge/services/benchmark_service.py`<br>`taskforge/ui/dsa_labs.py` | **Implemented (Phase 03)** | `tests/test_searching.py`<br>`tests/test_sorting.py`<br>`tests/test_benchmarks.py`<br>`tests/test_dsa_integration.py` (34 tests passing) |
+| **CO4** | **Phase 04** | Custom Binary Search Tree (BST) for deadline indexing and inorder traversal | `taskforge/structures/bst.py`<br>`taskforge/services/task_index.py`<br>`taskforge/ui/tree_view.py` | **Implemented (Active)** | `tests/test_bst.py`<br>`tests/test_bst_integration.py` (20 tests passing) |
 | **CO5** | **Phase 05** | Custom Adjacency-List Graph, BFS/DFS Traversal, Cycle Detection, Topological Sorting | `taskforge/graph/dependency_graph.py`<br>`taskforge/ui/dependency_map.py` | *Planned (Phase 05)* | Directed graph edge tests, cycle prevention, prerequisite resolution tests |
 | **CO2** | **Phase 06** | Custom Hash Table (separate chaining) & Multi-Structure Storage/Retrieval Evaluation Lab | `taskforge/structures/hash_table.py`<br>`taskforge/services/structure_evaluation.py` | *Planned (Phase 06)* | Collision handling, load-factor analysis, comparative retrieval benchmark tests |
 | **CO1 + CO5** | **Phase 07** | Custom Heap Priority Queue, Smart Auto-Scheduler, Rule-Based Deadline Risk Analyzer | `taskforge/structures/priority_queue.py`<br>`taskforge/services/scheduler.py`<br>`taskforge/services/risk_analyzer.py` | *Planned (Phase 07)* | Priority heap invariant tests, scheduler eligibility, risk boundary tests |
@@ -37,55 +37,60 @@ This document provides the official Course Outcome (CO) mapping for **TaskForge:
 ## Detailed Evidence for Implemented Course Outcomes
 
 ### CO1: Develop efficient solutions using stack and/or queue data structures.
-*(Implemented in Phase 02 — see previous commit `30c3f9c`)*
+*(Implemented in Phase 02 — see commit `30c3f9c`)*
 - Custom generic `Stack` (LIFO) and `Queue` (FIFO singly-linked list without `collections.deque`).
 - Dual-stack `UndoManager` reversing task creation, editing, deletion, and queue processing.
 - FIFO pending-task dispatching via `TaskQueueService`.
 - Verified by 26 automated tests.
 
 ### CO3: Evaluate the performance of searching and sorting algorithms for solving engineering problems.
-*(Implemented in Phase 03)*
-- **Manual Searching Algorithms (`taskforge/algorithms/searching.py`):**
-  - `linear_search`: Sequential search with $O(1)$ best, $O(n)$ average/worst case, returning deterministic first-matches.
-  - `binary_search`: Iterative divide-and-conquer search with $O(\log n)$ efficiency on pre-sorted data.
-- **Manual Sorting Algorithms (`taskforge/algorithms/sorting.py`):**
-  - `insertion_sort`: Stable incremental sort ($O(n)$ best case on sorted data, $O(n^2)$ worst case).
-  - `merge_sort`: Stable divide-and-conquer sort with guaranteed $O(n \log n)$ time across all distributions.
-  - Custom key functions: `task_deadline_key` (deadline ascending, unscheduled last), `task_priority_key` (Urgent to Low), `task_priority_deadline_key` (combined tie-break), and `task_id_key`.
-- **DSA Performance Laboratory (`taskforge/services/benchmark_service.py`, `taskforge/ui/dsa_labs.py`):**
-  - Empirical evaluation comparing Linear vs. Binary search across first, middle, last, and absent targets.
-  - Comparison of Insertion vs. Merge sort on randomized, sorted, and reverse-sorted distributions across configurable sizes ($N=100$ to $N=5000$).
-  - Measured with `time.perf_counter()`, recording exact comparison and data-shift operations.
-  - Visualized using Matplotlib bar charts.
+*(Implemented in Phase 03 — see commit `54548eb`)*
+- Manual implementations of `linear_search`, `binary_search`, `insertion_sort`, and `merge_sort`.
+- Interactive `DSA Performance Lab` measuring execution time via `time.perf_counter()` and recording comparisons/shifts.
+- Verified by 34 automated tests.
+
+### CO4: Develop tree structure for solving engineering problems.
+*(Implemented in Phase 04)*
+- **Custom Binary Search Tree (`taskforge/structures/bst.py`):**
+  - Pure manual implementation of generic `TreeNode[K, V]` and `BinarySearchTree[K, V]`.
+  - Implements `insert`, `search`, `delete` (3-case node deletion: leaf, 1 child, 2 children via in-order successor), and tree height calculation.
+  - Implements tree traversals: `inorder_traversal()` (sorted key order), `preorder_traversal()` (prefix/reconstruction), and `postorder_traversal()` (postfix/bottom-up).
+- **Task Deadline Indexing Service (`taskforge/services/task_index.py`):**
+  - Dynamically builds the BST index from persistent SQLite records using composite keys:
+    `key = (has_no_deadline_flag, normalized_deadline, task_id)`
+  - Guarantees tasks with deadlines precede unscheduled tasks, and equal deadlines are deterministically tie-broken by task ID without key collisions or node overwrite.
+  - Synchronizes seamlessly with task mutations and Undo/Redo cycles without modifying underlying SQLite data.
+- **Interactive UI Tree View (`taskforge/ui/tree_view.py`):**
+  - Live deadline-ordered table generated strictly from BST Inorder Traversal.
+  - Interactive BST search widget testing exact key presence and absence.
+  - Traversal laboratory comparing Inorder, Preorder, and Postorder sequences.
+  - Hierarchical ASCII tree structure diagram and skewness diagnostic.
 - **Automated Verification:**
-  - `tests/test_searching.py`: 13 tests covering edge cases, positions, duplicates, and task lookups.
-  - `tests/test_sorting.py`: 14 tests covering stability, reverse flags, distributions, and task sorting rules.
-  - `tests/test_benchmarks.py`: 6 tests verifying reproducible benchmark runs, metric shapes, and distributions.
-  - `tests/test_dsa_integration.py`: 1 integration test verifying non-mutating search and sort over live SQLite records.
-  - **Total active tests for CO3:** 34 tests (all passing).
+  - `tests/test_bst.py`: 15 unit tests covering empty trees, insertion, search, duplicates, 3-case deletion, traversals, and left/right skewness.
+  - `tests/test_bst_integration.py`: 5 integration tests covering SQLite index rebuilding, composite key sorting, search by deadline/ID, and consistency through mutations/undo/redo.
+  - **Total active tests for CO4:** 20 tests (all passing).
 
 ---
 
-## Academic Viva Demonstration Procedure (CO3)
+## Academic Viva Demonstration Procedure (CO4)
 
 1. **Launch the application:**
    ```bash
    streamlit run app.py
    ```
-2. **Demonstrate Custom Task Sorting on the Dashboard:**
-   - In **📋 Task Dashboard & Registry**, locate the **⚡ Sort Tasks By** selector.
-   - Select **Deadline Ascending** and choose **Merge Sort (O(n log n))**.
-   - Show that tasks immediately reorder with earliest deadlines first, while unscheduled tasks are pushed to the end. Point out the operational counter badge (`Sorted via Merge Sort in X comparisons, Y shifts`).
-   - Switch to **Priority Descending** with **Insertion Sort (O(n²))**. Show that Urgent (P4) tasks appear first, followed by High, Medium, and Low.
-3. **Demonstrate Algorithm Search by Task ID:**
-   - Open the **🔎 Algorithm Search Demonstration** expander on the dashboard.
-   - Enter a target Task ID and select **Binary Search**.
-   - Explain to faculty: *Binary Search requires pre-sorting by Task ID first, then operates in $O(\log n)$ comparisons.* Show that it locates the task in very few comparisons.
-4. **Demonstrate the DSA Performance Lab:**
-   - Navigate to **🔬 DSA Performance Lab (CO3)** from the sidebar.
-   - Under **🔍 Searching Laboratory**, set $N=5000$ and target to **Middle Element**. Click **Run Searching Benchmark**.
-   - Show the resulting chart: Linear Search requires $\approx 2500$ comparisons, whereas Binary Search needs only $\approx 12$ comparisons!
-   - Under **📊 Sorting Laboratory**, set $N=2000$ and distribution to **Randomized**. Click **Run Sorting Benchmark**.
-   - Point out that Merge Sort runs significantly faster and executes far fewer operations than Insertion Sort's quadratic shifts.
-   - Now change distribution to **Already Sorted**. Click **Run Sorting Benchmark**.
-   - Point out that Insertion Sort now executes only $n-1 = 1999$ comparisons ($O(n)$ best case), illustrating why understanding theoretical complexity matters in engineering!
+2. **Access the BST Task Index:**
+   - In the sidebar navigation, select **🌲 BST Task Index (CO4)**.
+   - Click **🌱 Load Sample Tasks** in the sidebar to populate diverse tasks if the database is empty.
+3. **Demonstrate Deadline-Ordered Retrieval (Inorder Traversal):**
+   - In the **📋 Inorder Traversal (Deadline Order)** tab, observe the list of tasks.
+   - Point out to faculty: *The order of these rows was NOT produced by SQL `ORDER BY` or Python `sorted()`. It is generated by an Inorder traversal (Left $\to$ Root $\to$ Right) on our custom Binary Search Tree, extracting nodes in strictly increasing deadline order ($O(n)$ time).*
+   - Notice that tasks with deadlines appear first, and unscheduled tasks appear at the bottom.
+4. **Demonstrate Tree Search:**
+   - Switch to the **🔍 BST Key Search** tab.
+   - Select any task from the dropdown and click **Execute BST Search**.
+   - Explain to faculty: *The search traverses the tree nodes using key comparison, achieving $O(\log n)$ average search complexity without scanning the entire list.*
+   - Click **Search Missing Key** and observe that it safely returns `None`.
+5. **Demonstrate Tree Traversals & Structure:**
+   - Open the **🔄 Traversal Laboratory** tab. Toggle between **Inorder**, **Preorder**, and **Postorder**. Point out how the visited sequence changes.
+   - Open the **🌳 Visual Tree Structure** tab. Show the hierarchical tree diagram displaying the root, `├── (L)` subtrees, and `└── (R)` subtrees.
+   - Highlight the **Skewness Analysis** metric showing tree height vs. minimum theoretical height.
