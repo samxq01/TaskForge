@@ -27,7 +27,7 @@ This document provides the official Course Outcome (CO) mapping for **TaskForge:
 | **CO3** | **Phase 03** | Searching (Linear Search, Binary Search) & Sorting (Insertion Sort, Merge Sort) + DSA Performance Lab | `taskforge/algorithms/searching.py`<br>`taskforge/algorithms/sorting.py`<br>`taskforge/services/benchmark_service.py`<br>`taskforge/ui/dsa_labs.py` | **Implemented (Phase 03)** | `tests/test_searching.py`<br>`tests/test_sorting.py`<br>`tests/test_benchmarks.py`<br>`tests/test_dsa_integration.py` (34 tests passing) |
 | **CO4** | **Phase 04** | Custom Binary Search Tree (BST) for deadline indexing and inorder traversal | `taskforge/structures/bst.py`<br>`taskforge/services/task_index.py`<br>`taskforge/ui/tree_view.py` | **Implemented (Phase 04)** | `tests/test_bst.py`<br>`tests/test_bst_integration.py` (20 tests passing) |
 | **CO5** | **Phase 05** | Custom Adjacency-List Graph, BFS/DFS Traversal, Cycle Detection, Topological Sorting (Kahn's), Dependency Scheduler | `taskforge/graph/dependency_graph.py`<br>`taskforge/services/dependency_service.py`<br>`taskforge/services/scheduler.py`<br>`taskforge/ui/dependency_view.py` | **Implemented (Phase 05)** | `tests/test_dependency_graph.py`<br>`tests/test_dependency_service.py`<br>`tests/test_scheduler.py`<br>`tests/test_dependency_integration.py` (28 tests passing) |
-| **CO2** | **Phase 06** | Custom Hash Table (separate chaining) & Multi-Structure Storage/Retrieval Evaluation Lab | `taskforge/structures/hash_table.py`<br>`taskforge/services/structure_evaluation.py` | *Planned (Phase 06)* | Collision handling, load-factor analysis, comparative retrieval benchmark tests |
+| **CO2** | **Phase 06** | Custom Hash Table (separate chaining), Task-ID Index, & Multi-Structure Evaluation Lab (List vs Hash vs BST) | `taskforge/structures/hash_table.py`<br>`taskforge/services/task_hash_index.py`<br>`taskforge/services/structure_evaluation.py`<br>`taskforge/ui/structure_evaluation_view.py` | **Implemented (Phase 06)** | `tests/test_hash_table.py`<br>`tests/test_task_hash_index.py`<br>`tests/test_structure_evaluation.py`<br>`tests/test_phase6_integration.py` (23 tests passing) |
 | **CO1 + CO5** | **Phase 07** | Custom Heap Priority Queue, Smart Auto-Scheduler, Rule-Based Deadline Risk Analyzer | `taskforge/structures/priority_queue.py`<br>`taskforge/services/scheduler.py`<br>`taskforge/services/risk_analyzer.py` | *Planned (Phase 07)* | Priority heap invariant tests, scheduler eligibility, risk boundary tests |
 | **CO5** | **Phase 08** | Critical Path Analyzer (DAG Longest Path) & What-If Schedule Simulator (Non-mutating) | `taskforge/services/critical_path.py`<br>`taskforge/services/what_if_simulator.py` | *Planned (Phase 08)* | Critical path duration tests, downstream delay propagation tests, non-mutation proofs |
 | **All COs** | **Phase 09** | Full Integration, System Verification, Performance Audit & Viva Documentation | Whole application integration | *Planned (Phase 09)* | End-to-end integration tests covering all CO criteria |
@@ -43,6 +43,35 @@ This document provides the official Course Outcome (CO) mapping for **TaskForge:
 - FIFO pending-task dispatching via `TaskQueueService`.
 - Verified by 26 automated tests.
 
+### CO2: Evaluate the suitability of data structures for efficient storage and retrieval.
+*(Implemented in Phase 06)*
+- **Custom Hash Table (`taskforge/structures/hash_table.py`):**
+  - Pure manual generic `HashTable[K, V]` using an internal list of buckets (`list[list[_HashEntry]]`).
+  - Python dictionaries are strictly **not** used for internal bucket storage.
+  - Implements **separate chaining** to handle collisions gracefully without data overwrites.
+  - Dynamic resizing: Automatically doubles bucket capacity and rehashes entries when load factor $\alpha > 0.75$.
+  - Exposes comprehensive diagnostic metrics: capacity $m$, items $n$, load factor $\alpha$, occupied buckets, colliding buckets, total collisions, and maximum chain length.
+- **Task-ID Hash Indexing Service (`taskforge/services/task_hash_index.py`):**
+  - Rebuilds in-memory hash table directly from SQLite persistent storage.
+  - Enables rapid $O(1)$ average-case primary key lookup for tasks.
+  - Synchronizes with SQLite across mutations and undo/redo cycles.
+- **Multi-Structure Evaluation Service (`taskforge/services/structure_evaluation.py`):**
+  - Controlled empirical comparison across **Sequential List Search** ($O(n)$), **Custom Hash Table** ($O(1)$ avg), and **Custom Binary Search Tree** ($O(\log n)$ avg).
+  - Enforces strict fair-comparison rules: identical datasets, identical task ID keys, identical query targets, and separated construction vs. lookup timing.
+  - Evaluates across varied workloads: Early hit (5%), Middle hit (50%), Late hit (95%), and Absent key (guaranteed miss).
+  - Measures key comparisons / inspected entries outside timed blocks and validates output correctness.
+- **Interactive UI Evaluation Lab (`taskforge/ui/structure_evaluation_view.py`):**
+  - Interactive Hash Table sandbox with real-time collision trigger and bucket chain visualizer.
+  - Live task-ID lookup widget measuring bucket chain inspections.
+  - Comparative benchmark runner with dynamic Matplotlib charts (Lookup Time, Comparisons, Construction Time).
+  - Academic complexity and trade-offs matrix.
+- **Automated Verification:**
+  - `tests/test_hash_table.py`: 12 unit tests covering insertions, duplicate upserts, deletions, collisions, separate chaining, comparisons, resizing, and capacity limits.
+  - `tests/test_task_hash_index.py`: 3 tests covering SQLite synchronization, task retrieval, comparisons, and undo/redo consistency.
+  - `tests/test_structure_evaluation.py`: 7 tests covering synthetic dataset generation, target selection, linear search baseline, hit/miss scenarios, and multi-size benchmarks.
+  - `tests/test_phase6_integration.py`: 1 full workflow integration test verifying hash indexing alongside Phase 01–05 components.
+  - **Total active tests for CO2:** 23 tests (all passing).
+
 ### CO3: Evaluate the performance of searching and sorting algorithms for solving engineering problems.
 *(Implemented in Phase 03 — see commit `54548eb`)*
 - Manual implementations of `linear_search`, `binary_search`, `insertion_sort`, and `merge_sort`.
@@ -56,71 +85,52 @@ This document provides the official Course Outcome (CO) mapping for **TaskForge:
 - Verified by 20 automated tests.
 
 ### CO5: Evaluate the applicability of graph data structures and traversal techniques for solving engineering problems.
-*(Implemented in Phase 05)*
-- **Custom Adjacency-List Directed Graph (`taskforge/graph/dependency_graph.py`):**
-  - Pure manual implementation of directed dependency graph without external algorithmic graph libraries (no NetworkX).
-  - Enforces strict edge convention: $A \to B$ means Task B depends on Task A (Task A is a prerequisite for Task B).
-  - Forward adjacency mapping $u \to \{v\}$ and reverse adjacency mapping $v \to \{u\}$ for $O(1)$ edge lookups and immediate in/out-degree inspection.
-  - Cycle detection using 3-color Depth-First Search (WHITE=0, GRAY=1, BLACK=2) identifying back-edges and extracting circular loop sequences.
-  - Pre-validation reachability check: `would_create_cycle(prereq, dep)` evaluates `has_path(dep, prereq)` to reject circular dependencies *before* persisting to SQLite.
-  - Topological sorting via **Kahn's Algorithm** utilizing Phase 02 custom **FIFO Queue** with deterministic tie-breaking.
-  - Traversals:
-    - **BFS:** Uses custom generic `Queue` to explore task dependents level-by-level.
-    - **DFS:** Uses custom generic `Stack` to explore deep prerequisite chains.
-- **SQLite Dependency Persistence (`taskforge/storage.py`):**
-  - Normalized `task_dependencies` table with composite primary key `(prerequisite_id, dependent_id)` and foreign key cascading deletes.
-- **Dependency & Eligibility Services (`taskforge/services/dependency_service.py` & `scheduler.py`):**
-  - Synchronizes in-memory graph with persistent SQLite storage.
-  - Computes task eligibility: a task is eligible if its status is Pending and **all** prerequisites are Completed.
-  - Identifies blocked tasks and surfaces their unresolved blockers.
-- **FIFO Queue Integration (`taskforge/services/task_queue_service.py`):**
-  - Only eligible pending tasks are enqueued into the FIFO processing queue; blocked tasks are safely deferred until prerequisites complete.
-- **Interactive UI Dependency Map (`taskforge/ui/dependency_view.py`):**
-  - Visual Matplotlib directed graph layout with status color-coding (Green=Completed, Yellow=In Progress, Blue=Eligible, Red=Blocked).
-  - Dependency management forms with real-time cycle rejection warnings.
-  - Step-by-step Topological Order execution sequence runner.
-  - Interactive BFS and DFS traversal comparisons.
-  - Sandbox circular dependency simulator for viva demonstration.
-- **Automated Verification:**
-  - `tests/test_dependency_graph.py`: 15 unit tests covering nodes, edges, reachability, BFS, DFS, cycle detection, Kahn's sort, and tie-breaking.
-  - `tests/test_dependency_service.py`: 7 tests covering SQLite persistence, self-dependency rejection, cycle rejection, cascading deletes, and topological models.
-  - `tests/test_scheduler.py`: 4 tests covering independent task readiness, blocker tracking, prerequisite completion unblocking, and multi-prerequisite satisfaction.
-  - `tests/test_dependency_integration.py`: 2 full workflow tests verifying queue filtering, multi-stage completion, and undo/redo interaction.
-  - **Total active tests for CO5:** 28 tests (all passing).
+*(Implemented in Phase 05 — see commit `69e2324`)*
+- Custom directed `DependencyGraph` with adjacency list representation ($A \to B$ convention).
+- 3-color DFS cycle detection and `would_create_cycle` safety check.
+- Kahn's algorithm topological sorting with custom FIFO Queue.
+- Dependency-aware scheduler filtering the FIFO task processing queue.
+- Verified by 28 automated tests.
 
 ---
 
-## Academic Viva Demonstration Procedure (CO5)
+## Academic Viva Demonstration Procedure (CO2)
 
 1. **Launch the application:**
    ```bash
    streamlit run app.py
    ```
-2. **Access the Dependency Map:**
-   - In the sidebar navigation, select **🔗 Dependency Map (CO5)**.
-   - Click **🌱 Load Sample Tasks** in the sidebar to populate realistic sample tasks and dependency links.
-3. **Demonstrate the Visual Graph & Adjacency Structure:**
-   - In the **🗺️ Visual Graph** tab, inspect the directed dependency diagram.
-   - Point out to faculty:
-     * *“Each arrow $A \to B$ denotes that Task A must complete before Task B can start.”*
-     * *“Notice the color coding: Completed tasks are green, In-Progress tasks are amber, Eligible tasks ready to start are blue, and Blocked tasks waiting for prerequisites are red.”*
-   - Expand the **Raw Adjacency List & Degrees Table** to demonstrate in-degrees, out-degrees, and incoming/outgoing edges.
-4. **Demonstrate Circular Dependency Rejection (Safety Invariant):**
-   - Switch to the **➕ Manage Dependencies** tab.
-   - Show how attempting to make an earlier task depend on a later task raises a cycle error:
-     * Try adding a dependency from a downstream task to an upstream prerequisite.
-     * Show the red warning: *“🚨 Cycle Prevention: Circular dependency rejected... Adding this dependency would cause a deadlock cycle.”*
-     * Explain to faculty: *“Our `DependencyService` runs `would_create_cycle()` in memory using 3-color DFS before writing to SQLite, ensuring the schedule never deadlocks.”*
-5. **Demonstrate Topological Sorting (Kahn’s Algorithm):**
-   - Switch to the **📊 Topological Order (Kahn's)** tab.
-   - Walk faculty through the computed linear sequence:
-     * *“Kahn’s algorithm begins with tasks that have in-degree 0 (root prerequisites). It enqueues them into our custom FIFO Queue from Phase 02, dequeues each task, decrements the in-degrees of its dependent neighbors, and enqueues newly freed tasks.”*
-     * *“This proves mathematically that all engineering dependencies are strictly honored.”*
-6. **Demonstrate Graph Traversals (BFS vs. DFS):**
-   - Switch to the **🔍 BFS & DFS Traversal** tab.
-   - Select a root task (e.g. `#1 Setup Database Schema`).
-   - Run **BFS**: Observe level-by-level exploration powered by our custom **Queue**.
-   - Run **DFS**: Observe branch-by-branch deep exploration powered by our custom **Stack**.
-7. **Demonstrate Cycle Simulation Sandbox:**
-   - Switch to the **🧪 Cycle Simulator (Viva Demo)** tab.
-   - Click **🧪 Simulate Cycle Detection** to demonstrate how a cycle `101 -> 102 -> 103 -> 101` is trapped and unpacked into an explicit cycle loop string.
+2. **Access the Data Structure Evaluation Module:**
+   - In the sidebar navigation, select **🧮 Data Structure Evaluation (CO2)**.
+   - Click **🌱 Load Sample Tasks** in the sidebar to populate tasks if the database is empty.
+3. **Demonstrate the Custom Hash Table Lab:**
+   - Go to the **🗄️ Custom Hash Table Lab** tab.
+   - Inspect the top metric cards showing Capacity ($m$), Stored Keys ($n$), Load Factor ($\alpha = n/m$), Collisions, and Max Chain Length.
+   - Insert key-value pairs (e.g. `task_1` ➔ `Schema Design`).
+   - Click **💥 Collision Demo** to demonstrate **separate chaining**:
+     * Point out to faculty: *“Multiple keys have mapped into the same bucket. Notice that our implementation preserves all entries in a chain rather than overwriting previous values.”*
+     * Look at the **Bucket Chains & Collision Structure** chart and table to observe the chained entries.
+   - Delete one colliding key: Show that the other entries in the same bucket remain completely unaffected.
+4. **Demonstrate the Production Task-ID Hash Index:**
+   - Switch to the **🔍 Live Task-ID Hash Index** tab.
+   - Select an existing Task ID from the dropdown.
+   - Show how the hash table locates the task:
+     * *“Notice the lookup message: Task found in 1 chain inspection. The primary key hash index gives constant $O(1)$ average retrieval time.”*
+5. **Demonstrate the Multi-Structure Comparative Benchmark:**
+   - Switch to the **🔬 Comparative Benchmark (List vs Hash vs BST)** tab.
+   - Select Dataset Size: `1000`, Scenario: `Middle Hit (~50% mark)`, Repetitions: `250`.
+   - Click **🚀 Run Comparative Benchmark**.
+   - Walk faculty through the empirical results table and visual charts:
+     * **Lookup Time:** Point out that Sequential List takes $O(n)$ time, BST takes $O(\log n)$ time, and Custom Hash Table takes $O(1)$ time.
+     * **Key Comparisons:** Point out the difference in comparisons:
+       - List: Scans $\approx 500$ items (halfway through 1,000 tasks).
+       - BST: Inspects $\approx 10$ nodes ($\log_2 1000 \approx 10$).
+       - Hash Table: Inspects $\approx 1$ chain entry.
+     * **Construction Time:** Note that List construction is fastest ($O(n)$ array allocation), Hash Table requires hashing entries ($O(n)$), and BST requires tree node link updates ($O(n \log n)$).
+   - Change scenario to `Absent Key (Miss Case)` and run again:
+     * Observe that List must inspect all 1,000 items before confirming absence ($O(n)$), while Hash Table immediately accesses an empty bucket or small chain ($O(1)$).
+6. **Conclude with Complexity & Trade-Offs (Tab 4):**
+   - Summarize to faculty:
+     * *“For pure primary-key retrieval, a Hash Table is optimal ($O(1)$).*
+     * *For chronological deadline ordering and range queries, a BST is optimal ($O(\log n)$ with sorted Inorder traversal).*
+     * *For small sequential queues and logs, a List is simplest.”*

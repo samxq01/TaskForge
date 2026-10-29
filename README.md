@@ -47,6 +47,13 @@ TaskForge is a Python web application that combines task management with practic
 - **Dependency-Aware Scheduling:** Identifies blocked tasks with incomplete prerequisites and filters the active FIFO processing queue so only unblocked tasks are dispatched.
 - **Interactive UI Dependency Map:** Visual Matplotlib directed graph with execution status color-coding, adjacency and in/out-degree tables, and a dedicated viva cycle simulator.
 
+### Phase 06: Custom Hash Table and Data Structure Evaluation (CO2)
+- **Custom Hash Table (`HashTable`):** Pure manual implementation using separate chaining without Python dictionaries for internal bucket storage.
+- **Dynamic Resizing & Rehashing:** Doubles capacity when load factor $\alpha = n / m > 0.75$, maintaining $O(1)$ average-case operations.
+- **Task-ID Hash Index:** In-memory hash indexing of SQLite task records for rapid constant-time primary key retrieval.
+- **Multi-Structure Evaluation Lab:** Controlled benchmark comparing Sequential List ($O(n)$), Custom Hash Table ($O(1)$ avg), and Custom BST ($O(\log n)$ avg) using equivalent datasets, targets, and operations.
+- **Interactive UI Lab & Charts:** Collision trigger demo, bucket distribution graphs, real-time comparison tables, and Matplotlib timing/comparison charts.
+
 ---
 
 ## 🛠️ Technology Stack
@@ -124,11 +131,12 @@ TaskForge/
 │   ├── __init__.py                 # Package initialization
 │   ├── models.py                   # Typed Task dataclass and validation
 │   ├── storage.py                  # SQLite storage layer with parameterized queries & dependency table
-│   ├── structures/                 # Custom manual DSA implementations (CO1 & CO4)
+│   ├── structures/                 # Custom manual DSA implementations (CO1, CO2, CO4)
 │   │   ├── __init__.py
-│   │   ├── stack.py                # Generic LIFO Stack implementation
-│   │   ├── queue.py                # Generic FIFO Queue (singly-linked list)
-│   │   └── bst.py                  # Generic Binary Search Tree (CO4)
+│   │   ├── stack.py                # Generic LIFO Stack implementation (CO1)
+│   │   ├── queue.py                # Generic FIFO Queue (singly-linked list) (CO1)
+│   │   ├── bst.py                  # Generic Binary Search Tree (CO4)
+│   │   └── hash_table.py           # Generic Hash Table with separate chaining (CO2)
 │   ├── graph/                      # Custom graph implementations (CO5)
 │   │   ├── __init__.py
 │   │   └── dependency_graph.py     # Custom adjacency-list Directed Graph, BFS, DFS, Kahn's sort (CO5)
@@ -142,6 +150,8 @@ TaskForge/
 │   │   ├── task_queue_service.py   # FIFO pending task dispatcher with dependency awareness
 │   │   ├── benchmark_service.py    # Searching & Sorting benchmark runner
 │   │   ├── task_index.py           # BST deadline indexing service (CO4)
+│   │   ├── task_hash_index.py      # HashTable task-ID indexing service (CO2)
+│   │   ├── structure_evaluation.py # List vs HashTable vs BST evaluation engine (CO2)
 │   │   ├── dependency_service.py   # Graph SQLite sync and cycle validation (CO5)
 │   │   └── scheduler.py            # Dependency-aware task eligibility evaluator (CO5)
 │   └── ui/                         # Modular Streamlit UI components
@@ -151,8 +161,9 @@ TaskForge/
 │       ├── history_view.py         # CO1 Queue & Stack visualizer and viva guide
 │       ├── dsa_labs.py             # CO3 DSA Performance Lab & Matplotlib charts
 │       ├── tree_view.py            # CO4 BST Task Index, Traversals & Tree Visualizer
-│       └── dependency_view.py      # CO5 Dependency Map, Topological Order & Traversals
-├── tests/                          # Automated test suite (126 tests)
+│       ├── dependency_view.py      # CO5 Dependency Map, Topological Order & Traversals
+│       └── structure_evaluation_view.py # CO2 Hash Table Lab & Structure Comparison
+├── tests/                          # Automated test suite (149 tests)
 │   ├── __init__.py
 │   ├── test_models.py              # Domain model and validation tests
 │   ├── test_storage.py             # SQLite CRUD and persistence tests
@@ -170,7 +181,11 @@ TaskForge/
 │   ├── test_dependency_graph.py    # Custom DependencyGraph unit tests (CO5)
 │   ├── test_dependency_service.py  # Dependency service & SQLite persistence tests (CO5)
 │   ├── test_scheduler.py           # Scheduler eligibility & blocker tests (CO5)
-│   └── test_dependency_integration.py # End-to-end dependency & queue lifecycle tests (CO5)
+│   ├── test_dependency_integration.py # End-to-end dependency & queue lifecycle tests (CO5)
+│   ├── test_hash_table.py          # Custom HashTable unit tests (CO2)
+│   ├── test_task_hash_index.py     # Task hash index service tests (CO2)
+│   ├── test_structure_evaluation.py # List vs Hash vs BST benchmark tests (CO2)
+│   └── test_phase6_integration.py  # Phase 06 multi-structure integration tests (CO2)
 └── docs/                           # Project documentation
     ├── CO_MAPPING.md               # Official Course Outcome alignment matrix & viva guide
     └── ALGORITHM_COMPLEXITY.md     # Data structure & algorithm complexity analysis
@@ -181,7 +196,7 @@ TaskForge/
 ## 🎓 Course Outcomes (CO) Alignment
 
 - **CO1:** Develop efficient solutions using stack and/or queue data structures. *(Implemented in Phase 02)*
-- **CO2:** Evaluate the suitability of data structures for efficient storage and retrieval. *(Planned for Phase 06)*
+- **CO2:** Evaluate the suitability of data structures for efficient storage and retrieval. *(Implemented in Phase 06)*
 - **CO3:** Evaluate the performance of searching and sorting algorithms for solving engineering problems. *(Implemented in Phase 03)*
 - **CO4:** Develop tree structure for solving engineering problems. *(Implemented in Phase 04)*
 - **CO5:** Evaluate the applicability of graph data structures and traversal techniques for solving engineering problems. *(Implemented in Phase 05)*

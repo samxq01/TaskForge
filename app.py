@@ -11,6 +11,7 @@ import streamlit as st
 from taskforge.models import Priority, Task, TaskStatus
 from taskforge.services.dependency_service import DependencyService
 from taskforge.services.scheduler import SchedulerService
+from taskforge.services.task_hash_index import TaskHashIndexService
 from taskforge.services.task_index import TaskIndexService
 from taskforge.services.task_queue_service import TaskQueueService
 from taskforge.services.undo_manager import ActionType, UndoManager
@@ -19,6 +20,7 @@ from taskforge.ui.dashboard import render_dashboard
 from taskforge.ui.dependency_view import render_dependency_view
 from taskforge.ui.dsa_labs import render_dsa_performance_lab
 from taskforge.ui.history_view import render_history_view
+from taskforge.ui.structure_evaluation_view import render_structure_evaluation_view
 from taskforge.ui.tree_view import render_tree_view
 
 
@@ -72,12 +74,20 @@ def get_index_service(storage: TaskStorage) -> TaskIndexService:
     return st.session_state.index_service
 
 
+def get_hash_index_service(storage: TaskStorage) -> TaskHashIndexService:
+    """Initialize or retrieve TaskHashIndexService singleton (CO2)."""
+    if "hash_index" not in st.session_state:
+        st.session_state.hash_index = TaskHashIndexService(storage)
+    return st.session_state.hash_index
+
+
 def load_sample_tasks(
     storage: TaskStorage,
     undo_manager: UndoManager,
     queue_service: TaskQueueService,
     index_service: TaskIndexService,
     dep_service: DependencyService,
+    hash_index: TaskHashIndexService,
 ) -> None:
     """Seed initial sample tasks and realistic dependencies for demonstration and viva testing."""
     now = datetime.now()
@@ -163,6 +173,7 @@ def load_sample_tasks(
     dep_service.rebuild()
     queue_service.refresh()
     index_service.rebuild()
+    hash_index.rebuild_index()
 
 
 def render_sidebar(
@@ -171,11 +182,12 @@ def render_sidebar(
     queue_service: TaskQueueService,
     index_service: TaskIndexService,
     dep_service: DependencyService,
+    hash_index: TaskHashIndexService,
 ) -> str:
     """Render the sidebar with navigation, phase status, and demonstration tools."""
     with st.sidebar:
         st.title("⚡ TaskForge")
-        st.caption("College DSA Micro-Project • CO1, CO3, CO4, CO5 Active")
+        st.caption("College DSA Micro-Project • CO1, CO2, CO3, CO4, CO5 Active")
 
         st.markdown("### 📌 Navigation")
         view_choice = st.radio(
@@ -183,12 +195,13 @@ def render_sidebar(
             options=[
                 "📋 Task Dashboard & Registry",
                 "🔄 Task Processing & History (CO1)",
+                "🧮 Data Structure Evaluation (CO2)",
                 "🔬 DSA Performance Lab (CO3)",
                 "🌲 BST Task Index (CO4)",
                 "🔗 Dependency Map (CO5)",
             ],
             index=0,
-            help="Navigate across Phase 01 (Dashboard), Phase 02 (CO1), Phase 03 (CO3), Phase 04 (CO4), and Phase 05 (CO5).",
+            help="Navigate across all Course Outcome modules (CO1–CO5).",
         )
 
         st.markdown("---")
@@ -199,8 +212,8 @@ def render_sidebar(
 - 🟢 **Phase 02:** Stack, Queue & Undo/Redo (CO1) *(Complete)*
 - 🟢 **Phase 03:** Searching & Sorting Lab (CO3) *(Complete)*
 - 🟢 **Phase 04:** BST Deadline Index (CO4) *(Complete)*
-- 🟢 **Phase 05:** Dependency Graph & Visual Map (CO5) *(Active)*
-- 🔒 **Phase 06:** Hash Table & Storage Lab (CO2)
+- 🟢 **Phase 05:** Dependency Graph & Visual Map (CO5) *(Complete)*
+- 🟢 **Phase 06:** Hash Table & Storage Lab (CO2) *(Active)*
 - 🔒 **Phase 07:** Smart Auto-Scheduler
 - 🔒 **Phase 08:** Critical Path & Simulator
 - 🔒 **Phase 09:** Final Polish & Integration
@@ -210,8 +223,8 @@ def render_sidebar(
         st.markdown("---")
         st.markdown("### 🛠️ Demonstration Tools")
         if st.button("🌱 Load Sample Tasks", use_container_width=True):
-            load_sample_tasks(storage, undo_manager, queue_service, index_service, dep_service)
-            st.success("Sample tasks & graph dependencies loaded!")
+            load_sample_tasks(storage, undo_manager, queue_service, index_service, dep_service, hash_index)
+            st.success("Sample tasks, dependencies & hash index loaded!")
             st.rerun()
 
         counts = storage.count_tasks()
@@ -235,8 +248,9 @@ def render_sidebar(
                         dep_service.rebuild()
                         queue_service.refresh()
                         index_service.rebuild()
+                        hash_index.rebuild_index()
                         st.session_state.confirm_clear_all = False
-                        st.success("All tasks, graph dependencies, queue, and BST index cleared.")
+                        st.success("All tasks, dependencies, queue, BST, and Hash index cleared.")
                         st.rerun()
                 with col_n:
                     if st.button("Cancel", use_container_width=True):
@@ -244,7 +258,7 @@ def render_sidebar(
                         st.rerun()
 
         st.markdown("---")
-        st.caption("TaskForge v0.5.0 • Phase 05 (CO5)")
+        st.caption("TaskForge v0.6.0 • Phase 06 (CO2)")
 
     return view_choice
 
@@ -264,8 +278,16 @@ def main() -> None:
     scheduler_service = get_scheduler_service(storage, dep_service)
     queue_service = get_queue_service(storage, undo_manager, dep_service)
     index_service = get_index_service(storage)
+    hash_index = get_hash_index_service(storage)
 
-    current_view = render_sidebar(storage, undo_manager, queue_service, index_service, dep_service)
+    current_view = render_sidebar(
+        storage=storage,
+        undo_manager=undo_manager,
+        queue_service=queue_service,
+        index_service=index_service,
+        dep_service=dep_service,
+        hash_index=hash_index,
+    )
 
     st.title("⚡ TaskForge — Task Management & Scheduling System")
 
@@ -276,6 +298,8 @@ def main() -> None:
         render_dashboard(storage, undo_manager=undo_manager, queue_service=queue_service)
     elif current_view == "🔄 Task Processing & History (CO1)":
         render_history_view(storage, undo_manager, queue_service)
+    elif current_view == "🧮 Data Structure Evaluation (CO2)":
+        render_structure_evaluation_view(storage, hash_index)
     elif current_view == "🔬 DSA Performance Lab (CO3)":
         render_dsa_performance_lab()
     elif current_view == "🌲 BST Task Index (CO4)":

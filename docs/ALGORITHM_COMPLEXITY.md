@@ -162,3 +162,43 @@ The custom `DependencyGraph` represents directed task prerequisites using manual
 - **Queue Filtering (`TaskQueueService.refresh()`):**
   - Runs parameterized SQLite query to exclude tasks with incomplete prerequisites.
   - Guarantees $O(N_{tasks})$ database pass with single-index lookups.
+
+
+---
+
+## 8. Custom Hash Table & Multi-Structure Evaluation (`taskforge/structures/hash_table.py` & `taskforge/services/structure_evaluation.py`)
+
+The custom `HashTable[K, V]` implements an in-memory key-value dictionary using **separate chaining** for collision resolution without relying on Python's built-in dictionary container for bucket storage.
+
+### A. Hash Table Asymptotic Complexity
+
+| Operation | Method Signature | Average / Expected Case | Worst Case | Auxiliary Space | Description & Notes |
+| :--- | :--- | :--- | :--- | :--- | :--- |
+| **Insertion (Upsert)** | `insert(key, value) -> bool` | $O(1)$ amortized | $O(n)$ | $O(1)$ | Hashes key to bucket; searches chain. Appends new entry if absent, updates in place if present. Triggers dynamic resizing when load factor $\alpha > 0.75$. |
+| **Lookup (Get)** | `get(key, default) -> V` | $O(1)$ | $O(n)$ | $O(1)$ | Hashes key to bucket and inspects chain entries. In worst case (all keys collide into same bucket), degenerates to $O(n)$. |
+| **Contains** | `contains(key) -> bool` | $O(1)$ | $O(n)$ | $O(1)$ | Validates presence of key via bucket chain inspection. |
+| **Update** | `update(key, value) -> bool` | $O(1)$ | $O(n)$ | $O(1)$ | Updates value of an existing entry; returns `False` if key is absent without inserting. |
+| **Deletion** | `delete(key) -> bool` | $O(1)$ | $O(n)$ | $O(1)$ | Removes entry from bucket chain without affecting other colliding entries in the same bucket. |
+| **Iteration** | `items() / keys() / values()` | $O(m + n)$ | $O(m + n)$ | $O(n)$ | Scans all $m$ buckets and extracts $n$ entries across all chains. |
+| **Dynamic Resize** | `_resize(new_capacity)` | $O(n)$ | $O(n)$ | $O(m_{new})$ | Allocates $2m$ buckets and rehashes all existing entries. Amortized over all insertions, insertion remains $O(1)$. |
+
+*Here, $n$ denotes the total number of unique keys stored in the table, and $m$ denotes the total bucket capacity.*
+
+### B. Comparative Complexity: List vs. Hash Table vs. Binary Search Tree
+
+| Criterion | Sequential List Search | Custom Hash Table (Chaining) | Custom Binary Search Tree |
+| :--- | :--- | :--- | :--- |
+| **Lookup Time (Average)** | $O(n)$ | **$O(1)$** | **$O(\log n)$** |
+| **Lookup Time (Worst Case)** | $O(n)$ (end of list or absent) | $O(n)$ (all keys collide) | $O(n)$ (completely skewed tree) |
+| **Index Construction Time** | $O(n)$ (array allocation / copy) | $O(n)$ amortized | $O(n \log n)$ average, $O(n^2)$ worst |
+| **Key Inherent Ordering** | Preserves insertion sequence | **None** (hash position modulo $m$) | **Strict Inorder Sorting** ($L < N < R$) |
+| **Memory / Space Overhead** | Low (contiguous array of references) | Moderate ($m$ bucket pointers + chain nodes) | Moderate (2 pointers `left` & `right` per node) |
+| **Optimal Use Case** | Small datasets ($N < 50$), queue logs | Exact primary-key retrieval ($O(1)$) | Ordered range queries, priority schedules |
+
+### C. Separate Chaining, Load Factor, and Rehashing Dynamics
+1. **Separate Chaining:** Each bucket in the internal array stores a dynamic sequence (chain) of `_HashEntry` objects. When two distinct keys hash to the same bucket index (a collision), both entries are appended to the bucket's chain. Retrievals inspect only the entries in the target bucket chain.
+2. **Load Factor ($\alpha = n / m$):** Quantifies table saturation. A low load factor ensures short chains ($\le 1$ average entries per bucket).
+3. **Resizing Policy:** When $\alpha > 0.75$, capacity doubles ($m \leftarrow 2m$). All existing entries are rehashed into the new bucket array. Because capacity is doubled geometrically, the $O(n)$ cost of rehashing is amortized over $\Omega(n)$ preceding insertions, yielding $O(1)$ amortized cost per insertion.
+4. **Empirical vs. Theoretical Observations:**
+   - On small workloads ($N \le 100$), CPU cache locality and small constant factors can make linear array scanning perform within a few microseconds of hash lookup.
+   - As $N$ scales ($N = 1,000$ and $N = 5,000$), linear search time grows strictly linearly with $N$ ($O(n)$), while Hash Table lookup remains flat at $\approx 1$ comparison ($O(1)$) and BST search grows logarithmically ($O(\log n)$).

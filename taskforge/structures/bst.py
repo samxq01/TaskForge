@@ -123,15 +123,29 @@ class BinarySearchTree(Generic[K, V]):
         Returns:
             The associated value if found, or None if the key does not exist.
         """
+        val, _ = self.search_with_comparisons(key)
+        return val
+
+    def search_with_comparisons(self, key: K) -> tuple[Optional[V], int]:
+        """Search for a key in the BST and count node comparisons performed.
+        
+        Args:
+            key: The key to locate.
+            
+        Returns:
+            Tuple of (value_or_None, comparison_count).
+        """
         curr = self._root
+        comparisons = 0
         while curr is not None:
+            comparisons += 1
             if key == curr.key:
-                return curr.value
+                return curr.value, comparisons
             elif key < curr.key:
                 curr = curr.left
             else:
                 curr = curr.right
-        return None
+        return None, comparisons
 
     def contains(self, key: K) -> bool:
         """Check whether a key exists in the tree."""
