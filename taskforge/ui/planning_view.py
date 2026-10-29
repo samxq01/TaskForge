@@ -25,17 +25,29 @@ from taskforge.services.what_if_simulator import (
     WhatIfSimulatorService,
 )
 from taskforge.storage import TaskStorage
+from taskforge.ui.theme import (
+    COLOR_BG,
+    COLOR_CORAL,
+    COLOR_LIME,
+    COLOR_SURFACE,
+    COLOR_TEXT_MUTED,
+    COLOR_TEXT_PRIMARY,
+    render_metric_strip,
+    render_pill,
+    render_section_header,
+    style_anthracite_ax,
+)
 
 
 def draw_critical_path_gantt(result: CriticalPathResult) -> plt.Figure:
     """Render a Gantt-style timeline visualization of earliest task schedules."""
-    fig, ax = plt.subplots(figsize=(10, max(4.0, len(result.schedule_details) * 0.55)), dpi=120)
-    fig.patch.set_facecolor("#0e1117")
-    ax.set_facecolor("#161b22")
+    fig, ax = plt.subplots(figsize=(10, max(4.0, len(result.schedule_details) * 0.52)), dpi=120)
+    fig.patch.set_facecolor(COLOR_BG)
+    ax.set_facecolor(COLOR_SURFACE)
 
     tasks_ordered = [result.schedule_details[tid] for tid in result.topological_order if tid in result.schedule_details]
     if not tasks_ordered:
-        ax.text(0.5, 0.5, "No tasks to display", color="#8b949e", ha="center", va="center")
+        ax.text(0.5, 0.5, "No tasks to display", color=COLOR_TEXT_MUTED, ha="center", va="center")
         return fig
 
     y_positions = list(range(len(tasks_ordered)))[::-1]
@@ -46,15 +58,15 @@ def draw_critical_path_gantt(result: CriticalPathResult) -> plt.Figure:
         duration = max(1, item.duration_minutes)
         is_crit = item.is_on_critical_path
 
-        bar_color = "#e53935" if is_crit else "#1e88e5"
-        edge_color = "#ff8a80" if is_crit else "#90caf9"
+        bar_color = COLOR_CORAL if is_crit else "#3B82F6"
+        edge_color = "#EF4444" if is_crit else "#2563EB"
 
         # Draw task duration bar
         rect = patches.Rectangle(
-            (start, y - 0.25),
+            (start, y - 0.22),
             duration,
-            0.5,
-            linewidth=1.5,
+            0.44,
+            linewidth=1.2,
             edgecolor=edge_color,
             facecolor=bar_color,
             alpha=0.9,
@@ -68,8 +80,8 @@ def draw_critical_path_gantt(result: CriticalPathResult) -> plt.Figure:
             start + duration / 2,
             y,
             label_text,
-            color="#ffffff",
-            fontsize=9,
+            color="#FFFFFF" if is_crit else "#F3F1EB",
+            fontsize=8.5,
             fontweight="bold" if is_crit else "normal",
             ha="center",
             va="center",
@@ -77,16 +89,14 @@ def draw_critical_path_gantt(result: CriticalPathResult) -> plt.Figure:
         )
 
     ax.set_yticks(y_positions)
-    ax.set_yticklabels([f"#{item.task.id}" for item in tasks_ordered], color="#c9d1d9", fontsize=9)
-    ax.set_xlabel("Elapsed Timeline (Minutes from Project Start)", color="#c9d1d9", fontsize=10, labelpad=8)
-    ax.tick_params(colors="#8b949e", which="both")
-    ax.grid(axis="x", color="#30363d", linestyle="--", alpha=0.7)
+    ax.set_yticklabels([f"#{item.task.id}" for item in tasks_ordered], color=COLOR_TEXT_MUTED, fontsize=8.5)
+    style_anthracite_ax(ax, title="Project Earliest Start / Finish Timeline", xlabel="Elapsed Minutes from Project Inception", ylabel="Tasks")
 
     # Vertical line at total duration
     if result.total_duration_minutes > 0:
         ax.axvline(
             result.total_duration_minutes,
-            color="#ff5252",
+            color=COLOR_LIME,
             linestyle="-.",
             linewidth=1.8,
             label=f"Project Finish: {result.total_duration_minutes}m",
@@ -97,22 +107,22 @@ def draw_critical_path_gantt(result: CriticalPathResult) -> plt.Figure:
     ax.set_ylim(-1, len(tasks_ordered))
 
     legend_elements = [
-        patches.Patch(facecolor="#e53935", edgecolor="#ff8a80", label="Critical Path Task"),
-        patches.Patch(facecolor="#1e88e5", edgecolor="#90caf9", label="Non-Critical (Has Slack)"),
+        patches.Patch(facecolor=COLOR_CORAL, edgecolor="#EF4444", label="Critical Path Task (Zero Float)"),
+        patches.Patch(facecolor="#3B82F6", edgecolor="#2563EB", label="Non-Critical (Has Slack)"),
     ]
-    ax.legend(handles=legend_elements, loc="upper right", facecolor="#21262d", edgecolor="#30363d", labelcolor="#c9d1d9")
+    ax.legend(handles=legend_elements, loc="upper right", facecolor="#1B1B1B", edgecolor="#2A2A2A", labelcolor=COLOR_TEXT_MUTED, fontsize=8.5)
     plt.tight_layout()
     return fig
 
 
 def draw_what_if_comparison_chart(sim_result: WhatIfSimulationResult) -> plt.Figure:
     """Render a side-by-side timeline comparison of Baseline vs Simulated schedules."""
-    fig, ax = plt.subplots(figsize=(10, max(4.0, len(sim_result.impacts) * 0.7)), dpi=120)
-    fig.patch.set_facecolor("#0e1117")
-    ax.set_facecolor("#161b22")
+    fig, ax = plt.subplots(figsize=(10, max(4.0, len(sim_result.impacts) * 0.65)), dpi=120)
+    fig.patch.set_facecolor(COLOR_BG)
+    ax.set_facecolor(COLOR_SURFACE)
 
     if not sim_result.impacts:
-        ax.text(0.5, 0.5, "No incomplete tasks simulated", color="#8b949e", ha="center", va="center")
+        ax.text(0.5, 0.5, "No incomplete tasks simulated", color=COLOR_TEXT_MUTED, ha="center", va="center")
         return fig
 
     impacts = sim_result.impacts[::-1]
@@ -123,23 +133,23 @@ def draw_what_if_comparison_chart(sim_result: WhatIfSimulationResult) -> plt.Fig
         b_rect = patches.Rectangle(
             (imp.baseline_start, y + 0.05),
             imp.duration_minutes,
-            0.3,
+            0.28,
             linewidth=1,
-            edgecolor="#64b5f6",
-            facecolor="#1565c0",
-            alpha=0.75,
+            edgecolor="#3B82F6",
+            facecolor="#1D4ED8",
+            alpha=0.8,
             zorder=3,
         )
         ax.add_patch(b_rect)
 
         # Simulated bar (bottom half)
-        sim_color = "#ff7043" if imp.is_affected else "#4caf50"
-        sim_edge = "#ffab91" if imp.is_affected else "#81c784"
+        sim_color = COLOR_CORAL if imp.is_affected else COLOR_LIME
+        sim_edge = "#EF4444" if imp.is_affected else "#C2ED4C"
 
         s_rect = patches.Rectangle(
-            (imp.simulated_start, y - 0.35),
+            (imp.simulated_start, y - 0.33),
             imp.duration_minutes,
-            0.3,
+            0.28,
             linewidth=1.2,
             edgecolor=sim_edge,
             facecolor=sim_color,
@@ -149,22 +159,20 @@ def draw_what_if_comparison_chart(sim_result: WhatIfSimulationResult) -> plt.Fig
         ax.add_patch(s_rect)
 
         # Task title on the side
-        marker = " ⚠️ Delayed" if imp.is_affected else ""
+        marker = " ⚠ Delayed" if imp.is_affected else ""
         ax.text(
             max(imp.baseline_finish, imp.simulated_finish) + 5,
             y,
             f"#{imp.task_id} {imp.task_title[:18]}{marker}",
-            color="#ffab91" if imp.is_affected else "#c9d1d9",
-            fontsize=8.5,
+            color=COLOR_CORAL if imp.is_affected else COLOR_TEXT_MUTED,
+            fontsize=8.2,
             va="center",
             zorder=4,
         )
 
     ax.set_yticks(y_positions)
-    ax.set_yticklabels([f"#{imp.task_id}" for imp in impacts], color="#c9d1d9", fontsize=9)
-    ax.set_xlabel("Remaining Timeline (Minutes)", color="#c9d1d9", fontsize=10, labelpad=8)
-    ax.tick_params(colors="#8b949e", which="both")
-    ax.grid(axis="x", color="#30363d", linestyle="--", alpha=0.7)
+    ax.set_yticklabels([f"#{imp.task_id}" for imp in impacts], color=COLOR_TEXT_MUTED, fontsize=8.5)
+    style_anthracite_ax(ax, title="Remaining Timeline Comparison (Baseline vs Simulated)", xlabel="Remaining Minutes", ylabel="Tasks")
 
     max_x = max(
         sim_result.simulated_project_duration,
@@ -175,11 +183,11 @@ def draw_what_if_comparison_chart(sim_result: WhatIfSimulationResult) -> plt.Fig
     ax.set_ylim(-1, len(impacts))
 
     legend_elements = [
-        patches.Patch(facecolor="#1565c0", edgecolor="#64b5f6", label="Baseline Schedule"),
-        patches.Patch(facecolor="#ff7043", edgecolor="#ffab91", label="Simulated (Shifted)"),
-        patches.Patch(facecolor="#4caf50", edgecolor="#81c784", label="Simulated (Unchanged)"),
+        patches.Patch(facecolor="#1D4ED8", edgecolor="#3B82F6", label="Baseline Schedule"),
+        patches.Patch(facecolor=COLOR_CORAL, edgecolor="#EF4444", label="Simulated (Shifted Downstream)"),
+        patches.Patch(facecolor=COLOR_LIME, edgecolor="#C2ED4C", label="Simulated (Slack Absorbed / Unchanged)"),
     ]
-    ax.legend(handles=legend_elements, loc="upper right", facecolor="#21262d", edgecolor="#30363d", labelcolor="#c9d1d9")
+    ax.legend(handles=legend_elements, loc="upper right", facecolor="#1B1B1B", edgecolor="#2A2A2A", labelcolor=COLOR_TEXT_MUTED, fontsize=8.5)
     plt.tight_layout()
     return fig
 
@@ -190,10 +198,10 @@ def render_planning_view(
     what_if_simulator: WhatIfSimulatorService,
 ) -> None:
     """Render the Critical Path Analyzer & What-If Schedule Simulator page."""
-    st.subheader("🗺️ Critical Path & What-If Planning (CO5)")
-    st.markdown(
-        "Model project timelines, compute the longest dependency chain (Critical Path), "
-        "and simulate task delays in-memory with **guaranteed persistence safety**."
+    render_section_header(
+        eyebrow="COURSE OUTCOME 5 (CO5) • CRITICAL PATH & SIMULATION",
+        title="Critical Path Analyzer & What-If Planning Studio",
+        subtitle="Model project completion timelines, identify the longest dependency chain via DAG dynamic programming, and simulate delay ripple effects in-memory with guaranteed database persistence safety.",
     )
 
     tab_cp, tab_sim = st.tabs(
@@ -207,13 +215,19 @@ def render_planning_view(
     # TAB 1: Critical Path Analyzer
     # ------------------------------------------------------------------
     with tab_cp:
-        st.markdown("### 🎯 Critical Path Analysis (DAG Longest Path)")
-        st.caption(
-            "Identifies the sequence of dependent tasks that determines minimum project duration. "
-            "Computed via dynamic programming over Kahn's topological sort."
+        st.markdown(
+            """
+            <div style="font-family: 'Syne', sans-serif; font-size: 1.15rem; font-weight: 700; color: #FFFFFF; margin-top: 0.5rem; margin-bottom: 0.2rem;">
+                Critical Path Analysis (DAG Longest Path)
+            </div>
+            <div style="font-size: 0.85rem; color: #A6A49E; margin-bottom: 1.2rem;">
+                Identifies the sequence of dependent tasks that strictly dictates total project duration. Computed via single-pass dynamic programming over Kahn's topological sort.
+            </div>
+            """,
+            unsafe_allow_html=True,
         )
 
-        col_act1, col_act2 = st.columns([1, 4])
+        col_act1, _ = st.columns([2, 5])
         with col_act1:
             if st.button("🔄 Recalculate Critical Path", type="primary", use_container_width=True):
                 st.rerun()
@@ -229,46 +243,48 @@ def render_planning_view(
             return
 
         all_tasks = storage.list_tasks()
-
-        # Summary Metrics
-        m1, m2, m3, m4 = st.columns(4)
-        m1.metric("Total Project Duration", result.total_duration_formatted)
-        m2.metric("Critical Path Length", f"{len(result.critical_path_ids)} tasks")
-        m3.metric("Total Project Tasks", len(all_tasks))
         pct = (len(result.critical_path_ids) / len(all_tasks) * 100) if all_tasks else 0
-        m4.metric("Critical Task Ratio", f"{pct:.0f}%")
 
-        st.markdown("---")
+        render_metric_strip([
+            {"label": "Total Project Duration", "value": result.total_duration_formatted, "caption": "Minimum Completion Time"},
+            {"label": "Critical Path Tasks", "value": f"{len(result.critical_path_ids)} tasks", "caption": "Longest Predecessor Chain"},
+            {"label": "Total Tasks", "value": str(len(all_tasks)), "caption": "Persistent Project Tasks"},
+            {"label": "Critical Task Ratio", "value": f"{pct:.0f}%", "caption": "Constrained Proportion"},
+        ])
 
         # Visual Critical Path Chain
         if result.critical_path_tasks:
             path_display = " &nbsp;➔&nbsp; ".join(
-                f"<span style='background-color:#b71c1c; padding:3px 8px; border-radius:4px; font-weight:bold;'>#{t.id} {t.title} ({t.duration}m)</span>"
+                f"<span style='background-color:#261414; border: 1px solid rgba(248, 113, 113, 0.4); padding:4px 10px; border-radius:3px; font-weight:600; font-family: JetBrains Mono; color: #F87171;'>#{t.id} {t.title} ({t.duration}m)</span>"
                 for t in result.critical_path_tasks
             )
             st.markdown(
                 f"""
-                <div style="background-color: rgba(229, 57, 53, 0.12); border-left: 5px solid #e53935; padding: 16px; border-radius: 8px; margin-bottom: 20px;">
-                    <h4 style="margin: 0 0 10px 0; color: #ff8a80;">🎯 Critical Dependency Chain:</h4>
-                    <div style="font-size: 14px; color: #ffffff; line-height: 1.8;">{path_display}</div>
-                    <p style="margin: 10px 0 0 0; color: #b0bec5; font-size: 13px;"><em>💡 Impact:</em> {result.explanation}</p>
+                <div style="background-color: #1A1A1A; border: 1px solid #282828; border-left: 3px solid #F87171; padding: 1.2rem 1.4rem; border-radius: 3px; margin-bottom: 1.4rem;">
+                    <div style="font-family: 'JetBrains Mono', monospace; font-size: 0.68rem; letter-spacing: 0.12em; text-transform: uppercase; color: #F87171; font-weight: 700; margin-bottom: 0.4rem;">
+                        ● Critical Dependency Chain (Zero Float)
+                    </div>
+                    <div style="font-size: 0.95rem; color: #FFFFFF; line-height: 1.9; margin-bottom: 0.6rem;">{path_display}</div>
+                    <div style="font-size: 0.85rem; color: #A6A49E; border-top: 1px solid #252525; padding-top: 0.6rem;">
+                        <strong style="color: #FFFFFF;">Algorithmic Assessment:</strong> {result.explanation}
+                    </div>
                 </div>
                 """,
                 unsafe_allow_html=True,
             )
         else:
-            st.info("ℹ️ No tasks available to establish a critical path.")
+            st.info("No tasks available to establish a critical path.")
 
         # Timeline Chart
         if result.schedule_details:
-            st.markdown("#### 📊 Project Earliest Schedule (Gantt)")
+            st.markdown('<div style="font-family: Syne, sans-serif; font-size: 1.05rem; font-weight: 700; color: #FFFFFF; margin-bottom: 0.6rem;">Project Earliest Schedule Timeline (Gantt)</div>', unsafe_allow_html=True)
             fig = draw_critical_path_gantt(result)
             st.pyplot(fig)
             plt.close(fig)
 
         # Schedule Table
         if result.schedule_details:
-            st.markdown("#### 📋 Earliest Start & Finish Schedule Table")
+            st.markdown('<div style="font-family: Syne, sans-serif; font-size: 1.05rem; font-weight: 700; color: #FFFFFF; margin: 1.2rem 0 0.6rem 0;">Earliest Start & Finish Schedule Table</div>', unsafe_allow_html=True)
             table_data = []
             for tid in result.topological_order:
                 if tid in result.schedule_details:
@@ -280,11 +296,11 @@ def render_planning_view(
                             "Title": t.title,
                             "Priority": t.priority_label,
                             "Status": t.status,
-                            "Duration": f"{t.duration} min",
-                            "Earliest Start": f"{item.earliest_start} min",
-                            "Earliest Finish": f"{item.earliest_finish} min",
-                            "Critical Path?": "🔴 Critical" if item.is_on_critical_path else "⚪ Slack",
-                            "Predecessor": f"#{item.predecessor_id}" if item.predecessor_id is not None else "None (Root)",
+                            "Duration": f"{t.duration}m",
+                            "Earliest Start": f"{item.earliest_start}m",
+                            "Earliest Finish": f"{item.earliest_finish}m",
+                            "Critical Path?": "Critical (Zero Slack)" if item.is_on_critical_path else "Non-Critical (Float)",
+                            "Dominant Predecessor": f"#{item.predecessor_id}" if item.predecessor_id is not None else "None (Root)",
                         }
                     )
             st.dataframe(table_data, use_container_width=True, hide_index=True)
@@ -294,13 +310,13 @@ def render_planning_view(
             st.markdown(
                 r"""
                 **How the Critical Path is Computed:**
-                1. **Topological Order:** Tasks are processed in order of Kahn's Algorithm ($O(V + E)$).
+                1. **Topological Order:** Tasks are sorted using Kahn's Algorithm ($O(V + E)$).
                 2. **Recurrence Relation:**
                    $$\text{Earliest Start}(v) = \max_{u \in \text{prereqs}(v)} \text{Earliest Finish}(u)$$
                    $$\text{Earliest Finish}(v) = \text{Earliest Start}(v) + \text{Duration}(v)$$
                 3. **Project Duration:** $\max_{v \in V} \text{Earliest Finish}(v)$.
-                4. **Backtracking:** The path is reconstructed by following predecessor pointers from the task achieving maximum finish back to the root.
-                5. **Parallel Tasks:** Independent tasks run concurrently; only the longest prerequisite branch determines completion time.
+                4. **Backtracking:** Follows dominant predecessor pointers backwards from terminal max finish task.
+                5. **Parallel Tasks:** Independent branches execute concurrently; shorter parallel branches possess slack float.
                 """
             )
 
@@ -308,23 +324,32 @@ def render_planning_view(
     # TAB 2: What-If Schedule Simulator
     # ------------------------------------------------------------------
     with tab_sim:
-        st.markdown("### 🔮 What-If Schedule Simulator")
-        st.caption(
-            "Hypothetically delay an incomplete task to assess downstream ripple effects and project completion delays. "
-            "Evaluates slack absorption across parallel branches."
+        st.markdown(
+            """
+            <div style="font-family: 'Syne', sans-serif; font-size: 1.15rem; font-weight: 700; color: #FFFFFF; margin-top: 0.5rem; margin-bottom: 0.2rem;">
+                What-If Schedule Simulator
+            </div>
+            <div style="font-size: 0.85rem; color: #A6A49E; margin-bottom: 1.2rem;">
+                Hypothetically delay an incomplete task to assess downstream ripple effects and project completion delays.
+            </div>
+            """,
+            unsafe_allow_html=True,
         )
 
         # Safety Banner
-        st.info(
-            "🛡️ **Simulation Only — Saved Task Data Will Not Change.**\n\n"
-            "This simulation runs entirely in memory on isolated calculation models. "
-            "No database records, deadlines, durations, dependencies, or undo histories are modified."
+        st.markdown(
+            """
+            <div style="background-color: #171A15; border: 1px solid rgba(215, 255, 100, 0.35); border-radius: 3px; padding: 1rem 1.3rem; margin-bottom: 1.4rem; font-size: 0.88rem; color: #F3F1EB;">
+                <strong style="color: #D7FF64;">● Strict Persistence Safety Guaranteed:</strong> This simulation runs strictly on in-memory deep copies. Persistent SQLite records, deadlines, durations, dependencies, and undo histories remain 100% unaltered.
+            </div>
+            """,
+            unsafe_allow_html=True,
         )
 
         incomplete_tasks = [t for t in storage.list_tasks() if t.status != TaskStatus.COMPLETED.value and t.id is not None]
 
         if not incomplete_tasks:
-            st.success("🎉 All tasks in the project are already Completed! Nothing to simulate.")
+            st.success("All tasks in the project are already Completed. Nothing to simulate.")
             return
 
         col_sel1, col_sel2 = st.columns([2, 2])
@@ -358,46 +383,44 @@ def render_planning_view(
             )
 
             if not sim_res.is_valid:
-                st.error(f"🚨 Simulation Error: {sim_res.error_message}")
+                st.error(f"Simulation Error: {sim_res.error_message}")
                 return
 
-            # Display Simulation Metrics
-            st.markdown("---")
-            m_b, m_s, m_diff, m_aff = st.columns(4)
-            m_b.metric("Baseline Remaining Time", format_duration(sim_res.baseline_project_duration))
-            m_s.metric("Simulated Remaining Time", format_duration(sim_res.simulated_project_duration))
+            st.markdown("<hr style='margin: 1.4rem 0 1rem 0;'>", unsafe_allow_html=True)
+            render_metric_strip([
+                {"label": "Baseline Remaining", "value": format_duration(sim_res.baseline_project_duration), "caption": "Unshifted Schedule"},
+                {"label": "Simulated Remaining", "value": format_duration(sim_res.simulated_project_duration), "caption": "Post-Delay Timeline"},
+                {"label": "Project Delay Impact", "value": f"+{sim_res.project_delay_increase}m" if sim_res.project_delay_increase > 0 else "+0m", "caption": "Net Project Extension"},
+                {"label": "Downstream Affected", "value": f"{len(sim_res.affected_task_ids)} tasks", "caption": "Propagated Delays"},
+            ])
 
             if sim_res.project_delay_increase > 0:
-                m_diff.metric(
-                    "Project Delay Impact",
-                    f"+{sim_res.project_delay_increase} min",
-                    delta=f"-{sim_res.project_delay_increase}m delay",
-                    delta_color="inverse",
+                st.markdown(
+                    f"""
+                    <div style="background-color: #241616; border: 1px solid rgba(248, 113, 113, 0.4); border-radius: 3px; padding: 1rem 1.2rem; margin-bottom: 1.2rem; font-size: 0.88rem; color: #F87171;">
+                        <strong>⚠ Schedule Impact:</strong> {sim_res.explanation}
+                    </div>
+                    """,
+                    unsafe_allow_html=True,
                 )
             else:
-                m_diff.metric(
-                    "Project Delay Impact",
-                    "+0 min (Absorbed)",
-                    delta="Slack absorbed",
-                    delta_color="normal",
+                st.markdown(
+                    f"""
+                    <div style="background-color: #1A1F16; border: 1px solid rgba(215, 255, 100, 0.35); border-radius: 3px; padding: 1rem 1.2rem; margin-bottom: 1.2rem; font-size: 0.88rem; color: #D7FF64;">
+                        <strong>● Slack Absorbed:</strong> {sim_res.explanation}
+                    </div>
+                    """,
+                    unsafe_allow_html=True,
                 )
-
-            m_aff.metric("Downstream Affected", f"{len(sim_res.affected_task_ids)} tasks")
-
-            # Result Explanation Callout
-            if sim_res.project_delay_increase > 0:
-                st.warning(f"⚠️ **Schedule Impact:** {sim_res.explanation}")
-            else:
-                st.success(f"🟢 **No Project Delay:** {sim_res.explanation}")
 
             # Gantt / Timeline Comparison Chart
-            st.markdown("#### 📊 Schedule Comparison Timeline (Baseline vs Simulated)")
+            st.markdown('<div style="font-family: Syne, sans-serif; font-size: 1.05rem; font-weight: 700; color: #FFFFFF; margin-bottom: 0.6rem;">Schedule Comparison Timeline (Baseline vs Simulated)</div>', unsafe_allow_html=True)
             fig_comp = draw_what_if_comparison_chart(sim_res)
             st.pyplot(fig_comp)
             plt.close(fig_comp)
 
             # Comparison Table
-            st.markdown("#### 📋 Detailed Task Impact Comparison")
+            st.markdown('<div style="font-family: Syne, sans-serif; font-size: 1.05rem; font-weight: 700; color: #FFFFFF; margin: 1.2rem 0 0.6rem 0;">Detailed Task Impact Comparison</div>', unsafe_allow_html=True)
             comp_table = []
             for imp in sim_res.impacts:
                 comp_table.append(
@@ -412,7 +435,7 @@ def render_planning_view(
                         "Simulated Finish": f"{imp.simulated_finish}m",
                         "Start Shift": f"+{imp.start_delay_minutes}m" if imp.start_delay_minutes > 0 else "0m",
                         "Finish Shift": f"+{imp.finish_delay_minutes}m" if imp.finish_delay_minutes > 0 else "0m",
-                        "Impact": "🔴 Shifted" if imp.is_affected else "🟢 Unchanged",
+                        "Impact State": "Shifted" if imp.is_affected else "Unchanged (Slack)",
                     }
                 )
 

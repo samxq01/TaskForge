@@ -11,6 +11,7 @@ from taskforge.models import Priority, Task, TaskStatus
 from taskforge.services.task_index import TaskIndexService, make_deadline_key, make_search_key
 from taskforge.storage import TaskStorage
 from taskforge.structures.bst import BinarySearchTree, TreeNode
+from taskforge.ui.theme import render_metric_strip, render_pill, render_section_header
 
 
 def _format_node_key(key: tuple[int, datetime, int]) -> str:
@@ -29,7 +30,7 @@ def _generate_tree_text_diagram(node: Optional[TreeNode[Any, Task]], prefix: str
     lines: list[str] = []
     connector = "├── (L) " if is_left else "└── (R) "
     if not prefix:
-        connector = "🌟 [ROOT] "
+        connector = "● [ROOT] "
 
     key_str = _format_node_key(node.key)
     task_str = f"Task #{node.value.id}: '{node.value.title}' ({node.value.priority_label})"
@@ -52,44 +53,44 @@ def _generate_tree_text_diagram(node: Optional[TreeNode[Any, Task]], prefix: str
 
 def render_tree_view(storage: TaskStorage, index_service: TaskIndexService) -> None:
     """Render the full BST Task Index interface for CO4."""
-    st.markdown("## 🌲 Binary Search Tree (BST) Task Index (CO4)")
-    st.markdown(
-        """
-        > **Course Outcome 4 (CO4):** *Develop tree structure for solving engineering problems.*
-        
-        This module implements a **custom Binary Search Tree** that indexes tasks by deadline using a composite key:
-        `key = (has_no_deadline_flag, normalized_deadline, task_id)`
-        - **Inorder Traversal ($O(n)$):** Guarantees retrieval of all tasks in strictly ascending deadline order.
-        - **Logarithmic Search ($O(\\log n)$ avg):** Fast task lookup by deadline key.
-        - **Zero Database Modification:** The BST is an in-memory index built dynamically from persistent SQLite records.
-        """
+    render_section_header(
+        eyebrow="COURSE OUTCOME 4 (CO4) • TREE STRUCTURES",
+        title="Binary Search Tree Task Index",
+        subtitle="Indexes tasks in-memory by deadline using a composite key (has_deadline, normalized_timestamp, id). Demonstrates logarithmic search, tree traversals, and chronological ordering.",
     )
 
     # Rebuild index from current database records
     index_service.rebuild()
     raw_bst = index_service.get_raw_bst()
 
-    # Overview Metrics & Controls
-    col_m1, col_m2, col_m3, col_m4 = st.columns([2, 2, 2, 2])
-    with col_m1:
-        st.metric("Total Indexed Nodes", f"{index_service.get_tree_size()} tasks")
-    with col_m2:
-        st.metric("Tree Height (Depth)", f"{index_service.get_tree_height()}")
-    with col_m3:
-        root_key = _format_node_key(raw_bst.root.key) if raw_bst.root else "None"
-        st.metric("Root Node Key", root_key)
-    with col_m4:
-        st.write("")
-        st.write("")
+    # Overview Metric Strip
+    root_key = _format_node_key(raw_bst.root.key) if raw_bst.root else "None"
+    render_metric_strip([
+        {"label": "Total Indexed Nodes", "value": f"{index_service.get_tree_size()} tasks", "caption": "In-Memory Tree"},
+        {"label": "Tree Height (Depth)", "value": str(index_service.get_tree_height()), "caption": "Subtree Max Depth"},
+        {"label": "Root Node Key", "value": root_key, "caption": "BST Anchor Node"},
+        {"label": "Search Complexity", "value": "O(log n) avg", "caption": "O(n) worst if skewed"},
+    ])
+
+    col_btn, _ = st.columns([2, 5])
+    with col_btn:
         if st.button("🔄 Rebuild / Refresh Index", use_container_width=True):
             index_service.rebuild()
             st.success("BST index rebuilt from SQLite.")
             st.rerun()
 
-    st.markdown("---")
+    st.markdown("<hr style='margin: 1.2rem 0 1.5rem 0;'>", unsafe_allow_html=True)
 
     if index_service.is_empty():
-        st.info("ℹ️ The Binary Search Tree is currently empty. Create tasks in the Dashboard or click 'Load Sample Tasks' in the sidebar.")
+        st.markdown(
+            """
+            <div style="background-color: #1B1B1B; border: 1px solid #2A2A2A; border-radius: 3px; padding: 2rem; text-align: center; color: #A6A49E;">
+                <div style="font-family: 'Syne', sans-serif; font-size: 1.15rem; color: #FFFFFF; margin-bottom: 0.35rem;">The Binary Search Tree is currently empty.</div>
+                <div>Create tasks with deadlines in the Dashboard or click 'Load Sample Tasks' in the sidebar to populate the tree index.</div>
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
         return
 
     tab_inorder, tab_search, tab_traversals, tab_diagram = st.tabs(
@@ -103,52 +104,66 @@ def render_tree_view(storage: TaskStorage, index_service: TaskIndexService) -> N
 
     # ---------------- TAB 1: INORDER DEADLINE RETRIEVAL ----------------
     with tab_inorder:
-        st.markdown("### 📋 Inorder Traversal — Deadline-Ordered Retrieval")
-        st.caption(
-            "An Inorder traversal (Left $\\to$ Root $\\to$ Right) on a Binary Search Tree produces elements in strictly sorted order ($O(n)$ time)."
+        st.markdown(
+            """
+            <div style="font-family: 'Syne', sans-serif; font-size: 1.15rem; font-weight: 700; color: #FFFFFF; margin-top: 0.5rem; margin-bottom: 0.2rem;">
+                Inorder Traversal — Sorted Chronological Retrieval
+            </div>
+            <div style="font-size: 0.85rem; color: #A6A49E; margin-bottom: 1.2rem;">
+                An Inorder traversal (<code>Left ➔ Root ➔ Right</code>) guarantees extraction of tasks in strictly ascending chronological order in <code>O(n)</code> linear time.
+            </div>
+            """,
+            unsafe_allow_html=True,
         )
 
         ordered_tasks = index_service.get_deadline_ordered_tasks()
-        st.success(f"Extracted **{len(ordered_tasks)}** task(s) in sorted deadline order directly from BST Inorder Traversal.")
+        st.markdown(
+            f"""
+            <div style="background-color: #1A1F16; border: 1px solid rgba(215, 255, 100, 0.35); border-radius: 3px; padding: 0.8rem 1.2rem; margin-bottom: 1rem; font-size: 0.88rem; color: #D7FF64;">
+                ● Extracted <strong>{len(ordered_tasks)}</strong> task(s) in sorted deadline sequence directly from BST Inorder Traversal.
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
 
         header_cols = st.columns([1, 1, 4, 3, 2, 2, 2])
-        header_cols[0].markdown("**Seq**")
-        header_cols[1].markdown("**ID**")
-        header_cols[2].markdown("**Title**")
-        header_cols[3].markdown("**Deadline**")
-        header_cols[4].markdown("**Priority**")
-        header_cols[5].markdown("**Duration**")
-        header_cols[6].markdown("**Status**")
-        st.markdown("<hr style='margin: 0.3rem 0;'>", unsafe_allow_html=True)
+        header_cols[0].markdown("<span style='font-family: JetBrains Mono; font-size: 0.72rem; color: #A6A49E; text-transform: uppercase;'>Seq</span>", unsafe_allow_html=True)
+        header_cols[1].markdown("<span style='font-family: JetBrains Mono; font-size: 0.72rem; color: #A6A49E; text-transform: uppercase;'>ID</span>", unsafe_allow_html=True)
+        header_cols[2].markdown("<span style='font-family: JetBrains Mono; font-size: 0.72rem; color: #A6A49E; text-transform: uppercase;'>Title</span>", unsafe_allow_html=True)
+        header_cols[3].markdown("<span style='font-family: JetBrains Mono; font-size: 0.72rem; color: #A6A49E; text-transform: uppercase;'>Deadline</span>", unsafe_allow_html=True)
+        header_cols[4].markdown("<span style='font-family: JetBrains Mono; font-size: 0.72rem; color: #A6A49E; text-transform: uppercase;'>Priority</span>", unsafe_allow_html=True)
+        header_cols[5].markdown("<span style='font-family: JetBrains Mono; font-size: 0.72rem; color: #A6A49E; text-transform: uppercase;'>Duration</span>", unsafe_allow_html=True)
+        header_cols[6].markdown("<span style='font-family: JetBrains Mono; font-size: 0.72rem; color: #A6A49E; text-transform: uppercase;'>Status</span>", unsafe_allow_html=True)
+        st.markdown("<hr style='margin: 0.3rem 0 0.6rem 0;'>", unsafe_allow_html=True)
 
         for idx, task in enumerate(ordered_tasks, start=1):
             cols = st.columns([1, 1, 4, 3, 2, 2, 2])
-            cols[0].write(f"#{idx}")
-            cols[1].write(f"#{task.id}")
-            cols[2].write(task.title)
-            cols[3].write(task.formatted_deadline)
-            cols[4].write(task.priority_label)
-            cols[5].write(f"{task.duration}m")
-            cols[6].write(task.status)
-            st.markdown("<hr style='margin: 0.2rem 0; opacity: 0.2;'>", unsafe_allow_html=True)
+            cols[0].markdown(f"<span style='font-family: JetBrains Mono; color: #A6A49E;'>#{idx}</span>", unsafe_allow_html=True)
+            cols[1].markdown(f"<span style='font-family: JetBrains Mono; color: #D7FF64; font-weight: 600;'>#{task.id}</span>", unsafe_allow_html=True)
+            cols[2].markdown(f"<strong style='color: #FFFFFF;'>{task.title}</strong>", unsafe_allow_html=True)
+            cols[3].markdown(f"<span style='font-family: JetBrains Mono; font-size: 0.85rem; color: #F3F1EB;'>{task.formatted_deadline}</span>", unsafe_allow_html=True)
+            cols[4].markdown(f"<span style='font-size: 0.85rem; color: #A6A49E;'>{task.priority_label}</span>", unsafe_allow_html=True)
+            cols[5].markdown(f"<span style='font-family: JetBrains Mono; font-size: 0.85rem; color: #A6A49E;'>{task.duration}m</span>", unsafe_allow_html=True)
+            cols[6].markdown(render_pill(task.status, variant="lime" if task.status == "Completed" else "muted"), unsafe_allow_html=True)
+            st.markdown("<hr style='margin: 0.25rem 0; opacity: 0.35;'>", unsafe_allow_html=True)
 
     # ---------------- TAB 2: BST KEY SEARCH ----------------
     with tab_search:
-        st.markdown("### 🔍 Exact Key Search in Binary Search Tree")
         st.markdown(
             """
-            Search invokes `bst.search(composite_key)`.
-            At each node $N$:
-            - If target key equals $N.key$: Match found ($O(1)$)
-            - If target key $< N.key$: Traverses left subtree
-            - If target key $> N.key$: Traverses right subtree
-            - Average search complexity: $O(\\log n)$.
-            """
+            <div style="font-family: 'Syne', sans-serif; font-size: 1.15rem; font-weight: 700; color: #FFFFFF; margin-top: 0.5rem; margin-bottom: 0.2rem;">
+                Exact Key Search in Binary Search Tree
+            </div>
+            <div style="font-size: 0.85rem; color: #A6A49E; margin-bottom: 1.2rem;">
+                Search invokes <code>bst.search(composite_key)</code> with <code>O(log n)</code> average time complexity.
+            </div>
+            """,
+            unsafe_allow_html=True,
         )
 
         all_tasks = storage.list_tasks()
         selected_task_label = st.selectbox(
-            "Select a target task to locate in the BST:",
+            "Select target task to locate in the BST index:",
             options=all_tasks,
             format_func=lambda t: f"Task #{t.id}: '{t.title}' | Deadline: {t.formatted_deadline}",
         )
@@ -159,22 +174,28 @@ def render_tree_view(storage: TaskStorage, index_service: TaskIndexService) -> N
                 found_task = raw_bst.search(search_key)
 
                 if found_task:
-                    st.success(f"✅ Found in BST via `search({_format_node_key(search_key)})`!")
-                    res_col1, res_col2 = st.columns(2)
-                    with res_col1:
-                        st.markdown(f"**Task ID:** #{found_task.id}")
-                        st.markdown(f"**Title:** {found_task.title}")
-                        st.markdown(f"**Description:** {found_task.description or 'None'}")
-                    with res_col2:
-                        st.markdown(f"**Deadline:** {found_task.formatted_deadline}")
-                        st.markdown(f"**Priority:** {found_task.priority_label}")
-                        st.markdown(f"**Duration:** {found_task.duration} minutes")
-                        st.markdown(f"**Status:** {found_task.status}")
+                    st.markdown(
+                        f"""
+                        <div style="background-color: #1A1F16; border: 1px solid rgba(215, 255, 100, 0.35); border-radius: 3px; padding: 1.2rem 1.4rem; margin-top: 1rem;">
+                            <div style="font-family: 'JetBrains Mono', monospace; font-size: 0.68rem; letter-spacing: 0.12em; text-transform: uppercase; color: #D7FF64; font-weight: 700; margin-bottom: 0.3rem;">
+                                ● Match Found in BST Index
+                            </div>
+                            <div style="font-family: 'Syne', sans-serif; font-size: 1.25rem; font-weight: 700; color: #FFFFFF; margin-bottom: 0.4rem;">
+                                Task #{found_task.id}: {found_task.title}
+                            </div>
+                            <div style="font-size: 0.88rem; color: #A6A49E; line-height: 1.6;">
+                                Composite Key: <code style="color: #D7FF64;">{_format_node_key(search_key)}</code><br>
+                                Deadline: <strong style="color: #FFFFFF;">{found_task.formatted_deadline}</strong> &bull; Priority: <strong style="color: #FFFFFF;">{found_task.priority_label}</strong> &bull; Duration: <strong style="color: #FFFFFF;">{found_task.duration}m</strong> &bull; Status: <strong style="color: #FFFFFF;">{found_task.status}</strong>
+                            </div>
+                        </div>
+                        """,
+                        unsafe_allow_html=True,
+                    )
                 else:
-                    st.error("❌ Key not found in BST.")
+                    st.error("Key not found in BST index.")
 
-        st.markdown("---")
-        st.markdown("#### Test Non-Existent Key")
+        st.markdown("<hr style='margin: 1.4rem 0;'>", unsafe_allow_html=True)
+        st.markdown('<div style="font-family: Syne, sans-serif; font-size: 1.05rem; font-weight: 700; color: #FFFFFF; margin-bottom: 0.4rem;">Test Non-Existent Key Search</div>', unsafe_allow_html=True)
         col_ne1, col_ne2 = st.columns([3, 1])
         with col_ne1:
             dummy_id = st.number_input("Enter Non-Existent Task ID", min_value=9000, value=9999)
@@ -185,18 +206,20 @@ def render_tree_view(storage: TaskStorage, index_service: TaskIndexService) -> N
                 dummy_key = make_search_key(datetime(2030, 1, 1), dummy_id)
                 res = raw_bst.search(dummy_key)
                 if res is None:
-                    st.info(f"ℹ️ As expected, `search({_format_node_key(dummy_key)})` returned `None` without error.")
+                    st.info(f"ℹ️ As expected, `search({_format_node_key(dummy_key)})` returned `None` safely without error.")
 
     # ---------------- TAB 3: TRAVERSAL LABORATORY ----------------
     with tab_traversals:
-        st.markdown("### 🔄 Traversal Laboratory (Inorder vs. Preorder vs. Postorder)")
         st.markdown(
             """
-            Tree traversals systematically visit every node in the BST ($O(n)$ time):
-            - **Inorder (Left $\\to$ Root $\\to$ Right):** Produces keys in ascending sorted order.
-            - **Preorder (Root $\\to$ Left $\\to$ Right):** Visits parent before children (used for tree serialization).
-            - **Postorder (Left $\\to$ Right $\\to$ Root):** Visits children before parent (used for subtree evaluation and deletion).
-            """
+            <div style="font-family: 'Syne', sans-serif; font-size: 1.15rem; font-weight: 700; color: #FFFFFF; margin-top: 0.5rem; margin-bottom: 0.2rem;">
+                Tree Traversal Laboratory
+            </div>
+            <div style="font-size: 0.85rem; color: #A6A49E; margin-bottom: 1.2rem;">
+                Compare recursive tree exploration strategies in <code>O(n)</code> linear time.
+            </div>
+            """,
+            unsafe_allow_html=True,
         )
 
         trav_mode = st.radio(
@@ -207,38 +230,51 @@ def render_tree_view(storage: TaskStorage, index_service: TaskIndexService) -> N
 
         if trav_mode == "Inorder Traversal":
             entries = index_service.get_inorder_entries()
-            order_name = "Inorder (Sorted Keys)"
+            order_name = "Inorder (Sorted Ascending Keys)"
         elif trav_mode == "Preorder Traversal":
             entries = index_service.get_preorder_entries()
-            order_name = "Preorder (Root First)"
+            order_name = "Preorder (Root First, Tree Cloning Order)"
         else:
             entries = index_service.get_postorder_entries()
-            order_name = "Postorder (Leaves First)"
+            order_name = "Postorder (Leaves First, Subtree Deletion Order)"
 
         st.markdown(f"#### Traversal Sequence: **{order_name}**")
         seq_items = [f"#{t.id} ('{t.title}')" for _, t in entries]
-        st.write(" ➔ ".join(seq_items))
+        st.markdown(
+            f"""
+            <div style="background-color: #171717; border: 1px solid #282828; border-radius: 3px; padding: 0.9rem 1.1rem; font-family: 'JetBrains Mono', monospace; font-size: 0.82rem; color: #D7FF64; margin-bottom: 1rem;">
+                {' ➔ '.join(seq_items)}
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
 
-        # Table of entries
         t_cols = st.columns([1, 4, 3, 2])
-        t_cols[0].markdown("**Step**")
-        t_cols[1].markdown("**Composite Key**")
-        t_cols[2].markdown("**Task Title**")
-        t_cols[3].markdown("**Priority**")
-        st.markdown("<hr style='margin: 0.2rem 0;'>", unsafe_allow_html=True)
+        t_cols[0].markdown("<span style='font-family: JetBrains Mono; font-size: 0.72rem; color: #A6A49E;'>Step</span>", unsafe_allow_html=True)
+        t_cols[1].markdown("<span style='font-family: JetBrains Mono; font-size: 0.72rem; color: #A6A49E;'>Composite Key</span>", unsafe_allow_html=True)
+        t_cols[2].markdown("<span style='font-family: JetBrains Mono; font-size: 0.72rem; color: #A6A49E;'>Task Title</span>", unsafe_allow_html=True)
+        t_cols[3].markdown("<span style='font-family: JetBrains Mono; font-size: 0.72rem; color: #A6A49E;'>Priority</span>", unsafe_allow_html=True)
+        st.markdown("<hr style='margin: 0.25rem 0 0.5rem 0;'>", unsafe_allow_html=True)
 
         for step, (key, task) in enumerate(entries, start=1):
             cols = st.columns([1, 4, 3, 2])
-            cols[0].write(f"Step {step}")
+            cols[0].markdown(f"<span style='font-family: JetBrains Mono; color: #A6A49E;'>#{step}</span>", unsafe_allow_html=True)
             cols[1].code(_format_node_key(key))
-            cols[2].write(f"#{task.id} {task.title}")
-            cols[3].write(task.priority_label)
+            cols[2].markdown(f"<strong style='color: #FFFFFF;'>#{task.id} {task.title}</strong>", unsafe_allow_html=True)
+            cols[3].markdown(f"<span style='font-size: 0.85rem; color: #A6A49E;'>{task.priority_label}</span>", unsafe_allow_html=True)
 
     # ---------------- TAB 4: TREE STRUCTURE VISUALIZATION ----------------
     with tab_diagram:
-        st.markdown("### 🌳 Visual Hierarchy & Branching Structure")
-        st.caption(
-            "Hierarchical structural view showing the root node, left subtrees (< parent key), and right subtrees (> parent key)."
+        st.markdown(
+            """
+            <div style="font-family: 'Syne', sans-serif; font-size: 1.15rem; font-weight: 700; color: #FFFFFF; margin-top: 0.5rem; margin-bottom: 0.2rem;">
+                Hierarchical Branching Structure
+            </div>
+            <div style="font-size: 0.85rem; color: #A6A49E; margin-bottom: 1.2rem;">
+                Tree topology displaying Root, Left subtrees (<code>&lt; parent</code>), and Right subtrees (<code>&gt; parent</code>).
+            </div>
+            """,
+            unsafe_allow_html=True,
         )
 
         tree_lines = _generate_tree_text_diagram(raw_bst.root)
@@ -248,14 +284,15 @@ def render_tree_view(storage: TaskStorage, index_service: TaskIndexService) -> N
             tree_text = "\n".join(tree_lines)
             st.code(tree_text, language="text")
 
-        st.markdown("---")
-        st.markdown("#### 💡 Structural Properties & Skewness Analysis")
+        st.markdown("<hr style='margin: 1.4rem 0;'>", unsafe_allow_html=True)
+        st.markdown('<div style="font-family: Syne, sans-serif; font-size: 1.05rem; font-weight: 700; color: #FFFFFF; margin-bottom: 0.6rem;">Structural Properties & Balance Analysis</div>', unsafe_allow_html=True)
         col_prop1, col_prop2 = st.columns(2)
         with col_prop1:
-            st.markdown(f"- **Total Nodes:** {index_service.get_tree_size()}")
-            st.markdown(f"- **Tree Height:** {index_service.get_tree_height()}")
+            st.markdown(f"- **Total Nodes ($N$):** `{index_service.get_tree_size()}`")
+            st.markdown(f"- **Actual Tree Height:** `{index_service.get_tree_height()}`")
         with col_prop2:
             min_possible_height = (index_service.get_tree_size() - 1).bit_length() - 1 if index_service.get_tree_size() > 0 else 0
-            st.markdown(f"- **Minimum Possible Height (if perfectly balanced):** {min_possible_height}")
+            st.markdown(f"- **Optimal Balanced Height ($\\lfloor \\log_2 N \\rfloor$):** `{min_possible_height}`")
             is_skewed = index_service.get_tree_height() > (min_possible_height + 2)
-            st.markdown(f"- **Skewness Warning:** {'⚠️ Skewed Tree' if is_skewed else '✅ Reasonably Balanced'}")
+            skew_status = "⚠️ Skewed Tree" if is_skewed else "✅ Balanced Tree"
+            st.markdown(f"- **Balance Assessment:** `{skew_status}`")

@@ -17,74 +17,73 @@ from taskforge.services.structure_evaluation import (
 from taskforge.services.task_hash_index import TaskHashIndexService
 from taskforge.storage import TaskStorage
 from taskforge.structures.hash_table import HashTable
+from taskforge.ui.theme import (
+    COLOR_BG,
+    COLOR_LIME,
+    COLOR_SURFACE,
+    COLOR_TEXT_MUTED,
+    COLOR_TEXT_PRIMARY,
+    render_metric_strip,
+    render_pill,
+    render_section_header,
+    style_anthracite_ax,
+)
 
 
 def render_evaluation_charts(results: list[StructureBenchmarkResult]) -> plt.Figure:
-    """Generate comparative visualization charts using Matplotlib."""
-    fig, axes = plt.subplots(1, 3, figsize=(15, 4.5), dpi=120)
-    fig.patch.set_facecolor("#0e1117")
+    """Generate comparative visualization charts using Anthracite Studio styling."""
+    fig, axes = plt.subplots(1, 3, figsize=(15, 4.2), dpi=120)
+    fig.patch.set_facecolor(COLOR_BG)
 
-    colors = ["#e74c3c", "#2ecc71", "#3498db"]  # List (Red), Hash (Green), BST (Blue)
+    colors = [COLOR_TEXT_MUTED, COLOR_LIME, "#60A5FA"]  # List (Muted), Hash (Lime), BST (Blue)
     names = [r.structure_name.split(" ")[0] for r in results]
 
     # Chart 1: Average Lookup Time (microseconds)
     ax1 = axes[0]
-    ax1.set_facecolor("#1a1f2c")
     lookup_times = [r.lookup_time_avg_us for r in results]
-    bars1 = ax1.bar(names, lookup_times, color=colors, width=0.55, edgecolor="#ffffff", linewidth=0.8)
-    ax1.set_title("Avg Lookup Time (µs)", color="#ffffff", fontsize=11, fontweight="bold")
-    ax1.set_ylabel("Microseconds (µs)", color="#cccccc", fontsize=9)
-    ax1.tick_params(colors="#cccccc", labelsize=9)
-    ax1.grid(axis="y", linestyle="--", alpha=0.25, color="#ffffff")
+    bars1 = ax1.bar(names, lookup_times, color=colors, width=0.48, edgecolor="#2A2A2A", linewidth=0.8)
+    style_anthracite_ax(ax1, title="Avg Lookup Time (µs)", ylabel="Microseconds (µs)")
     for bar in bars1:
         yval = bar.get_height()
-        ax1.text(bar.get_x() + bar.get_width() / 2.0, yval, f"{yval:.2f}µs", ha="center", va="bottom", color="#ffffff", fontsize=8.5)
+        ax1.text(bar.get_x() + bar.get_width() / 2.0, yval, f"{yval:.2f}µs", ha="center", va="bottom", color=COLOR_TEXT_PRIMARY, fontsize=8.5, fontweight="bold")
 
     # Chart 2: Comparisons / Entries Inspected
     ax2 = axes[1]
-    ax2.set_facecolor("#1a1f2c")
     comparisons = [r.comparisons_count for r in results]
-    bars2 = ax2.bar(names, comparisons, color=colors, width=0.55, edgecolor="#ffffff", linewidth=0.8)
-    ax2.set_title("Comparisons / Inspected Nodes", color="#ffffff", fontsize=11, fontweight="bold")
-    ax2.set_ylabel("Count", color="#cccccc", fontsize=9)
-    ax2.tick_params(colors="#cccccc", labelsize=9)
-    ax2.grid(axis="y", linestyle="--", alpha=0.25, color="#ffffff")
+    bars2 = ax2.bar(names, comparisons, color=colors, width=0.48, edgecolor="#2A2A2A", linewidth=0.8)
+    style_anthracite_ax(ax2, title="Comparisons / Inspected Nodes", ylabel="Count")
     for bar in bars2:
         yval = bar.get_height()
-        ax2.text(bar.get_x() + bar.get_width() / 2.0, yval, f"{yval:,}", ha="center", va="bottom", color="#ffffff", fontsize=8.5)
+        ax2.text(bar.get_x() + bar.get_width() / 2.0, yval, f"{yval:,}", ha="center", va="bottom", color=COLOR_TEXT_PRIMARY, fontsize=8.5, fontweight="bold")
 
     # Chart 3: Construction / Indexing Time (ms)
     ax3 = axes[2]
-    ax3.set_facecolor("#1a1f2c")
     const_times = [r.construction_time_ms for r in results]
-    bars3 = ax3.bar(names, const_times, color=colors, width=0.55, edgecolor="#ffffff", linewidth=0.8)
-    ax3.set_title("Construction Time (ms)", color="#ffffff", fontsize=11, fontweight="bold")
-    ax3.set_ylabel("Milliseconds (ms)", color="#cccccc", fontsize=9)
-    ax3.tick_params(colors="#cccccc", labelsize=9)
-    ax3.grid(axis="y", linestyle="--", alpha=0.25, color="#ffffff")
+    bars3 = ax3.bar(names, const_times, color=colors, width=0.48, edgecolor="#2A2A2A", linewidth=0.8)
+    style_anthracite_ax(ax3, title="Construction Time (ms)", ylabel="Milliseconds (ms)")
     for bar in bars3:
         yval = bar.get_height()
-        ax3.text(bar.get_x() + bar.get_width() / 2.0, yval, f"{yval:.2f}ms", ha="center", va="bottom", color="#ffffff", fontsize=8.5)
+        ax3.text(bar.get_x() + bar.get_width() / 2.0, yval, f"{yval:.2f}ms", ha="center", va="bottom", color=COLOR_TEXT_PRIMARY, fontsize=8.5, fontweight="bold")
 
     plt.tight_layout()
     return fig
 
 
 def render_bucket_distribution_chart(stats: dict[str, Any]) -> plt.Figure:
-    """Generate a bucket chain length distribution chart."""
-    fig, ax = plt.subplots(figsize=(10, 3.5), dpi=120)
-    fig.patch.set_facecolor("#0e1117")
-    ax.set_facecolor("#1a1f2c")
+    """Generate a bucket chain length distribution chart using Anthracite Studio styling."""
+    fig, ax = plt.subplots(figsize=(10, 3.4), dpi=120)
+    fig.patch.set_facecolor(COLOR_BG)
 
     bucket_sizes = stats.get("bucket_sizes", [])
     indices = list(range(len(bucket_sizes)))
 
-    ax.bar(indices, bucket_sizes, color="#2ecc71", width=0.7, edgecolor="#27ae60", alpha=0.85)
-    ax.set_title(f"Bucket Chain Length Distribution (Capacity: {stats.get('capacity', 0)}, Items: {stats.get('size', 0)})", color="#ffffff", fontsize=11)
-    ax.set_xlabel("Bucket Index", color="#cccccc", fontsize=9)
-    ax.set_ylabel("Entries per Chain", color="#cccccc", fontsize=9)
-    ax.tick_params(colors="#cccccc", labelsize=8)
-    ax.grid(axis="y", linestyle="--", alpha=0.2, color="#ffffff")
+    ax.bar(indices, bucket_sizes, color=COLOR_LIME, width=0.65, edgecolor="#2A2A2A", alpha=0.9)
+    style_anthracite_ax(
+        ax,
+        title=f"Bucket Chain Length Distribution (Capacity: {stats.get('capacity', 0)}, Items: {stats.get('size', 0)})",
+        xlabel="Bucket Index",
+        ylabel="Entries per Chain",
+    )
 
     plt.tight_layout()
     return fig
@@ -95,24 +94,11 @@ def render_structure_evaluation_view(
     hash_index: TaskHashIndexService,
 ) -> None:
     """Render the Data Structure Evaluation & Hash Table module (CO2)."""
-    st.header("🧮 Data Structure Evaluation Lab (CO2)")
-    st.caption("Course Outcome 2: Evaluate the suitability of data structures for efficient storage and retrieval.")
-
-    # Educational Accordion
-    with st.expander("📘 **About Course Outcome 2 & Multi-Structure Evaluation**", expanded=False):
-        st.markdown(
-            """
-            ### What is CO2?
-            Different engineering tasks demand distinct data structures:
-            - **Sequential List ($O(n)$)**: Simplest structure; preserves exact insertion order, but lookup requires linear scanning through every element.
-            - **Custom Hash Table ($O(1)$ Average)**: Maps keys to bucket positions using a hash function. Handles collisions via **separate chaining** (linked chains per bucket). Extremely fast for exact-key lookups, but does not preserve sorted order.
-            - **Binary Search Tree ($O(\\log n)$ Average)**: Hierarchical ordered structure. Enables sorted traversals (e.g. earliest deadline first) while providing logarithmic search on balanced inputs, but can degrade to $O(n)$ if degenerate.
-            
-            ### Hash Table Invariants:
-            - **Load Factor ($\\alpha = n / m$)**: Ratio of unique keys ($n$) to bucket capacity ($m$). When $\\alpha > 0.75$, the table dynamically doubles capacity and rehashes entries.
-            - **Separate Chaining**: If keys collide into the same bucket, entries are chained together without overwriting each other.
-            """
-        )
+    render_section_header(
+        eyebrow="COURSE OUTCOME 2 (CO2) • STORAGE & RETRIEVAL EVALUATION",
+        title="Data Structure Evaluation Laboratory",
+        subtitle="Empirically evaluate the storage and retrieval characteristics of custom Unsorted List O(n), Hash Table O(1), and Binary Search Tree O(log n) across identical synthetic workloads.",
+    )
 
     # Initialize demo hash table in session state if not present
     if "demo_hash_table" not in st.session_state:
@@ -133,24 +119,32 @@ def render_structure_evaluation_view(
     # TAB 1: Custom Hash Table Lab
     # -------------------------------------------------------------------------
     with tab_lab:
-        st.subheader("Custom Hash Table Interactive Demonstration")
-        st.markdown("Interact directly with our custom `HashTable[K, V]` using separate chaining.")
+        st.markdown(
+            """
+            <div style="font-family: 'Syne', sans-serif; font-size: 1.15rem; font-weight: 700; color: #FFFFFF; margin-top: 0.5rem; margin-bottom: 0.2rem;">
+                Custom Hash Table Interactive Demonstration
+            </div>
+            <div style="font-size: 0.85rem; color: #A6A49E; margin-bottom: 1.2rem;">
+                Interact with our custom <code>HashTable[K, V]</code> implementation featuring separate chaining collision resolution and dynamic rehashing.
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
 
         stats = demo_ht.collision_stats()
 
-        col1, col2, col3, col4, col5 = st.columns(5)
-        col1.metric("📦 Capacity (m)", stats["capacity"])
-        col2.metric("🔑 Stored Keys (n)", stats["size"])
-        col3.metric("📈 Load Factor (α)", f"{stats['load_factor']:.3f}")
-        col4.metric("💥 Collisions", stats["total_collisions"])
-        col5.metric("📏 Max Chain", stats["max_chain_length"])
-
-        st.markdown("---")
+        render_metric_strip([
+            {"label": "Bucket Capacity (m)", "value": str(stats["capacity"]), "caption": "Static Array Size"},
+            {"label": "Stored Keys (n)", "value": str(stats["size"]), "caption": "Unique Key Count"},
+            {"label": "Load Factor (α)", "value": f"{stats['load_factor']:.3f}", "caption": "Resizes at > 0.75"},
+            {"label": "Total Collisions", "value": str(stats["total_collisions"]), "caption": "Chain Collisions"},
+            {"label": "Max Chain Length", "value": str(stats["max_chain_length"]), "caption": "Longest Linked Chain"},
+        ])
 
         col_left, col_right = st.columns([1, 1])
 
         with col_left:
-            st.markdown("#### 🛠️ Hash Table Operations")
+            st.markdown('<div style="font-family: Syne, sans-serif; font-size: 1.05rem; font-weight: 700; color: #FFFFFF; margin-bottom: 0.6rem;">🛠️ Hash Table Operations</div>', unsafe_allow_html=True)
             op_mode = st.radio(
                 "Select Operation:",
                 options=["Insert / Upsert", "Retrieve (Get)", "Update Existing", "Delete"],
@@ -206,7 +200,7 @@ def render_structure_evaluation_view(
                         else:
                             st.warning(f"Key '{k}' not found.")
 
-            st.markdown("#### ⚡ Quick Actions")
+            st.markdown('<div style="font-family: Syne, sans-serif; font-size: 1.05rem; font-weight: 700; color: #FFFFFF; margin: 1.2rem 0 0.6rem 0;">⚡ Quick Actions</div>', unsafe_allow_html=True)
             col_b1, col_b2, col_b3 = st.columns(3)
             with col_b1:
                 if st.button("🌱 Load Samples", use_container_width=True):
@@ -217,7 +211,6 @@ def render_structure_evaluation_view(
                     st.rerun()
             with col_b2:
                 if st.button("💥 Collision Demo", use_container_width=True):
-                    # Force collisions by inserting multiple keys into small capacity
                     demo_ht.insert("alpha_1", "Module A")
                     demo_ht.insert("alpha_2", "Module B")
                     demo_ht.insert("alpha_3", "Module C")
@@ -229,12 +222,11 @@ def render_structure_evaluation_view(
                     st.rerun()
 
         with col_right:
-            st.markdown("#### ⛓️ Bucket Chains & Collision Structure")
+            st.markdown('<div style="font-family: Syne, sans-serif; font-size: 1.05rem; font-weight: 700; color: #FFFFFF; margin-bottom: 0.6rem;">⛓️ Bucket Chains & Collision Structure</div>', unsafe_allow_html=True)
             fig = render_bucket_distribution_chart(stats)
             st.pyplot(fig)
             plt.close(fig)
 
-            # Raw bucket display table
             bucket_rows = []
             for idx, bucket in enumerate(demo_ht._buckets):
                 if bucket:
@@ -249,24 +241,33 @@ def render_structure_evaluation_view(
             if bucket_rows:
                 st.dataframe(bucket_rows, use_container_width=True)
             else:
-                st.info("Demo table is currently empty. Insert keys or click 'Load Samples' above.")
+                st.markdown("<span style='color: #6E6D68; font-size: 0.85rem;'>Demo table is currently empty. Insert keys or click 'Load Samples' above.</span>", unsafe_allow_html=True)
 
     # -------------------------------------------------------------------------
     # TAB 2: Live Task-ID Hash Index
     # -------------------------------------------------------------------------
     with tab_index:
-        st.subheader("Production Task-ID Hash Index")
         st.markdown(
-            "TaskForge maintains an in-memory `HashTable[int, Task]` synchronizing with SQLite to enable rapid $O(1)$ average primary key retrieval."
+            """
+            <div style="font-family: 'Syne', sans-serif; font-size: 1.15rem; font-weight: 700; color: #FFFFFF; margin-top: 0.5rem; margin-bottom: 0.2rem;">
+                Production Task-ID Hash Index
+            </div>
+            <div style="font-size: 0.85rem; color: #A6A49E; margin-bottom: 1.2rem;">
+                TaskForge maintains an in-memory <code>HashTable[int, Task]</code> synchronized with SQLite to enable <code>O(1)</code> average primary key retrieval.
+            </div>
+            """,
+            unsafe_allow_html=True,
         )
 
         all_tasks = storage.list_tasks()
         p_stats = hash_index.get_statistics()
 
-        col_p1, col_p2, col_p3 = st.columns(3)
-        col_p1.metric("Indexed Tasks", p_stats["size"])
-        col_p2.metric("Bucket Capacity", p_stats["capacity"])
-        col_p3.metric("Load Factor", f"{p_stats['load_factor']:.3f}")
+        render_metric_strip([
+            {"label": "Indexed Tasks", "value": str(p_stats["size"]), "caption": "Primary Key Index"},
+            {"label": "Bucket Capacity", "value": str(p_stats["capacity"]), "caption": "Internal Buckets"},
+            {"label": "Load Factor (α)", "value": f"{p_stats['load_factor']:.3f}", "caption": "Target < 0.75"},
+            {"label": "Lookup Complexity", "value": "O(1) Average", "caption": "Constant-Time Hash"},
+        ])
 
         col_search, col_rebuild = st.columns([3, 1])
         with col_search:
@@ -283,15 +284,19 @@ def render_structure_evaluation_view(
                 if selected_id is not None:
                     found_task, comparisons = hash_index.get_task_with_comparisons(selected_id)
                     if found_task:
-                        st.success(
-                            f"**Hash Table Match:** Task #{found_task.id} found in **{comparisons} bucket chain inspection(s)**."
-                        )
                         st.markdown(
                             f"""
-                            <div style="background-color: #1e2430; padding: 12px; border-radius: 6px; border-left: 4px solid #2ecc71;">
-                                <h4>#{found_task.id}: {found_task.title}</h4>
-                                <p style="color: #cccccc; margin-bottom: 4px;">{found_task.description or 'No description'}</p>
-                                <small><strong>Priority:</strong> {found_task.priority_label} | <strong>Status:</strong> {found_task.status} | <strong>Duration:</strong> {found_task.duration}m | <strong>Due:</strong> {found_task.due_date or 'None'}</small>
+                            <div style="background-color: #1A1F16; border: 1px solid rgba(215, 255, 100, 0.35); border-radius: 3px; padding: 1.2rem 1.4rem; margin-top: 0.8rem;">
+                                <div style="font-family: 'JetBrains Mono', monospace; font-size: 0.68rem; letter-spacing: 0.12em; text-transform: uppercase; color: #D7FF64; font-weight: 700; margin-bottom: 0.3rem;">
+                                    ● Instant Hash Match Found ({comparisons} Chain Comparison/s)
+                                </div>
+                                <div style="font-family: 'Syne', sans-serif; font-size: 1.25rem; font-weight: 700; color: #FFFFFF; margin-bottom: 0.3rem;">
+                                    #{found_task.id}: {found_task.title}
+                                </div>
+                                <p style="color: #A6A49E; margin-bottom: 0.6rem; font-size: 0.88rem;">{found_task.description or 'No description'}</p>
+                                <div style="font-family: 'JetBrains Mono', monospace; font-size: 0.78rem; color: #A6A49E;">
+                                    Priority: <strong style="color: #FFFFFF;">{found_task.priority_label}</strong> &bull; Status: <strong style="color: #FFFFFF;">{found_task.status}</strong> &bull; Duration: <strong style="color: #FFFFFF;">{found_task.duration}m</strong> &bull; Deadline: <strong style="color: #FFFFFF;">{found_task.formatted_deadline}</strong>
+                                </div>
                             </div>
                             """,
                             unsafe_allow_html=True,
@@ -307,9 +312,16 @@ def render_structure_evaluation_view(
     # TAB 3: Comparison Laboratory
     # -------------------------------------------------------------------------
     with tab_bench:
-        st.subheader("Data Structure Evaluation Lab (List vs Hash Table vs BST)")
         st.markdown(
-            "Empirically compare **Sequential List Search**, **Custom Hash Table**, and **Custom BST** using identical workloads."
+            """
+            <div style="font-family: 'Syne', sans-serif; font-size: 1.15rem; font-weight: 700; color: #FFFFFF; margin-top: 0.5rem; margin-bottom: 0.2rem;">
+                Comparative Evaluation: List vs Hash Table vs BST
+            </div>
+            <div style="font-size: 0.85rem; color: #A6A49E; margin-bottom: 1.2rem;">
+                Empirically compare Sequential Scanning <code>O(n)</code>, Hash Table Indexing <code>O(1)</code>, and Binary Search Tree <code>O(log n)</code> across identical workloads.
+            </div>
+            """,
+            unsafe_allow_html=True,
         )
 
         col_c1, col_c2, col_c3 = st.columns(3)
@@ -349,7 +361,7 @@ def render_structure_evaluation_view(
         if "last_bench_results" in st.session_state:
             results = st.session_state.last_bench_results
 
-            st.markdown("### 📊 Benchmark Results Table")
+            st.markdown("<hr style='margin: 1.4rem 0 1rem 0;'>", unsafe_allow_html=True)
             table_data = []
             for r in results:
                 table_data.append({
@@ -360,13 +372,11 @@ def render_structure_evaluation_view(
                     "Total Lookup Time (ms)": f"{r.lookup_time_total_ms:.3f} ms",
                     "Avg Lookup Time (µs)": f"{r.lookup_time_avg_us:.3f} µs",
                     "Comparisons / Inspected": f"{r.comparisons_count:,}",
-                    "Found?": "✅ Yes" if r.result_found else "❌ No",
+                    "Found?": "Yes" if r.result_found else "No",
                     "Structural Metrics": str(r.extra_stats),
                 })
             st.dataframe(table_data, use_container_width=True)
 
-            # Matplotlib Charts
-            st.markdown("### 📈 Visual Benchmark Charts")
             chart_fig = render_evaluation_charts(results)
             st.pyplot(chart_fig)
             plt.close(chart_fig)
@@ -375,7 +385,14 @@ def render_structure_evaluation_view(
     # TAB 4: Complexity Matrix
     # -------------------------------------------------------------------------
     with tab_matrix:
-        st.subheader("Data Structure Complexity & Suitability Comparison")
+        st.markdown(
+            """
+            <div style="font-family: 'Syne', sans-serif; font-size: 1.15rem; font-weight: 700; color: #FFFFFF; margin-top: 0.5rem; margin-bottom: 0.8rem;">
+                Data Structure Complexity & Suitability Comparison
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
         st.markdown(
             """
             | Data Structure | Lookup (Avg) | Lookup (Worst) | Construction Time | Sorted Ordering? | Space Overhead | Ideal Engineering Application |
@@ -386,38 +403,45 @@ def render_structure_evaluation_view(
             """
         )
 
-        st.markdown("---")
-        st.markdown("### 🔍 Key Engineering Takeaways:")
         st.markdown(
             """
-            1. **Why is Hash Table Lookup $O(1)$ on Average?**  
-               The hash function maps any arbitrary key directly to a bucket array index in $O(1)$ time. With a low load factor ($\\alpha \\le 0.75$), most buckets contain only 0 or 1 entry, requiring $\\approx 1$ key comparison.
-            2. **Why does a List scale poorly for lookups?**  
-               Sequential search must inspect elements one by one until the target is found. Searching for a late item or missing key requires inspecting all $N$ elements.
-            3. **When is a BST preferable to a Hash Table?**  
-               A Hash Table has no concept of order (`min`, `max`, `successor`, range search). A BST maintains hierarchical order, allowing **Inorder Traversal** to yield sorted records without re-sorting.
-            """
+            <div style="background-color: #1B1B1B; border: 1px solid #2A2A2A; border-radius: 3px; padding: 1.4rem 1.6rem; margin-top: 1.5rem;">
+                <div style="font-family: 'Syne', sans-serif; font-size: 1.05rem; font-weight: 700; color: #FFFFFF; margin-bottom: 0.6rem;">
+                    Key Architectural Takeaways:
+                </div>
+                <div style="color: #A6A49E; font-size: 0.88rem; line-height: 1.6;">
+                    <p><strong style="color: #D7FF64;">1. Why is Hash Table Lookup $O(1)$ on Average?</strong><br>
+                    The hash function computes a numeric array index from the key in constant time. When $\\alpha \\le 0.75$, linked chains remain tiny ($\\le 1.3$ entries on average), yielding constant search time.</p>
+
+                    <p><strong style="color: #D7FF64;">2. When is a BST Preferable to a Hash Table?</strong><br>
+                    A Hash Table has no ordering semantics. A BST maintains strict hierarchical order, enabling sorted Inorder traversals (e.g. chronological deadlines) and range queries without re-sorting.</p>
+                </div>
+            </div>
+            """,
+            unsafe_allow_html=True,
         )
 
     # -------------------------------------------------------------------------
     # TAB 5: Viva Guide (CO2)
     # -------------------------------------------------------------------------
     with tab_viva:
-        st.subheader("🎓 Course Outcome 2 (CO2) Viva Examination Guide")
         st.markdown(
             """
-            #### 1. What is Course Outcome 2 (CO2)?
-            > *CO2: Evaluate the suitability of data structures for efficient storage and retrieval.*  
-            In TaskForge, we satisfy CO2 by manually building a **custom Hash Table** and conducting rigorous, empirical performance evaluations comparing **Sequential List**, **Hash Table**, and **Binary Search Tree** across equivalent task datasets.
+            <div style="background-color: #1B1B1B; border: 1px solid #2A2A2A; border-radius: 3px; padding: 1.6rem 1.8rem; margin-top: 0.5rem;">
+                <div style="font-family: 'Syne', sans-serif; font-size: 1.25rem; font-weight: 700; color: #FFFFFF; margin-bottom: 0.8rem;">
+                    Course Outcome 2 (CO2) Viva Examination Guide
+                </div>
+                <div style="color: #A6A49E; font-size: 0.9rem; line-height: 1.6;">
+                    <p><strong style="color: #D7FF64;">Q1: How is your Hash Table implemented? Did you use Python dictionaries?</strong><br>
+                    <strong>No.</strong> <code>HashTable[K, V]</code> is built completely from scratch using a fixed-capacity list of buckets (<code>list[list[_HashEntry]]</code>). Collisions are resolved using <strong>separate chaining</strong>.</p>
 
-            #### 2. How is your Hash Table implemented? Did you use Python dictionaries?
-            > **No.** Our `HashTable[K, V]` is manually constructed from scratch using a list of buckets (`list[list[_HashEntry]]`). Python dictionaries are **not** used inside the hash table. Collisions are handled using **separate chaining**, where each bucket contains a chain of entries that hashed to that index.
+                    <p><strong style="color: #D7FF64;">Q2: What is the Load Factor and why does resizing matter?</strong><br>
+                    The load factor is $\\alpha = n / m$ (stored items divided by bucket capacity). When $\\alpha > 0.75$, TaskForge automatically triggers dynamic rehashing, doubling capacity to keep average chain length minimal and preserve $O(1)$ lookup.</p>
 
-            #### 3. What is the Load Factor and why does resizing matter?
-            > The load factor is defined as $\\alpha = \\frac{n}{m}$, where $n$ is the number of stored unique keys and $m$ is the bucket capacity.  
-            As $\\alpha$ increases, bucket chains grow longer and search time degenerates toward $O(n)$. When $\\alpha > 0.75$, TaskForge automatically triggers **rehashing**, doubling the bucket capacity and re-distributing all entries so lookup remains $O(1)$ average time.
-
-            #### 4. Why does our benchmark show that small datasets may not show large differences?
-            > On small datasets ($N = 100$), the CPU cache and small constants mean linear search takes mere microseconds, sometimes comparable to hash calculation overhead. However, as $N$ scales to $1,000$ and $5,000$, linear search time grows linearly ($O(n)$), while Hash Table lookup remains flat at $\\approx 1$ comparison ($O(1)$).
-            """
+                    <p><strong style="color: #D7FF64;">Q3: How do the empirical results validate CO2?</strong><br>
+                    As dataset size scales from $N=100$ to $N=5,000$, Linear Search time grows linearly ($O(n)$), while Hash Table lookup remains flat at $\approx 1$ comparison ($O(1)$), proving suitability for high-frequency key-based retrieval.</p>
+                </div>
+            </div>
+            """,
+            unsafe_allow_html=True,
         )

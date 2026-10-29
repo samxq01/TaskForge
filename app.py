@@ -26,6 +26,7 @@ from taskforge.ui.history_view import render_history_view
 from taskforge.ui.planning_view import render_planning_view
 from taskforge.ui.scheduling_view import render_scheduling_view
 from taskforge.ui.structure_evaluation_view import render_structure_evaluation_view
+from taskforge.ui.theme import inject_anthracite_theme, render_brand_lockup
 from taskforge.ui.tree_view import render_tree_view
 
 
@@ -221,10 +222,12 @@ def render_sidebar(
 ) -> str:
     """Render the sidebar with navigation, phase status, and demonstration tools."""
     with st.sidebar:
-        st.title("⚡ TaskForge")
-        st.caption("College DSA Micro-Project • CO1, CO2, CO3, CO4, CO5 Active")
+        render_brand_lockup()
 
-        st.markdown("### 📌 Navigation")
+        st.markdown(
+            '<div class="tf-eyebrow" style="margin-top: 0.5rem;">Navigation Directory</div>',
+            unsafe_allow_html=True,
+        )
         view_choice = st.radio(
             "Select Module",
             options=[
@@ -238,27 +241,33 @@ def render_sidebar(
                 "🔗 Dependency Map (CO5)",
             ],
             index=0,
+            label_visibility="collapsed",
             help="Navigate across all Course Outcome modules (CO1–CO5).",
         )
 
-        st.markdown("---")
-        st.markdown("### 🗺️ Project Roadmap")
+        st.markdown("<hr style='margin: 1.2rem 0;'>", unsafe_allow_html=True)
+        st.markdown(
+            '<div class="tf-eyebrow">Academic Roadmap</div>',
+            unsafe_allow_html=True,
+        )
         st.markdown(
             """
-- 🟢 **Phase 01:** Foundation & Tasks *(Complete)*
-- 🟢 **Phase 02:** Stack, Queue & Undo/Redo (CO1) *(Complete)*
-- 🟢 **Phase 03:** Searching & Sorting Lab (CO3) *(Complete)*
-- 🟢 **Phase 04:** BST Deadline Index (CO4) *(Complete)*
-- 🟢 **Phase 05:** Dependency Graph & Visual Map (CO5) *(Complete)*
-- 🟢 **Phase 06:** Hash Table & Storage Lab (CO2) *(Complete)*
-- 🟢 **Phase 07:** Smart Auto-Scheduler & Risk Analyzer (CO1 + CO5) *(Complete)*
-- 🟢 **Phase 08:** Critical Path & What-If Planning (CO5) *(Complete)*
-- 🟢 **Phase 09:** Final Integration & CO Validation *(Complete)*
-            """
+<div style="font-size: 0.82rem; color: #A6A49E; line-height: 1.6; font-family: 'JetBrains Mono', monospace;">
+<div><span style="color: #D7FF64;">●</span> CO1 Linear Structures &bull; Verified</div>
+<div><span style="color: #D7FF64;">●</span> CO2 Hash Storage &bull; Verified</div>
+<div><span style="color: #D7FF64;">●</span> CO3 Search & Sort Lab &bull; Verified</div>
+<div><span style="color: #D7FF64;">●</span> CO4 BST Task Index &bull; Verified</div>
+<div><span style="color: #D7FF64;">●</span> CO5 Graph & Critical Path &bull; Verified</div>
+</div>
+            """,
+            unsafe_allow_html=True,
         )
 
-        st.markdown("---")
-        st.markdown("### 🛠️ Demonstration Tools")
+        st.markdown("<hr style='margin: 1.2rem 0;'>", unsafe_allow_html=True)
+        st.markdown(
+            '<div class="tf-eyebrow">Demonstration Suite</div>',
+            unsafe_allow_html=True,
+        )
         if st.button("🌱 Load Sample Tasks", use_container_width=True):
             loaded = load_sample_tasks(storage, undo_manager, queue_service, index_service, dep_service, hash_index)
             if loaded:
@@ -297,8 +306,16 @@ def render_sidebar(
                         st.session_state.confirm_clear_all = False
                         st.rerun()
 
-        st.markdown("---")
-        st.caption("TaskForge v1.0.0 • Micro-Project (CO1–CO5 Complete)")
+        st.markdown("<hr style='margin: 1.5rem 0;'>", unsafe_allow_html=True)
+        st.markdown(
+            """
+            <div style="font-family: 'JetBrains Mono', monospace; font-size: 0.65rem; color: #6E6D68; letter-spacing: 0.08em; text-transform: uppercase;">
+                TASKFORGE° v1.0.0<br>
+                DIGITAL CRAFT / CO1–CO5 ACTIVE
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
 
     return view_choice
 
@@ -311,6 +328,8 @@ def main() -> None:
         layout="wide",
         initial_sidebar_state="expanded",
     )
+
+    inject_anthracite_theme()
 
     storage = get_storage()
     undo_manager = get_undo_manager()
@@ -332,12 +351,7 @@ def main() -> None:
         hash_index=hash_index,
     )
 
-    st.title("⚡ TaskForge — Task Management & Scheduling System")
-
     if current_view == "📋 Task Dashboard & Registry":
-        st.markdown(
-            "Manage tasks with persistent SQLite storage, real-time metrics, custom sorting, and instant **Undo/Redo**."
-        )
         render_dashboard(storage, undo_manager=undo_manager, queue_service=queue_service)
     elif current_view == "🔄 Task Processing & History (CO1)":
         render_history_view(storage, undo_manager, queue_service)

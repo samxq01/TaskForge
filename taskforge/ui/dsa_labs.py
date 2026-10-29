@@ -10,39 +10,41 @@ from taskforge.services.benchmark_service import (
     SearchBenchmarkResult,
     SortBenchmarkResult,
 )
+from taskforge.ui.theme import (
+    COLOR_BG,
+    COLOR_LIME,
+    COLOR_SURFACE,
+    COLOR_TEXT_MUTED,
+    COLOR_TEXT_PRIMARY,
+    render_metric_strip,
+    render_section_header,
+    style_anthracite_ax,
+)
 
 
 def _render_search_chart(result: SearchBenchmarkResult) -> None:
-    """Render a clean Matplotlib chart comparing comparisons and execution time."""
+    """Render a clean Anthracite-styled Matplotlib chart comparing comparisons and execution time."""
     fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(10, 3.8))
-    fig.patch.set_facecolor("#0e1117")
+    fig.patch.set_facecolor(COLOR_BG)
 
     algorithms = ["Linear Search", "Binary Search"]
     comparisons = [result.linear_comparisons, result.binary_comparisons]
     times_ms = [result.linear_time_ms, result.binary_time_ms]
-    colors = ["#ff4b4b", "#00d26a"]
+    colors = [COLOR_TEXT_MUTED, COLOR_LIME]
 
     # 1. Comparison Count Bar Chart
-    bars1 = ax1.bar(algorithms, comparisons, color=colors, width=0.45)
-    ax1.set_title(f"Key Comparisons (Size: {result.dataset_size})", color="white", fontsize=11, fontweight="bold")
-    ax1.set_ylabel("Comparisons", color="white", fontsize=10)
-    ax1.set_facecolor("#161a24")
-    ax1.tick_params(colors="white")
-    ax1.grid(axis="y", linestyle="--", alpha=0.3, color="gray")
+    bars1 = ax1.bar(algorithms, comparisons, color=colors, width=0.42, edgecolor="#2A2A2A", linewidth=0.8)
+    style_anthracite_ax(ax1, title=f"Key Comparisons (Size: N={result.dataset_size})", ylabel="Comparisons")
     for bar in bars1:
         yval = bar.get_height()
-        ax1.text(bar.get_x() + bar.get_width() / 2.0, yval, f"{int(yval):,}", ha="center", va="bottom", color="white", fontsize=9, fontweight="bold")
+        ax1.text(bar.get_x() + bar.get_width() / 2.0, yval, f"{int(yval):,}", ha="center", va="bottom", color=COLOR_TEXT_PRIMARY, fontsize=9, fontweight="bold")
 
     # 2. Execution Time (ms) Bar Chart
-    bars2 = ax2.bar(algorithms, times_ms, color=colors, width=0.45)
-    ax2.set_title(f"Execution Time in ms (Repetitions avg)", color="white", fontsize=11, fontweight="bold")
-    ax2.set_ylabel("Time (milliseconds)", color="white", fontsize=10)
-    ax2.set_facecolor("#161a24")
-    ax2.tick_params(colors="white")
-    ax2.grid(axis="y", linestyle="--", alpha=0.3, color="gray")
+    bars2 = ax2.bar(algorithms, times_ms, color=colors, width=0.42, edgecolor="#2A2A2A", linewidth=0.8)
+    style_anthracite_ax(ax2, title="Execution Time (Avg ms)", ylabel="Milliseconds")
     for bar in bars2:
         yval = bar.get_height()
-        ax2.text(bar.get_x() + bar.get_width() / 2.0, yval, f"{yval:.4f} ms", ha="center", va="bottom", color="white", fontsize=9, fontweight="bold")
+        ax2.text(bar.get_x() + bar.get_width() / 2.0, yval, f"{yval:.4f} ms", ha="center", va="bottom", color=COLOR_TEXT_PRIMARY, fontsize=9, fontweight="bold")
 
     plt.tight_layout()
     st.pyplot(fig)
@@ -50,36 +52,28 @@ def _render_search_chart(result: SearchBenchmarkResult) -> None:
 
 
 def _render_sort_chart(result: SortBenchmarkResult) -> None:
-    """Render a clean Matplotlib chart comparing sorting comparisons and execution time."""
+    """Render a clean Anthracite-styled Matplotlib chart comparing sorting comparisons and execution time."""
     fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(10, 3.8))
-    fig.patch.set_facecolor("#0e1117")
+    fig.patch.set_facecolor(COLOR_BG)
 
     algorithms = ["Insertion Sort", "Merge Sort"]
     comparisons = [result.insertion_comparisons, result.merge_comparisons]
     times_ms = [result.insertion_time_ms, result.merge_time_ms]
-    colors = ["#ff9f1a", "#3880ff"]
+    colors = ["#FBBF24", COLOR_LIME]
 
     # 1. Comparison Count Bar Chart
-    bars1 = ax1.bar(algorithms, comparisons, color=colors, width=0.45)
-    ax1.set_title(f"Key Comparisons ({result.distribution.capitalize()}, N={result.dataset_size})", color="white", fontsize=11, fontweight="bold")
-    ax1.set_ylabel("Comparisons", color="white", fontsize=10)
-    ax1.set_facecolor("#161a24")
-    ax1.tick_params(colors="white")
-    ax1.grid(axis="y", linestyle="--", alpha=0.3, color="gray")
+    bars1 = ax1.bar(algorithms, comparisons, color=colors, width=0.42, edgecolor="#2A2A2A", linewidth=0.8)
+    style_anthracite_ax(ax1, title=f"Key Comparisons ({result.distribution.capitalize()}, N={result.dataset_size})", ylabel="Comparisons")
     for bar in bars1:
         yval = bar.get_height()
-        ax1.text(bar.get_x() + bar.get_width() / 2.0, yval, f"{int(yval):,}", ha="center", va="bottom", color="white", fontsize=9, fontweight="bold")
+        ax1.text(bar.get_x() + bar.get_width() / 2.0, yval, f"{int(yval):,}", ha="center", va="bottom", color=COLOR_TEXT_PRIMARY, fontsize=9, fontweight="bold")
 
     # 2. Execution Time (ms) Bar Chart
-    bars2 = ax2.bar(algorithms, times_ms, color=colors, width=0.45)
-    ax2.set_title(f"Execution Time in ms (N={result.dataset_size})", color="white", fontsize=11, fontweight="bold")
-    ax2.set_ylabel("Time (milliseconds)", color="white", fontsize=10)
-    ax2.set_facecolor("#161a24")
-    ax2.tick_params(colors="white")
-    ax2.grid(axis="y", linestyle="--", alpha=0.3, color="gray")
+    bars2 = ax2.bar(algorithms, times_ms, color=colors, width=0.42, edgecolor="#2A2A2A", linewidth=0.8)
+    style_anthracite_ax(ax2, title=f"Execution Time (N={result.dataset_size})", ylabel="Milliseconds")
     for bar in bars2:
         yval = bar.get_height()
-        ax2.text(bar.get_x() + bar.get_width() / 2.0, yval, f"{yval:.2f} ms", ha="center", va="bottom", color="white", fontsize=9, fontweight="bold")
+        ax2.text(bar.get_x() + bar.get_width() / 2.0, yval, f"{yval:.2f} ms", ha="center", va="bottom", color=COLOR_TEXT_PRIMARY, fontsize=9, fontweight="bold")
 
     plt.tight_layout()
     st.pyplot(fig)
@@ -88,13 +82,10 @@ def _render_sort_chart(result: SortBenchmarkResult) -> None:
 
 def render_dsa_performance_lab() -> None:
     """Render the full DSA Performance Lab interface for Searching and Sorting."""
-    st.markdown("## 🔬 DSA Performance Laboratory (CO3)")
-    st.markdown(
-        """
-        > **Course Outcome 3 (CO3):** *Evaluate the performance of searching and sorting algorithms for solving engineering problems.*
-        
-        This interactive laboratory executes our manual algorithm implementations against reproducible datasets, measuring wall-clock execution time with `time.perf_counter()` and recording exact operation counts.
-        """
+    render_section_header(
+        eyebrow="COURSE OUTCOME 3 (CO3) • EMPIRICAL ALGORITHM BENCHMARKING",
+        title="Algorithm Performance Laboratory",
+        subtitle="Benchmark custom linear vs. logarithmic searches and quadratic vs. divide-and-conquer sorts against synthetic reproducible datasets using high-resolution performance counters.",
     )
 
     tab_searching, tab_sorting, tab_summary = st.tabs(
@@ -103,13 +94,16 @@ def render_dsa_performance_lab() -> None:
 
     # ---------------- TAB 1: SEARCHING LAB ----------------
     with tab_searching:
-        st.markdown("### 🔍 Linear Search vs. Binary Search")
         st.markdown(
             """
-            - **Linear Search:** Examines each element sequentially ($O(n)$ average/worst case). Operates on unsorted or sorted data.
-            - **Binary Search:** Eliminates half of the search space on each comparison ($O(\\log n)$).
-              **Important Precondition:** Binary Search *strictly requires* input pre-sorted by the search key.
-            """
+            <div style="font-family: 'Syne', sans-serif; font-size: 1.15rem; font-weight: 700; color: #FFFFFF; margin-top: 0.5rem; margin-bottom: 0.2rem;">
+                Linear Search vs. Binary Search
+            </div>
+            <div style="font-size: 0.85rem; color: #A6A49E; margin-bottom: 1.2rem;">
+                Compare sequential scanning <code>O(n)</code> against divide-and-conquer <code>O(log n)</code> elimination on identical sorted data.
+            </div>
+            """,
+            unsafe_allow_html=True,
         )
 
         col_s1, col_s2, col_s3 = st.columns([2, 2, 2])
@@ -155,24 +149,24 @@ def render_dsa_performance_lab() -> None:
         if "last_search_benchmark" in st.session_state:
             res: SearchBenchmarkResult = st.session_state.last_search_benchmark
 
-            st.markdown("#### 📈 Benchmark Results")
-            metric_col1, metric_col2, metric_col3, metric_col4 = st.columns(4)
-            with metric_col1:
-                st.metric("Linear Search Time", f"{res.linear_time_ms:.5f} ms")
-            with metric_col2:
-                st.metric("Binary Search Time", f"{res.binary_time_ms:.5f} ms")
-            with metric_col3:
-                st.metric("Linear Comparisons", f"{res.linear_comparisons:,}")
-            with metric_col4:
-                st.metric("Binary Comparisons", f"{res.binary_comparisons:,}")
+            st.markdown("<hr style='margin: 1.4rem 0 1rem 0;'>", unsafe_allow_html=True)
+            render_metric_strip([
+                {"label": "Linear Search Time", "value": f"{res.linear_time_ms:.4f} ms", "caption": "Sequential Scan"},
+                {"label": "Binary Search Time", "value": f"{res.binary_time_ms:.4f} ms", "caption": "Logarithmic"},
+                {"label": "Linear Comparisons", "value": f"{res.linear_comparisons:,}", "caption": "O(n) steps"},
+                {"label": "Binary Comparisons", "value": f"{res.binary_comparisons:,}", "caption": "O(log n) steps"},
+            ])
 
             # Ratio highlight
-            comp_ratio = (
-                res.linear_comparisons / max(res.binary_comparisons, 1)
-            )
-            st.success(
-                f"🎯 **Algorithmic Efficiency:** Binary Search required **{res.binary_comparisons}** comparisons "
-                f"versus **{res.linear_comparisons}** for Linear Search (a **{comp_ratio:.1f}x** reduction in comparison operations!)."
+            comp_ratio = res.linear_comparisons / max(res.binary_comparisons, 1)
+            st.markdown(
+                f"""
+                <div style="background-color: #1A1F16; border: 1px solid rgba(215, 255, 100, 0.35); border-radius: 3px; padding: 1rem 1.3rem; margin-bottom: 1.2rem; font-size: 0.88rem; color: #F3F1EB;">
+                    <strong style="color: #D7FF64;">● Algorithmic Efficiency:</strong> Binary Search required <strong>{res.binary_comparisons}</strong> comparisons 
+                    versus <strong>{res.linear_comparisons}</strong> for Linear Search (<strong style="color: #D7FF64;">{comp_ratio:.1f}x reduction</strong> in comparison operations).
+                </div>
+                """,
+                unsafe_allow_html=True,
             )
 
             # Numerical Table
@@ -180,7 +174,7 @@ def render_dsa_performance_lab() -> None:
                 {
                     "Algorithm": "Linear Search",
                     "Target Value": res.target,
-                    "Found?": "✅ Yes" if res.linear_found else "❌ No",
+                    "Found?": "Yes" if res.linear_found else "No",
                     "Comparisons": res.linear_comparisons,
                     "Execution Time (ms)": f"{res.linear_time_ms:.5f}",
                     "Theoretical Complexity": "O(1) best, O(n) worst",
@@ -188,25 +182,29 @@ def render_dsa_performance_lab() -> None:
                 {
                     "Algorithm": "Binary Search",
                     "Target Value": res.target,
-                    "Found?": "✅ Yes" if res.binary_found else "❌ No",
+                    "Found?": "Yes" if res.binary_found else "No",
                     "Comparisons": res.binary_comparisons,
                     "Execution Time (ms)": f"{res.binary_time_ms:.5f}",
                     "Theoretical Complexity": "O(1) best, O(log n) worst",
                 },
             ]
-            st.table(table_data)
+            st.dataframe(table_data, use_container_width=True)
 
             # Matplotlib Visualizer
             _render_search_chart(res)
 
     # ---------------- TAB 2: SORTING LAB ----------------
     with tab_sorting:
-        st.markdown("### 📊 Insertion Sort vs. Merge Sort")
         st.markdown(
             """
-            - **Insertion Sort:** Incremental algorithm ($O(n^2)$ average/worst case, $O(n)$ on pre-sorted data). Stable.
-            - **Merge Sort:** Divide-and-conquer algorithm ($O(n \\log n)$ guaranteed in all cases). Stable.
-            """
+            <div style="font-family: 'Syne', sans-serif; font-size: 1.15rem; font-weight: 700; color: #FFFFFF; margin-top: 0.5rem; margin-bottom: 0.2rem;">
+                Insertion Sort vs. Merge Sort
+            </div>
+            <div style="font-size: 0.85rem; color: #A6A49E; margin-bottom: 1.2rem;">
+                Examine asymptotic scaling: quadratic <code>O(n²)</code> insertion sorting vs guaranteed <code>O(n log n)</code> recursive merge sorting.
+            </div>
+            """,
+            unsafe_allow_html=True,
         )
 
         col_sort1, col_sort2 = st.columns(2)
@@ -242,21 +240,25 @@ def render_dsa_performance_lab() -> None:
         if "last_sort_benchmark" in st.session_state:
             s_res: SortBenchmarkResult = st.session_state.last_sort_benchmark
 
-            st.markdown("#### 📈 Benchmark Results")
-            sm1, sm2, sm3, sm4 = st.columns(4)
-            with sm1:
-                st.metric("Insertion Sort Time", f"{s_res.insertion_time_ms:.2f} ms")
-            with sm2:
-                st.metric("Merge Sort Time", f"{s_res.merge_time_ms:.2f} ms")
-            with sm3:
-                st.metric("Insertion Comparisons", f"{s_res.insertion_comparisons:,}")
-            with sm4:
-                st.metric("Merge Comparisons", f"{s_res.merge_comparisons:,}")
+            st.markdown("<hr style='margin: 1.4rem 0 1rem 0;'>", unsafe_allow_html=True)
+            render_metric_strip([
+                {"label": "Insertion Sort Time", "value": f"{s_res.insertion_time_ms:.2f} ms", "caption": "O(n²) Quadratic"},
+                {"label": "Merge Sort Time", "value": f"{s_res.merge_time_ms:.2f} ms", "caption": "O(n log n) Guaranteed"},
+                {"label": "Insertion Comparisons", "value": f"{s_res.insertion_comparisons:,}", "caption": "Pairwise comparisons"},
+                {"label": "Merge Comparisons", "value": f"{s_res.merge_comparisons:,}", "caption": "Divide-and-Conquer"},
+            ])
 
             if s_res.is_correct:
-                st.success("✅ **Correctness Verified:** Both algorithms produced exact ground-truth sorted output.")
+                st.markdown(
+                    """
+                    <div style="background-color: #1A1F16; border: 1px solid rgba(215, 255, 100, 0.35); border-radius: 3px; padding: 0.8rem 1.2rem; margin-bottom: 1rem; font-size: 0.88rem; color: #D7FF64;">
+                        ● Correctness Verified: Both algorithms produced identical ground-truth sorted permutations.
+                    </div>
+                    """,
+                    unsafe_allow_html=True,
+                )
             else:
-                st.error("❌ Output verification failed.")
+                st.error("Output verification failed.")
 
             # Numerical Table
             sort_table_data = [
@@ -279,14 +281,21 @@ def render_dsa_performance_lab() -> None:
                     "Complexity Class": "O(n log n) in all cases",
                 },
             ]
-            st.table(sort_table_data)
+            st.dataframe(sort_table_data, use_container_width=True)
 
             # Matplotlib Visualizer
             _render_sort_chart(s_res)
 
     # ---------------- TAB 3: SUMMARY & VIVA ----------------
     with tab_summary:
-        st.markdown("### 📚 Comprehensive Complexity Matrix")
+        st.markdown(
+            """
+            <div style="font-family: 'Syne', sans-serif; font-size: 1.15rem; font-weight: 700; color: #FFFFFF; margin-top: 0.5rem; margin-bottom: 0.8rem;">
+                Theoretical Complexity Matrix & Viva Examination Reference
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
         matrix_data = [
             {
                 "Algorithm": "Linear Search",
@@ -325,21 +334,25 @@ def render_dsa_performance_lab() -> None:
                 "Stability / Notes": "Guaranteed Stable",
             },
         ]
-        st.table(matrix_data)
+        st.dataframe(matrix_data, use_container_width=True)
 
-        st.markdown("---")
-        st.markdown("### 🎓 Academic Viva Walkthrough: Theoretical Big-O vs. Measured Timings")
         st.markdown(
             """
-            #### Key Points to Explain to Faculty:
-            1. **Why does Binary Search require pre-sorted data?**
-               - Binary search relies on the invariant that if the middle element is greater than the target, the target *must* reside in the left partition. If the data is unsorted, this invariant is broken and elements would be missed.
-            2. **Why does Insertion Sort outperform Merge Sort on already-sorted input?**
-               - On already-sorted input, Insertion Sort performs only $n - 1$ comparisons and $0$ data shifts ($O(n)$ linear time), avoiding the recursive partitioning and buffer merging overhead of Merge Sort.
-            3. **Why do theoretical operation counts differ from wall-clock milliseconds?**
-               - Big-$O$ notation models growth rate as $n \\to \\infty$, ignoring constant factors ($c \\cdot g(n)$).
-               - Real wall-clock time is influenced by hardware factors: CPU cache spatial locality, branch prediction, Python bytecode interpretation, and memory allocation overhead.
-            4. **Data Safety in TaskForge:**
-               - All custom sorting functions allocate a defensive working copy; caller collections and SQLite records are never mutated by sorting demonstrations.
-            """
+            <div style="background-color: #1B1B1B; border: 1px solid #2A2A2A; border-radius: 3px; padding: 1.6rem 1.8rem; margin-top: 1.5rem;">
+                <div style="font-family: 'Syne', sans-serif; font-size: 1.15rem; font-weight: 700; color: #FFFFFF; margin-bottom: 0.8rem;">
+                    Key Examiner Viva Questions & Answers
+                </div>
+                <div style="color: #A6A49E; font-size: 0.9rem; line-height: 1.6;">
+                    <p><strong style="color: #D7FF64;">Q1: Why does Binary Search require pre-sorted data?</strong><br>
+                    Binary Search requires an invariant: if the midpoint value exceeds the target, the target strictly cannot reside in the right partition. On unsorted inputs, this invariant fails and elements are erroneously bypassed.</p>
+
+                    <p><strong style="color: #D7FF64;">Q2: Why does Insertion Sort outperform Merge Sort on sorted arrays?</strong><br>
+                    On already-sorted input, each item compares only once against its immediate left predecessor and incurs 0 shifts ($O(n)$ time), eliminating Merge Sort's recursive partition and merge buffer allocation overhead.</p>
+
+                    <p><strong style="color: #D7FF64;">Q3: How do we preserve persistence safety during benchmarks?</strong><br>
+                    BenchmarkService creates synthetic, isolated Python lists in memory using high-resolution <code>time.perf_counter()</code>; persistent SQLite records are completely untouched.</p>
+                </div>
+            </div>
+            """,
+            unsafe_allow_html=True,
         )

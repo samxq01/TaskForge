@@ -26,30 +26,27 @@ from taskforge.ui.task_manager import (
     render_add_task_form,
     render_edit_task_form,
 )
+from taskforge.ui.theme import (
+    render_editorial_hero,
+    render_metric_strip,
+    render_pill,
+    render_section_header,
+)
 
 
 def render_summary_metrics(storage: TaskStorage) -> None:
-    """Render top metric cards for total, pending, in-progress, completed, and overdue tasks."""
+    """Render top metric strip for total, pending, in-progress, completed, and overdue tasks."""
     counts = storage.count_tasks()
+    overdue_val = counts["overdue"]
+    overdue_caption = f"{overdue_val} past due" if overdue_val > 0 else "All deadlines current"
 
-    col1, col2, col3, col4, col5 = st.columns(5)
-    with col1:
-        st.metric(label="📋 Total Tasks", value=counts["total"])
-    with col2:
-        st.metric(label="⏳ Pending", value=counts["pending"])
-    with col3:
-        st.metric(label="⚙️ In Progress", value=counts["in_progress"])
-    with col4:
-        st.metric(label="✅ Completed", value=counts["completed"])
-    with col5:
-        overdue_val = counts["overdue"]
-        delta_str = f"{overdue_val} past due" if overdue_val > 0 else "None"
-        st.metric(
-            label="⚠️ Overdue",
-            value=overdue_val,
-            delta=delta_str if overdue_val > 0 else None,
-            delta_color="inverse",
-        )
+    render_metric_strip([
+        {"label": "Total Tasks", "value": counts["total"], "caption": "Persistent SQLite"},
+        {"label": "Pending", "value": counts["pending"], "caption": "FIFO Queue Head"},
+        {"label": "In Progress", "value": counts["in_progress"], "caption": "Active Processing"},
+        {"label": "Completed", "value": counts["completed"], "caption": "Prereqs Satisfied"},
+        {"label": "Overdue", "value": overdue_val, "caption": overdue_caption},
+    ])
 
 
 def _format_duration(minutes: int) -> str:
@@ -62,24 +59,23 @@ def _format_duration(minutes: int) -> str:
 
 
 def _priority_badge(priority: int) -> str:
-    """Return an emoji and label for a priority value."""
-    badges = {
-        Priority.URGENT.value: "🔴 Urgent (P4)",
-        Priority.HIGH.value: "🟠 High (P3)",
-        Priority.MEDIUM.value: "🟡 Medium (P2)",
-        Priority.LOW.value: "⚪ Low (P1)",
-    }
-    return badges.get(priority, f"P{priority}")
+    """Return an Anthracite-styled semantic pill for priority value."""
+    if priority == Priority.URGENT.value:
+        return render_pill("Urgent (P4)", variant="coral")
+    elif priority == Priority.HIGH.value:
+        return render_pill("High (P3)", variant="amber")
+    elif priority == Priority.MEDIUM.value:
+        return render_pill("Medium (P2)", variant="blue")
+    return render_pill("Low (P1)", variant="muted")
 
 
 def _status_badge(status: str) -> str:
-    """Return an emoji and label for status."""
-    badges = {
-        TaskStatus.PENDING.value: "⏳ Pending",
-        TaskStatus.IN_PROGRESS.value: "⚙️ In Progress",
-        TaskStatus.COMPLETED.value: "✅ Completed",
-    }
-    return badges.get(status, status)
+    """Return an Anthracite-styled semantic pill for status."""
+    if status == TaskStatus.COMPLETED.value:
+        return render_pill("Completed", variant="lime")
+    elif status == TaskStatus.IN_PROGRESS.value:
+        return render_pill("In Progress", variant="blue")
+    return render_pill("Pending", variant="muted")
 
 
 def render_dashboard(
@@ -88,9 +84,22 @@ def render_dashboard(
     queue_service: Optional[TaskQueueService] = None,
 ) -> None:
     """Render the full TaskForge dashboard with CRUD operations, undo/redo, and custom sorting/searching."""
-    # Summary Metrics
+    counts = storage.count_tasks()
+
+    # Editorial Hero Section
+    render_editorial_hero(
+        eyebrow="DIGITAL CRAFT • INTELLIGENT PLANNING",
+        headline="Make every task count.",
+        subhead="Your work, dependencies, and deadlines. One intelligent, deterministic planning system powered by pure data structures.",
+        meta_tags=[
+            ("TOTAL INVENTORY", f"{counts['total']} Items"),
+            ("ARRIVAL QUEUE", f"{counts['pending']} Pending"),
+            ("STORAGE ENGINE", "SQLite ACID Persistence"),
+        ],
+    )
+
+    # Top Metric Strip
     render_summary_metrics(storage)
-    st.markdown("---")
 
     # State variables for editing and deleting
     if "editing_task_id" not in st.session_state:
@@ -98,12 +107,12 @@ def render_dashboard(
     if "deleting_task_id" not in st.session_state:
         st.session_state.deleting_task_id = None
 
-    # Quick Undo/Redo Bar
+    # Quick Undo/Redo Action Strip
     if undo_manager is not None:
         col_undo, col_redo, col_status = st.columns([2, 2, 4])
         with col_undo:
             peek_u = undo_manager.peek_undo()
-            undo_text = f"↩️ Undo: {peek_u.summary}" if peek_u else "↩️ Undo (Empty)"
+            undo_text = f"↩ Undo: {peek_u.summary}" if peek_u else "↩ Undo (Stack Empty)"
             if st.button(undo_text, disabled=not undo_manager.can_undo(), key="quick_undo", use_container_width=True):
                 try:
                     act = undo_manager.undo(storage)
@@ -116,7 +125,7 @@ def render_dashboard(
 
         with col_redo:
             peek_r = undo_manager.peek_redo()
-            redo_text = f"↪️ Redo: {peek_r.summary}" if peek_r else "↪️ Redo (Empty)"
+            redo_text = f"↪ Redo: {peek_r.summary}" if peek_r else "↪ Redo (Stack Empty)"
             if st.button(redo_text, disabled=not undo_manager.can_redo(), key="quick_redo", use_container_width=True):
                 try:
                     act = undo_manager.redo(storage)
@@ -130,7 +139,16 @@ def render_dashboard(
         with col_status:
             undo_count = len(undo_manager.get_undo_history())
             redo_count = len(undo_manager.get_redo_history())
-            st.caption(f"📚 Stacks: **{undo_count}** Undoable action(s) | **{redo_count}** Redoable action(s)")
+            st.markdown(
+                f"""
+                <div style="font-family: 'JetBrains Mono', monospace; font-size: 0.78rem; color: #A6A49E; padding-top: 0.55rem;">
+                    Dual-Stack History: <strong style="color: #FFFFFF;">{undo_count}</strong> Undoable &bull; <strong style="color: #FFFFFF;">{redo_count}</strong> Redoable
+                </div>
+                """,
+                unsafe_allow_html=True,
+            )
+
+    st.markdown("<hr style='margin: 1.4rem 0;'>", unsafe_allow_html=True)
 
     # Handle Edit View if active
     if st.session_state.editing_task_id is not None:
@@ -147,7 +165,7 @@ def render_dashboard(
                 st.rerun()
 
             render_edit_task_form(storage, task_to_edit, on_updated, on_cancel, undo_manager=undo_manager)
-            st.markdown("---")
+            st.markdown("<hr style='margin: 1.4rem 0;'>", unsafe_allow_html=True)
         else:
             st.session_state.editing_task_id = None
 
@@ -159,7 +177,12 @@ def render_dashboard(
 
     render_add_task_form(storage, on_created, undo_manager=undo_manager)
 
-    st.markdown("### 🔍 Task Registry, Search & Custom Sorting (CO3)")
+    # Section Header for Work Registry
+    render_section_header(
+        eyebrow="WORK REGISTRY & SEARCH",
+        title="Task Inventory & Algorithmic Sorting",
+        subtitle="Filter and sort live tasks using manual O(n log n) Merge Sort or O(n²) Insertion Sort.",
+    )
 
     # Filter Controls
     col_search, col_status, col_priority, col_reset = st.columns([3, 2, 2, 1])
@@ -203,7 +226,7 @@ def render_dashboard(
     col_sort_mode, col_sort_algo = st.columns([3, 2])
     with col_sort_mode:
         sort_mode = st.selectbox(
-            "⚡ Sort Tasks By (Manual DSA Implementation):",
+            "Sort Order (Manual Algorithm):",
             options=[
                 ("db_default", "Default Database Order (Status, Priority, ID)"),
                 ("deadline_asc", "Deadline Ascending (Earliest First, No Deadline Last)"),
@@ -257,10 +280,10 @@ def render_dashboard(
 
         if sort_result is not None:
             tasks = sort_result.items
-            sort_metrics_str = f"📊 Ordered using **{sort_algo.split()[0]} {sort_algo.split()[1]}**: **{sort_result.comparisons}** comparisons, **{sort_result.shifts}** shifts."
+            sort_metrics_str = f"&bull; Ordered using <strong style='color: #D7FF64;'>{sort_algo.split()[0]} {sort_algo.split()[1]}</strong>: <strong>{sort_result.comparisons}</strong> comparisons, <strong>{sort_result.shifts}</strong> shifts."
 
     # Search Demonstration by ID (Binary Search vs Linear Search)
-    with st.expander("🔎 **Algorithm Search Demonstration (Lookup by Task ID)**", expanded=False):
+    with st.expander("🔎 Algorithm Search Demonstration (Lookup by Task ID)", expanded=False):
         col_s_id, col_s_mode, col_s_btn = st.columns([2, 2, 1])
         with col_s_id:
             search_task_id = st.number_input("Target Task ID", min_value=1, step=1, value=1)
@@ -277,7 +300,6 @@ def render_dashboard(
                 st.warning("No tasks available to search.")
             else:
                 if "Binary" in search_method:
-                    # Binary search precondition: sort by task ID first
                     sorted_tasks = merge_sort(all_current_tasks, key=task_id_key).items
                     s_res = binary_search(sorted_tasks, target=search_task_id, key=task_id_key)
                     if s_res.found and s_res.item:
@@ -318,59 +340,74 @@ def render_dashboard(
                 if st.button("Cancel", key="cancel_del", use_container_width=True):
                     st.session_state.deleting_task_id = None
                     st.rerun()
-            st.markdown("---")
+            st.markdown("<hr style='margin: 1rem 0;'>", unsafe_allow_html=True)
         else:
             st.session_state.deleting_task_id = None
 
     # Render Task List Table
     if not tasks:
-        st.info("ℹ️ No tasks found matching the criteria. Create a new task above or reset filters.")
+        st.markdown(
+            """
+            <div style="background-color: #1B1B1B; border: 1px solid #2A2A2A; border-radius: 3px; padding: 2rem; text-align: center; color: #A6A49E;">
+                <div style="font-family: 'Syne', sans-serif; font-size: 1.15rem; color: #FFFFFF; margin-bottom: 0.35rem;">No tasks match the active criteria.</div>
+                <div>Create a new task above or click 'Reset Filters' to view the full registry.</div>
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
     else:
-        st.caption(f"Showing **{len(tasks)}** task(s). {sort_metrics_str}")
+        st.markdown(
+            f"""
+            <div style="font-family: 'JetBrains Mono', monospace; font-size: 0.78rem; color: #A6A49E; margin-bottom: 0.8rem;">
+                Showing <strong style="color: #FFFFFF;">{len(tasks)}</strong> task(s) {sort_metrics_str}
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
 
         # Table header
         header_cols = st.columns([1, 4, 2, 3, 2, 2, 2])
-        header_cols[0].markdown("**ID**")
-        header_cols[1].markdown("**Title & Details**")
-        header_cols[2].markdown("**Priority**")
-        header_cols[3].markdown("**Deadline**")
-        header_cols[4].markdown("**Duration**")
-        header_cols[5].markdown("**Status**")
-        header_cols[6].markdown("**Actions**")
+        header_cols[0].markdown("<span style='font-family: JetBrains Mono; font-size: 0.75rem; text-transform: uppercase; color: #A6A49E;'>ID</span>", unsafe_allow_html=True)
+        header_cols[1].markdown("<span style='font-family: JetBrains Mono; font-size: 0.75rem; text-transform: uppercase; color: #A6A49E;'>Title & Details</span>", unsafe_allow_html=True)
+        header_cols[2].markdown("<span style='font-family: JetBrains Mono; font-size: 0.75rem; text-transform: uppercase; color: #A6A49E;'>Priority</span>", unsafe_allow_html=True)
+        header_cols[3].markdown("<span style='font-family: JetBrains Mono; font-size: 0.75rem; text-transform: uppercase; color: #A6A49E;'>Deadline</span>", unsafe_allow_html=True)
+        header_cols[4].markdown("<span style='font-family: JetBrains Mono; font-size: 0.75rem; text-transform: uppercase; color: #A6A49E;'>Duration</span>", unsafe_allow_html=True)
+        header_cols[5].markdown("<span style='font-family: JetBrains Mono; font-size: 0.75rem; text-transform: uppercase; color: #A6A49E;'>Status</span>", unsafe_allow_html=True)
+        header_cols[6].markdown("<span style='font-family: JetBrains Mono; font-size: 0.75rem; text-transform: uppercase; color: #A6A49E;'>Actions</span>", unsafe_allow_html=True)
 
-        st.markdown("<hr style='margin: 0.5rem 0;'>", unsafe_allow_html=True)
+        st.markdown("<hr style='margin: 0.4rem 0 0.8rem 0;'>", unsafe_allow_html=True)
 
         for task in tasks:
             assert task.id is not None
             cols = st.columns([1, 4, 2, 3, 2, 2, 2])
 
             # ID
-            cols[0].write(f"#{task.id}")
+            cols[0].markdown(f"<span style='font-family: JetBrains Mono; font-weight: 600; color: #D7FF64;'>#{task.id}</span>", unsafe_allow_html=True)
 
             # Title and description
             with cols[1]:
-                st.markdown(f"**{task.title}**")
+                st.markdown(f"<strong style='color: #FFFFFF; font-size: 0.95rem;'>{task.title}</strong>", unsafe_allow_html=True)
                 if task.description:
                     st.caption(task.description)
 
             # Priority
-            cols[2].write(_priority_badge(task.priority))
+            cols[2].markdown(_priority_badge(task.priority), unsafe_allow_html=True)
 
             # Deadline with overdue alert if applicable
             with cols[3]:
                 if task.due_date is None:
-                    st.write("No deadline")
+                    st.markdown("<span style='color: #6E6D68; font-size: 0.85rem;'>No deadline</span>", unsafe_allow_html=True)
                 else:
                     if task.is_overdue(as_of=now):
-                        st.markdown(f"🔴 **{task.formatted_deadline}** *(Overdue)*")
+                        st.markdown(f"<span style='color: #F87171; font-weight: 600; font-family: JetBrains Mono; font-size: 0.85rem;'>⚠ {task.formatted_deadline}</span>", unsafe_allow_html=True)
                     else:
-                        st.write(task.formatted_deadline)
+                        st.markdown(f"<span style='color: #F3F1EB; font-family: JetBrains Mono; font-size: 0.85rem;'>{task.formatted_deadline}</span>", unsafe_allow_html=True)
 
             # Duration
-            cols[4].write(_format_duration(task.duration))
+            cols[4].markdown(f"<span style='font-family: JetBrains Mono; color: #A6A49E; font-size: 0.85rem;'>{_format_duration(task.duration)}</span>", unsafe_allow_html=True)
 
             # Status
-            cols[5].write(_status_badge(task.status))
+            cols[5].markdown(_status_badge(task.status), unsafe_allow_html=True)
 
             # Action Buttons: Edit and Delete
             with cols[6]:
@@ -386,4 +423,4 @@ def render_dashboard(
                         st.session_state.editing_task_id = None
                         st.rerun()
 
-            st.markdown("<hr style='margin: 0.3rem 0; opacity: 0.3;'>", unsafe_allow_html=True)
+            st.markdown("<hr style='margin: 0.35rem 0; opacity: 0.4;'>", unsafe_allow_html=True)

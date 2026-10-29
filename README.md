@@ -190,8 +190,9 @@ TaskForge/
 │       ├── dependency_view.py      # CO5 Dependency Map, Topological Order & Traversals
 │       ├── structure_evaluation_view.py # CO2 Hash Table Lab & Structure Comparison
 │       ├── scheduling_view.py      # CO1+CO5 Smart Scheduler & Deadline Risk UI
-│       └── planning_view.py        # CO5 Critical Path & What-If Planning UI
-├── tests/                          # Automated test suite (201 tests)
+│       ├── planning_view.py        # CO5 Critical Path & What-If Planning UI
+│       └── theme.py                # Anthracite Studio design system, tokens, and CSS
+├── tests/                          # Automated test suite (204 tests)
 │   ├── __init__.py
 │   ├── test_models.py              # Domain model and validation tests
 │   ├── test_storage.py             # SQLite CRUD and persistence tests
@@ -221,7 +222,8 @@ TaskForge/
 │   ├── test_critical_path.py       # Critical path analyzer unit tests (CO5)
 │   ├── test_what_if_simulator.py   # What-If schedule delay simulation tests (CO5)
 │   ├── test_phase8_integration.py  # Phase 08 end-to-end integration tests (CO5)
-│   └── test_phase9_final_integration.py # Phase 09 cross-phase workflows A–E integration tests
+│   ├── test_phase9_final_integration.py # Phase 09 cross-phase workflows A–E integration tests
+│   └── test_ui_theme.py            # Anthracite UI theme and component unit tests
 └── docs/                           # Project documentation
     ├── CO_MAPPING.md               # Official Course Outcome alignment matrix & viva guide
     ├── ALGORITHM_COMPLEXITY.md     # Data structure & algorithm complexity analysis
