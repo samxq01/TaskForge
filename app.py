@@ -114,8 +114,16 @@ def load_sample_tasks(
     index_service: TaskIndexService,
     dep_service: DependencyService,
     hash_index: TaskHashIndexService,
-) -> None:
-    """Seed initial sample tasks and realistic dependencies for demonstration and viva testing."""
+) -> bool:
+    """Seed initial sample tasks and realistic dependencies for demonstration and viva testing.
+    
+    Returns True if sample tasks were newly seeded, False if already loaded.
+    """
+    existing_tasks = storage.list_tasks()
+    existing_titles = {t.title for t in existing_tasks}
+    if "Setup Database Schema & Models" in existing_titles and "Construct BST Deadline Index" in existing_titles:
+        return False
+
     now = datetime.now()
     sample_data = [
         Task(
@@ -200,6 +208,7 @@ def load_sample_tasks(
     queue_service.refresh()
     index_service.rebuild()
     hash_index.rebuild_index()
+    return True
 
 
 def render_sidebar(
@@ -243,16 +252,19 @@ def render_sidebar(
 - 🟢 **Phase 05:** Dependency Graph & Visual Map (CO5) *(Complete)*
 - 🟢 **Phase 06:** Hash Table & Storage Lab (CO2) *(Complete)*
 - 🟢 **Phase 07:** Smart Auto-Scheduler & Risk Analyzer (CO1 + CO5) *(Complete)*
-- 🟢 **Phase 08:** Critical Path & What-If Planning (CO5) *(Active)*
-- 🔒 **Phase 09:** Final Polish & Integration
+- 🟢 **Phase 08:** Critical Path & What-If Planning (CO5) *(Complete)*
+- 🟢 **Phase 09:** Final Integration & CO Validation *(Complete)*
             """
         )
 
         st.markdown("---")
         st.markdown("### 🛠️ Demonstration Tools")
         if st.button("🌱 Load Sample Tasks", use_container_width=True):
-            load_sample_tasks(storage, undo_manager, queue_service, index_service, dep_service, hash_index)
-            st.success("Sample tasks, dependencies & hash index loaded!")
+            loaded = load_sample_tasks(storage, undo_manager, queue_service, index_service, dep_service, hash_index)
+            if loaded:
+                st.success("Sample tasks, dependencies & hash index loaded!")
+            else:
+                st.info("Sample demonstration tasks are already present in the database.")
             st.rerun()
 
         counts = storage.count_tasks()
@@ -286,7 +298,7 @@ def render_sidebar(
                         st.rerun()
 
         st.markdown("---")
-        st.caption("TaskForge v0.8.0 • Phase 08 (CO5)")
+        st.caption("TaskForge v1.0.0 • Micro-Project (CO1–CO5 Complete)")
 
     return view_choice
 
